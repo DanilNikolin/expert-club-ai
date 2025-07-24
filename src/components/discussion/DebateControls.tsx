@@ -2,6 +2,8 @@
 'use client';
 
 import { type Run } from '@/types';
+import { Button } from '@/components/ui/Button';
+import { Paperclip, Scale } from 'lucide-react';
 
 type DebateControlsProps = {
   stage: 'setup' | 'debating' | 'paused' | 'judging' | 'finished';
@@ -25,49 +27,50 @@ export default function DebateControls({
   activeRun,
 }: DebateControlsProps) {
 
-  // Контролы на паузе
+  // --- Контролы на паузе ---
   if (stage === 'paused' && currentRound < rounds) {
     return (
-      <div className="mt-6 p-4 border-t">
-        <h3 className="font-semibold mb-2">Раунд {currentRound} завершен. Хотите вмешаться?</h3>
+      <div className="mt-6 pt-6 border-t border-bg-surface">
+        <h3 className="title-pixel text-accent-secondary text-center mb-3">Раунд {currentRound} завершен. Ваш ход.</h3>
         <textarea
           value={userIntervention}
           onChange={e => setUserIntervention(e.target.value)}
-          placeholder="Ваша реплика..."
-          className="w-full p-2 border border-gray-300 rounded-lg mb-2 text-black"
+          placeholder="Ваша реплика (необязательно)..."
+          className="w-full p-3 bg-bg-main border border-bg-surface rounded-md text-text-main resize-none focus:ring-1 focus:ring-accent-secondary mb-3"
+          rows={3}
         />
-        <button
-          onClick={onContinue}
-          className="w-full py-2 font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-        >
+        <Button onClick={onContinue} size="sm" className="w-full">
           Продолжить (Раунд {currentRound + 1})
-        </button>
+        </Button>
       </div>
     );
   }
 
-  // Кнопка вердикта
-  if (stage === 'paused' && currentRound >= rounds) {
+  // --- Кнопка вызова Судьи ---
+  if ((stage === 'paused' || stage === 'finished') && currentRound >= rounds && !activeRun?.report) {
     return (
-      <div className="mt-6 p-4 border-t text-center">
-        <h3 className="font-semibold mb-2">Все раунды завершены!</h3>
-        <button
+      <div className="mt-6 pt-6 border-t border-bg-surface text-center">
+        <h3 className="title-pixel text-amber-400 mb-3">Все раунды завершены!</h3>
+        <Button
           onClick={onGetVerdict}
           disabled={stage === 'judging'}
-          className="py-2 px-6 font-bold text-white bg-purple-600 rounded-lg hover:bg-purple-700 disabled:bg-gray-400"
+          isLoading={stage === 'judging'}
+          size="sm"
+          className="bg-amber-500 hover:bg-amber-600 focus:ring-amber-500"
         >
-          {stage === 'judging' ? 'Анализ...' : 'Получить вердикт Судьи'}
-        </button>
+          <Scale className="mr-2 h-4 w-4"/>
+          {stage === 'judging' ? 'Судья выносит вердикт...' : 'Получить вердикт Судьи'}
+        </Button>
       </div>
     );
   }
 
-  // Финальный отчет
+  // --- Финальный отчет ---
   if (stage === 'finished' && activeRun?.report) {
     return (
-      <div className="bg-green-50 p-6 rounded-lg border border-green-200 mt-6">
-        <h3 className="text-2xl font-bold mb-4 text-green-800">Итоговый Отчет Судьи</h3>
-        <div className="whitespace-pre-wrap text-gray-800">{activeRun.report}</div>
+        <div className="mt-6 pt-6 border-t border-bg-surface text-center">
+          <h3 className="title-pixel text-accent-success mb-3">Дебаты Завершены</h3>
+          <p className="text-sm text-text-secondary">Финальный вердикт находится в окне чата.</p>
       </div>
     );
   }

@@ -92,11 +92,7 @@ export default function DashboardPage() {
     setIsLoadingDiscussions(false);
   };
 
-  const wheelToScrollX = (e: React.WheelEvent, ref: React.RefObject<HTMLDivElement>) => {
-    if (!ref.current) return;
-    e.preventDefault();
-    ref.current.scrollBy({ left: e.deltaY, behavior: 'auto' });
-  };
+ 
 
   const scrollByStep = (
     ref: React.RefObject<HTMLDivElement>,
@@ -149,8 +145,7 @@ export default function DashboardPage() {
             Ваш Дашборд
           </h1>
           <p className="mt-2 text-lg text-text-secondary font-sans">
-            Добро пожаловать,&nbsp;
-            <span className="font-semibold text-text-main">{user.email}</span>
+            Управляйте вашими экспертами и дискуссиями
           </p>
         </div>
 
@@ -206,7 +201,6 @@ export default function DashboardPage() {
           {/* КАРТОЧКИ */}
           <div
             ref={cardsRef}
-            onWheel={e => wheelToScrollX(e, cardsRef)}
             className="flex gap-8 overflow-x-auto scroll-smooth pb-4 scrollbar-thin scrollbar-thumb-accent-primary/60 min-h-[540px] max-h-[560px]"
           >
             {/* EXPERTS */}
@@ -219,7 +213,12 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 experts.map(ex => (
-                  <div id={`experts-card-${ex.id}`} key={ex.id}>
+                  <div 
+                    id={`experts-card-${ex.id}`} 
+                    key={ex.id}
+                    // ↓↓↓ ВОТ ОНА, ВСЯ МАГИЯ ↓↓↓
+                    className="transform transition-all duration-50 ease-in-out saturate-50 brightness-75 hover:saturate-100 hover:brightness-100 scale-95 hover:scale-100"
+                  >
                     <ExpertCard
                       expert={ex}
                       onDelete={handleDeleteExpert}

@@ -2,6 +2,8 @@
 'use client';
 
 import { LegacyRef } from 'react';
+import { User, Sparkles } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type Message = {
   author: 'You' | 'Concierge';
@@ -16,19 +18,48 @@ type Props = {
 
 export default function ChatWindow({ messages, isLoading, chatEndRef }: Props) {
   return (
-    <div className="flex-grow overflow-y-auto p-6 bg-white rounded-lg shadow-inner space-y-4">
+    <div className="flex-grow overflow-y-auto space-y-6 pr-4 py-4">
       {messages.length === 0 && (
-        <p className="text-center text-gray-400">Начните диалог, описав вашу идею ниже.</p>
-      )}
-      {messages.map((msg, index) => (
-        <div key={index} className={`p-3 rounded-lg max-w-[80%] ${msg.author === 'You' ? 'bg-blue-100 ml-auto' : 'bg-gray-100'}`}>
-          <p className="text-sm font-bold text-gray-600">{msg.author}</p>
-          <p className="text-gray-900 whitespace-pre-wrap">{msg.text}</p>
+        <div className="flex h-full flex-col items-center justify-center text-center">
+          <Sparkles className="h-16 w-16 text-bg-surface" />
+          <p className="mt-4 font-pixel text-xl text-text-secondary">ГОТОВ СЛУШАТЬ</p>
+          <p className="mt-1 text-sm text-text-secondary/70">Начните с общей идеи, а я задам уточняющие вопросы.</p>
         </div>
-      ))}
+      )}
+      {messages.map((msg, index) => {
+        const isUser = msg.author === 'You';
+        return (
+          <div key={index} className={cn('flex items-start gap-4', isUser && 'justify-end')}>
+            {!isUser && (
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-bg-main">
+                <Sparkles className="h-5 w-5 text-accent-secondary" />
+              </div>
+            )}
+            <div className={cn(
+              'max-w-xl rounded-lg px-4 py-3 font-sans text-base',
+              isUser ? 'bg-accent-primary/20 text-text-main' : 'bg-bg-main text-text-secondary'
+            )}>
+              <p className={`font-pixel text-sm mb-1 ${isUser ? 'text-accent-primary' : 'text-accent-secondary'}`}>
+                {msg.author}
+              </p>
+              <p className="text-text-main whitespace-pre-wrap">{msg.text}</p>
+            </div>
+            {isUser && (
+               <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-bg-main">
+                <User className="h-5 w-5 text-text-secondary" />
+              </div>
+            )}
+          </div>
+        )
+      })}
       {isLoading && (
-        <div className="p-3 rounded-lg bg-gray-100 max-w-[80%]">
-          <p className="text-gray-500 italic">Консьерж печатает...</p>
+        <div className="flex items-start gap-4">
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-bg-main">
+             <Sparkles className="h-5 w-5 text-accent-secondary animate-pulse" />
+          </div>
+          <div className="rounded-lg bg-bg-main px-4 py-3 font-sans text-sm text-text-secondary italic">
+            Консьерж печатает...
+          </div>
         </div>
       )}
       <div ref={chatEndRef} />

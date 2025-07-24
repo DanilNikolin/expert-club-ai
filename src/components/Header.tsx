@@ -1,3 +1,4 @@
+// src/components/Header.tsx
 'use client';
 
 import Link from 'next/link';
@@ -5,6 +6,8 @@ import { useAuth } from '@/context/AuthContext';
 import { auth } from '@/firebase.config.js';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
+import { Button } from './ui/Button'; // Импортируем нашу кастомную кнопку
+import { UserCircle } from 'lucide-react';
 
 export default function Header() {
   const { user } = useAuth();
@@ -12,40 +15,46 @@ export default function Header() {
 
   const handleLogout = async () => {
     await signOut(auth);
-    router.push('/');
+    router.push('/login'); // После выхода кидаем на страницу логина
   };
 
+  // Определяем, куда будет вести ссылка-логотип
+  const logoHref = user ? '/dashboard' : '/';
+
   return (
-    <header className="bg-gray-800 text-white p-4 shadow-md">
-      <nav className="container mx-auto flex justify-between items-center">
-        <Link href="/" className="text-xl font-bold hover:text-gray-300">
+    <header className="bg-bg-main border-b border-bg-surface sticky top-0 z-50">
+      <nav className="container mx-auto flex h-20 items-center justify-between px-4">
+        
+        {/* ЛОГОТИП */}
+        <Link href={logoHref} className="title-pixel text-amber-400 hover:text-amber-400/80 transition-colors">
           Клуб Экспертов AI
         </Link>
-        <div className="space-x-4 flex items-center">
+        
+        {/* ПРАВАЯ ЧАСТЬ: НАВИГАЦИЯ И ПРОФИЛЬ */}
+        <div className="flex items-center space-x-4">
           {user ? (
-            // Если пользователь залогинен
+            // --- Если пользователь залогинен ---
             <>
-              <Link href="/dashboard" className="hover:text-gray-300">
-                Дашборд
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-md"
-              >
+              <div className="flex items-center gap-2 font-sans text-sm text-text-secondary">
+                <UserCircle size={16} />
+                <span>{user.email}</span>
+              </div>
+              <Button onClick={handleLogout} variant="destructive" size="sm">
                 Выйти
-              </button>
+              </Button>
             </>
           ) : (
-            // Если пользователь НЕ залогинен
+            // --- Если пользователь НЕ залогинен ---
             <>
-              <Link href="/login" className="hover:text-gray-300">
-                Войти
+              <Link href="/login">
+                 <Button variant="secondary" size="sm">
+                    Войти
+                 </Button>
               </Link>
-              <Link
-                href="/signup"
-                className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md"
-              >
-                Регистрация
+              <Link href="/signup">
+                <Button size="sm">
+                    Регистрация
+                </Button>
               </Link>
             </>
           )}

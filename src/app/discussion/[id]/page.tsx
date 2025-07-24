@@ -82,9 +82,22 @@ export default function DiscussionPage() {
 
     useEffect(() => {
         if (activeRun) {
-            setMessages(activeRun.transcript);
+            // Копируем существующий транскрипт
+            const transcriptWithReport = [...activeRun.transcript];
+
+            // Если в этом прогоне есть отчет (run.report), добавляем его в конец
+            if (activeRun.report) {
+            transcriptWithReport.push({
+                role: 'assistant',
+                name: 'Судья',
+                content: activeRun.report,
+            });
+            }
+
+            // Обновляем стейт уже с полным списком
+            setMessages(transcriptWithReport);
         }
-    }, [activeRun]);
+        }, [activeRun]);
 
     const handleUpdateGoal = async () => {
         if (!debateGoal) return;
@@ -391,52 +404,62 @@ export default function DiscussionPage() {
 
     
 
-    if (authLoading || isLoading || isLoadingCustomExperts || !user) {
-        return <div className="text-center mt-20">Загрузка рабочего пространства...</div>;
-    }
+    if (authLoading || isLoading || !user) { // Убрал isLoadingCustomExperts, т.к. он уже не нужен в таком виде
+    return <div className="text-center mt-20 font-pixel text-accent-primary animate-pulse">Загрузка рабочего пространства...</div>;
+  }
 
-    return (
-        <div className="container mx-auto mt-10 p-4 grid grid-cols-12 gap-6">
-            <Sidebar
-                brief={brief}
-                debateGoal={debateGoal}
-                setDebateGoal={setDebateGoal}
-                handleUpdateGoal={handleUpdateGoal}
-                isSavingGoal={isSavingGoal}
-                stage={stage}
-                availableExperts={availableCustomExperts}
-                selectedExperts={selectedExperts}
-                setSelectedExperts={setSelectedExperts}
-                rounds={rounds}
-                setRounds={setRounds}
-                autoPause={autoPause}
-                setAutoPause={setAutoPause}
-                onStartDebate={handleStartNewDebate}
-            />
-
-            <main className="col-span-8 bg-white p-6 rounded-lg shadow-inner min-h-[85vh] flex flex-col">
-                <RunSelector
-                    runs={runs}
-                    activeRun={activeRun}
-                    setActiveRun={setActiveRun}
-                    onDeleteRun={handleDeleteRun}
-                    stage={stage}
-                />
-                <ChatWindow
-                    messages={messages}
-                    chatEndRef={chatEndRef}
-                />
-                <DebateControls
-                    stage={stage}
-                    currentRound={currentRound}
-                    rounds={rounds}
-                    userIntervention={userIntervention}
-                    setUserIntervention={setUserIntervention}
-                    onContinue={onContinueDebate} // <-- Важно: используем обертку
-                    onGetVerdict={handleGetVerdict}
-                    activeRun={activeRun}
-                />
-            </main>
+  return (
+    // ИСПОЛЬЗУЕМ GRID ДЛЯ МАКЕТА
+    <div className="container mx-auto mt-10 p-4 grid grid-cols-12 gap-6">
+      
+      {/* --- САЙДБАР (ЛЕВАЯ КОЛОНКА) --- */}
+      <aside className="col-span-4">
+        <div className="sticky top-6"> {/* Делаем сайдбар липким */}
+          <Sidebar
+            brief={brief}
+            debateGoal={debateGoal}
+            setDebateGoal={setDebateGoal}
+            handleUpdateGoal={handleUpdateGoal}
+            isSavingGoal={isSavingGoal}
+            stage={stage}
+            availableExperts={availableCustomExperts}
+            selectedExperts={selectedExperts}
+            setSelectedExperts={setSelectedExperts}
+            rounds={rounds}
+            setRounds={setRounds}
+            autoPause={autoPause}
+            setAutoPause={setAutoPause}
+            onStartDebate={handleStartNewDebate}
+          />
         </div>
-    );
+      </aside>
+
+      {/* --- ОСНОВНОЕ ОКНО (ПРАВАЯ КОЛОНКА) --- */}
+      <main className="col-span-8 bg-bg-surface/50 border border-bg-surface rounded-lg shadow-inner min-h-[85vh] flex flex-col p-6">
+        <RunSelector
+          runs={runs}
+          activeRun={activeRun}
+          setActiveRun={setActiveRun}
+          onDeleteRun={handleDeleteRun}
+          stage={stage}
+        />
+        <ChatWindow
+          messages={messages}
+          chatEndRef={chatEndRef}
+          // Передаем команду, чтобы различать экспертов по цвету
+          teamInRun={activeRun?.team || []} 
+        />
+        <DebateControls
+          stage={stage}
+          currentRound={currentRound}
+          rounds={rounds}
+          userIntervention={userIntervention}
+          setUserIntervention={setUserIntervention}
+          onContinue={onContinueDebate}
+          onGetVerdict={handleGetVerdict}
+          activeRun={activeRun}
+        />
+      </main>
+    </div>
+  );
 }

@@ -5,7 +5,6 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
-// Импортируем наши новые компоненты
 import ConciergeHeader from './_components/ConciergeHeader';
 import ChatWindow from './_components/ChatWindow';
 import ChatInputForm from './_components/ChatInputForm';
@@ -16,7 +15,6 @@ type Message = {
 };
 
 export default function NewDiscussionPage() {
-  // Вся логика и стейты остаются здесь, в "умном" компоненте
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -80,26 +78,27 @@ export default function NewDiscussionPage() {
     }
   };
 
-  // Рендер теперь — это чистая сборка из компонентов
   return (
-    <div className="container mx-auto mt-10 p-4 flex flex-col h-[85vh]">
-      <ConciergeHeader
-        onStartBrief={handleCreateBrief}
-        isSubmitting={isSubmittingBrief}
-        isChatEmpty={messages.length === 0}
-        isLoading={isLoading}
-      />
-      <ChatWindow
-        messages={messages}
-        isLoading={isLoading}
-        chatEndRef={chatEndRef}
-      />
-      <ChatInputForm
-        currentMessage={currentMessage}
-        setCurrentMessage={setCurrentMessage}
-        handleSendMessage={handleSendMessage}
-        isLoading={isLoading}
-      />
+    <div className="container mx-auto mt-10 p-4">
+      <div className="flex flex-col h-[85vh] max-w-4xl mx-auto bg-bg-surface/50 border border-bg-surface rounded-lg shadow-inner p-6">
+        <ConciergeHeader
+          onStartBrief={handleCreateBrief}
+          isSubmitting={isSubmittingBrief}
+          isChatEmpty={messages.length === 0}
+          isLoading={isLoading}
+        />
+        <ChatWindow
+          messages={messages}
+          isLoading={isLoading}
+          chatEndRef={chatEndRef}
+        />
+        <ChatInputForm
+          currentMessage={currentMessage}
+          setCurrentMessage={setCurrentMessage}
+          handleSendMessage={handleSendMessage}
+          isLoading={isLoading}
+        />
+      </div>
     </div>
   );
 }

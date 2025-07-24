@@ -1,5 +1,8 @@
 // src/app/discussion/new/_components/ChatInputForm.tsx
 'use client';
+import { Button } from '@/components/ui/Button';
+import { SendHorizonal } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type Props = {
   currentMessage: string;
@@ -10,23 +13,29 @@ type Props = {
 
 export default function ChatInputForm({ currentMessage, setCurrentMessage, handleSendMessage, isLoading }: Props) {
   return (
-    <form onSubmit={handleSendMessage} className="mt-4">
-      <div className="flex">
+    <form onSubmit={handleSendMessage} className="mt-4 pt-4 border-t border-bg-surface flex-shrink-0">
+      <div className="flex gap-2">
         <input
           type="text"
           value={currentMessage}
           onChange={(e) => setCurrentMessage(e.target.value)}
           placeholder="Начните с описания вашей идеи..."
-          className="flex-grow p-4 text-lg text-gray-900 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           disabled={isLoading}
+          className={cn(
+            'w-full flex-grow rounded-md p-3 font-sans text-lg text-text-main placeholder:text-text-secondary/50',
+            'bg-bg-main ring-1 ring-inset ring-bg-surface transition-all duration-150',
+            'focus:outline-none focus:ring-2 focus:ring-accent-primary',
+            'disabled:opacity-50'
+          )}
         />
-        <button
+        <Button
           type="submit"
           disabled={isLoading || !currentMessage.trim()}
-          className="px-6 py-3 font-medium text-white bg-blue-600 rounded-r-lg hover:bg-blue-700 disabled:bg-gray-400"
+          size="default"
+          className="px-5" // Делаем кнопку чуть пошире для солидности
         >
-          Отправить
-        </button>
+          <SendHorizonal size={20} />
+        </Button>
       </div>
     </form>
   );

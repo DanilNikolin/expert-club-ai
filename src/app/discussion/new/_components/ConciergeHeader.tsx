@@ -1,5 +1,7 @@
 // src/app/discussion/new/_components/ConciergeHeader.tsx
 'use client';
+import { Button } from '@/components/ui/Button';
+import { FileText } from 'lucide-react';
 
 type Props = {
   onStartBrief: () => void;
@@ -10,18 +12,21 @@ type Props = {
 
 export default function ConciergeHeader({ onStartBrief, isSubmitting, isChatEmpty, isLoading }: Props) {
   return (
-    <div className="flex justify-between items-center mb-4">
+    <div className="flex justify-between items-start mb-4 pb-4 border-b border-bg-surface">
       <div>
-        <h1 className="text-3xl font-bold">Диалог с Консьержем</h1>
-        <p className="text-gray-500">Расскажите о своей идее, чтобы подготовить бриф для экспертов.</p>
+        <h1 className="page-title-pixel text-accent-primary">Консьерж</h1>
+        <p className="font-sans text-text-secondary mt-2">Опишите вашу идею, чтобы мы подготовили бриф для экспертов</p>
       </div>
-      <button
+      <Button
         onClick={onStartBrief}
         disabled={isChatEmpty || isLoading || isSubmitting}
-        className="px-6 py-3 font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:bg-gray-400"
+        isLoading={isSubmitting}
+        size="sm"
+        className="bg-accent-success hover:bg-accent-success/90 focus:ring-accent-success"
       >
-        {isSubmitting ? 'Формируем бриф...' : 'Передать Экспертам'}
-      </button>
+        <FileText className="mr-2 h-4 w-4"/>
+        {isSubmitting ? 'Формируем...' : 'Сформировать Бриф'}
+      </Button>
     </div>
   );
 }
