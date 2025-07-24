@@ -1,14 +1,25 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import Header from "@/components/Header"; // Импортируем нашу шапку
+import type { Metadata } from 'next';
+import { Inter, Press_Start_2P } from 'next/font/google';
+import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
+import Header from '@/components/Header';
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ['latin', 'cyrillic'],
+  display: 'swap',
+  variable: '--font-inter',
+});
+
+const pressStart = Press_Start_2P({
+  subsets: ['cyrillic', 'latin'],
+  weight: '400',
+  display: 'swap',
+  variable: '--font-pixel',
+});
 
 export const metadata: Metadata = {
-  title: "Дискуссионный Клуб Экспертов AI",
-  description: "AI-powered business idea analysis",
+  title: 'Клуб Экспертов Идеи',
+  description: 'Создай свою команду AI-экспертов',
 };
 
 export default function RootLayout({
@@ -18,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.variable} ${pressStart.variable} font-sans`}>
         <AuthProvider>
           <Header />
           <main>{children}</main>
