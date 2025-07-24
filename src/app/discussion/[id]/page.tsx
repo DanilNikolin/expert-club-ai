@@ -410,7 +410,7 @@ export default function DiscussionPage() {
 
   return (
     // ИСПОЛЬЗУЕМ GRID ДЛЯ МАКЕТА
-    <div className="container mx-auto mt-10 p-4 grid grid-cols-12 gap-6">
+    <div className="container mx-auto mt-6 lg:mt-10 p-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
       
       {/* --- САЙДБАР (ЛЕВАЯ КОЛОНКА) --- */}
       <aside className="col-span-4">
