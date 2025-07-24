@@ -59,18 +59,19 @@ export default function BasicInfoSection({ formData, handleChange, validationErr
             onChange={handleChange}
             className="select-primary"
           >
+            {/* Вот, блядь, что ты просил! Все остальные модели закомментированы */}
             <optgroup label="OpenAI (Июль 2025)">
-              <option value="gpt-4o">GPT-4o</option>
-              <option value="gpt-4.1">GPT-4.1</option>
+              {/* <option value="gpt-4o">GPT-4o</option> */}
+              {/* <option value="gpt-4.1">GPT-4.1</option> */}
               <option value="gpt-4.1-mini">GPT-4.1-Mini</option>
-              <option value="gpt-4.1-nano">GPT-4.1-Nano</option>
+               <option value="gpt-4.1-nano">GPT-4.1-Nano</option> 
             </optgroup>
-            <optgroup label="DeepSeek">
+            {/* <optgroup label="DeepSeek">
               <option value="deepseek-chat">Deepseek Chat</option>
             </optgroup>
             <optgroup label="Research Models">
               <option value="o3">o3 (Anthropic)</option>
-            </optgroup>
+            </optgroup> */}
           </select>
           <p className="mt-2 text-xs text-text-secondary font-sans">Выбор модели влияет на скорость, 'интеллект' и стоимость генерации.</p>
         </div>
