@@ -132,6 +132,14 @@ export default function DashboardPage() {
     setDiscussions(prev => prev.filter(d => d.id !== id));
   };
 
+  const handleBriefUpdate = (discussionId: string, newBrief: string) => {
+    setDiscussions(prev => 
+      prev.map(d => 
+        d.id === discussionId ? { ...d, brief: newBrief } : d
+      )
+    );
+  };
+
   /* ---------- RENDER ---------- */
   if (loading || !user)
     return <div className="text-center mt-20 text-text-secondary">Загрузка данных...</div>;
@@ -243,6 +251,7 @@ export default function DashboardPage() {
                   <DiscussionCard
                     discussion={di}
                     onDelete={handleDeleteDiscussion}
+                    onBriefUpdated={handleBriefUpdate} // <--- ДОБАВЛЕНА ЭТА СТРОКА
                   />
                 </div>
               ))
