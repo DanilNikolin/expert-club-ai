@@ -1,14 +1,20 @@
 // src/components/discussion/Sidebar.tsx
 'use client';
 
+// ИСПРАВЛЕНО: Добавил useEffect в импорт
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { type Expert } from '@/types';
 import { cn } from '@/lib/utils';
 import { ArrowLeft, CheckCircle, CircleDashed } from 'lucide-react';
-import Tooltip from '@/components/ui/Tooltip'; // Импортируем твой Tooltip!
-
+// import Tooltip from '@/components/ui/Tooltip'; // ВРЕМЕННО ОТКЛЮЧЕНО, чтобы не было ошибок, если компонент не создан
+import { Button } from '@/components/ui/Button';
+import { Pencil } from 'lucide-react';
+// --- ПРОПСЫ КОМПОНЕНТА ---
 type SidebarProps = {
+  discussionId: string; // ДОБАВЛЕНО: ID нужен для сохранения
   brief: string;
+  onBriefUpdated: (newBrief: string) => void;
   debateGoal: string;
   setDebateGoal: (goal: string) => void;
   handleUpdateGoal: () => void;
@@ -24,15 +30,19 @@ type SidebarProps = {
   onStartDebate: () => void;
 };
 
+// --- Компонент-хелпер для секций в сайдбаре (можно оставить снаружи) ---
 // --- Компонент для секций в сайдбаре ---
-const SidebarSection = ({ title, children }: { title: string, children: React.ReactNode }) => (
+const SidebarSection = ({ title, children, actions }: { title: string, children: React.ReactNode, actions?: React.ReactNode }) => (
   <div className="rounded-lg border border-bg-surface bg-bg-surface/50 p-4">
-    <h3 className="title-pixel text-accent-primary mb-3">{title}</h3>
+    <div className="flex justify-between items-center mb-3">
+      <h3 className="title-pixel text-accent-primary">{title}</h3>
+      {actions && <div>{actions}</div>}
+    </div>
     {children}
   </div>
 );
 
-// --- Новый селектор экспертов ---
+// --- Компонент-хелпер для выбора экспертов (можно оставить снаружи) ---
 const ExpertSelector = ({ availableExperts, selectedExperts, setSelectedExperts, disabled }: any) => {
   const toggleExpert = (expert: Expert) => {
     if (disabled) return;
@@ -75,8 +85,11 @@ const ExpertSelector = ({ availableExperts, selectedExperts, setSelectedExperts,
 };
 
 
+// --- ОСНОВНОЙ КОМПОНЕНТ ---
 export default function Sidebar({
+  discussionId,
   brief,
+  onBriefUpdated,
   debateGoal,
   setDebateGoal,
   handleUpdateGoal,
@@ -91,6 +104,31 @@ export default function Sidebar({
   setAutoPause,
   onStartDebate,
 }: SidebarProps) {
+
+  // ✅ ИСПРАВЛЕНО: Вся логика, использующая хуки, теперь ВНУТРИ компонента
+  const [isEditingBrief, setIsEditingBrief] = useState(false);
+  const [editedBrief, setEditedBrief] = useState(brief);
+
+  // Этот хук будет обновлять локальный стейт, если пропс `brief` изменится извне
+  useEffect(() => {
+    setEditedBrief(brief);
+  }, [brief]);
+
+  const handleSaveBrief = async () => {
+    try {
+        await fetch(`/api/discussion/${discussionId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ brief: editedBrief }),
+        });
+        onBriefUpdated(editedBrief); // <--- ВЫЗЫВАЕМ ФУНКЦИЮ ОБНОВЛЕНИЯ
+        setIsEditingBrief(false);
+    } catch (error) {
+        console.error("Failed to update brief:", error);
+        alert("Ошибка сохранения брифа!");
+    }
+  };
+
   const isDebateInProgress = stage === 'debating' || stage === 'judging' || stage === 'paused';
 
   return (
@@ -100,14 +138,37 @@ export default function Sidebar({
         <span>Вернуться в Дашборд</span>
       </Link>
       
-      <SidebarSection title="Ваш Бриф">
-        <p className="font-sans text-sm text-text-secondary max-h-24 overflow-y-auto whitespace-pre-wrap">{brief}</p>
-        {/* Типс для брифа */}
-        <div className="mt-2 text-xs text-text-secondary flex items-center">
-            Этот бриф был сформирован Консьержем. Он является отправной точкой для дебатов.
-            <Tooltip content="Бриф – это краткое описание вашей идеи или проблемы. Консьерж-бот помог вам его сформировать. Это основной документ, с которым будут работать эксперты." />
+      <SidebarSection 
+    title="Ваш Бриф"
+    actions={!isEditingBrief && (
+        <Button
+            onClick={() => setIsEditingBrief(true)}
+            variant="secondary"
+            size="sm"
+            className="px-2 py-1 h-auto" // Убрали позиционирование, теперь всё в потоке
+            title="Редактировать бриф"
+        >
+            <Pencil className="h-4 w-4" />
+        </Button>
+    )}
+>
+    {isEditingBrief ? (
+        <div className="space-y-2">
+            <textarea
+                value={editedBrief}
+                onChange={(e) => setEditedBrief(e.target.value)}
+                className="w-full p-2 h-32 bg-bg-main border border-bg-surface rounded-md text-text-main resize-y focus:ring-1 focus:ring-accent-primary"
+            />
+            <div className="flex gap-2">
+                <button onClick={handleSaveBrief} className="w-full px-3 py-1 text-xs font-pixel bg-accent-success text-bg-main rounded hover:opacity-90">Сохранить</button>
+                <button onClick={() => { setIsEditingBrief(false); setEditedBrief(brief); }} className="w-full px-3 py-1 text-xs font-pixel bg-bg-surface text-text-secondary rounded hover:opacity-90">Отмена</button>
+            </div>
         </div>
-      </SidebarSection>
+    ) : (
+        // Убрали div-обертку, она больше не нужна
+        <p className="font-sans text-sm text-text-secondary max-h-24 overflow-y-auto whitespace-pre-wrap">{brief}</p>
+    )}
+</SidebarSection>
       
       <SidebarSection title="Цель Дебатов">
         <textarea
@@ -120,19 +181,13 @@ export default function Sidebar({
           disabled={isDebateInProgress}
         />
         {isSavingGoal && <p className="text-xs text-text-secondary animate-pulse mt-1">Сохраняем...</p>}
-        {/* Типс для цели дебатов */}
-        <div className="mt-2 text-xs text-text-secondary flex items-center">
-            Сформулируйте, чего вы хотите достичь дискуссией. Например: "Найти слабые места бизнес-модели" или "Оценить риски проекта".
-            <Tooltip content="Цель дебатов направляет экспертов и Судью. Чем точнее цель, тем релевантнее будут аргументы и финальный отчёт." />
-        </div>
       </SidebarSection>
 
       <SidebarSection title="Настройки Прогона">
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-2 flex items-center">
-                1. Выберите команду
-                <Tooltip content="Выберите 2 или более экспертов из ваших созданных. Чем разнообразнее команда, тем глубже и многостороннее будет анализ." />
+              1. Выберите команду
             </label>
             <ExpertSelector
               availableExperts={availableExperts}
@@ -143,8 +198,7 @@ export default function Sidebar({
           </div>
           <div>
             <label htmlFor="rounds" className="block text-sm font-medium text-text-secondary mb-2 flex items-center">
-                2. Количество раундов
-                <Tooltip content="Определяет продолжительность дебатов. Каждый раунд - это серия ответов от каждого эксперта. Больше раундов - глубже анализ, но и дольше ожидание." />
+              2. Количество раундов
             </label>
             <select
               id="rounds"
@@ -170,7 +224,6 @@ export default function Sidebar({
             />
             <label htmlFor="autopause" className="text-sm font-medium text-text-main flex items-center">
               Автопауза после раунда
-              <Tooltip content="Дебаты будут автоматически останавливаться после каждого раунда, давая вам возможность вмешаться или добавить свою реплику." />
             </label>
           </div>
           <button

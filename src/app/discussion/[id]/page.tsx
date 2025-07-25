@@ -112,6 +112,10 @@ export default function DiscussionPage() {
         }
     };
 
+    const handleBriefUpdate = (newBrief: string) => {
+      setBrief(newBrief);
+    };
+
     const handleDeleteRun = async (runIdToDelete: string) => {
        if (!window.confirm('Это действие ПОЛНОСТЬЮ И БЕЗВОЗВРАТНО удалит прогон. Продолжить?')) return;
        setIsLoading(true);
@@ -402,7 +406,7 @@ export default function DiscussionPage() {
         }
     };
 
-    
+ 
 
     if (authLoading || isLoading || !user) { // Убрал isLoadingCustomExperts, т.к. он уже не нужен в таком виде
     return <div className="text-center mt-20 font-pixel text-accent-primary animate-pulse">Загрузка рабочего пространства...</div>;
@@ -416,6 +420,8 @@ export default function DiscussionPage() {
       <aside className="col-span-4">
         <div className="sticky top-6"> {/* Делаем сайдбар липким */}
           <Sidebar
+            discussionId={discussionId}
+            onBriefUpdated={handleBriefUpdate}
             brief={brief}
             debateGoal={debateGoal}
             setDebateGoal={setDebateGoal}
