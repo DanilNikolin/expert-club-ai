@@ -1,9 +1,11 @@
+// D:\expert-club-ai\expert-club-ai\src\app\experts\_components\BasicInfoSection.tsx
 'use client';
 
 import React, { useState } from 'react';
 import ConfigSectionCard from './ConfigSectionCard';
 import { type ExpertFormData, type ValidationErrors } from './expert-constructor.logic';
-import { cn } from '@/lib/utils'; // Убедись, что этот хелпер у тебя есть
+import { cn } from '@/lib/utils';
+import Tooltip from '@/components/ui/Tooltip'; // Импортируем наш УЛУЧШЕННЫЙ компонент Tooltip
 
 type Props = {
   formData: ExpertFormData;
@@ -17,13 +19,14 @@ export default function BasicInfoSection({ formData, handleChange, validationErr
       title="Уровень 0: Идентификация"
       description="Имя эксперта и базовая модель AI, на которой он будет работать."
       isCollapsible={true}
-      startOpen={false} // Эта секция будет открыта по умолчанию
+      startOpen={false}
     >
       <div className="space-y-6">
         {/* Поле для имени эксперта */}
         <div>
-          <label htmlFor="name" className="block font-pixel text-base uppercase text-text-main mb-2">
+          <label htmlFor="name" className="flex items-center font-pixel text-base uppercase text-text-main mb-2">
             Имя Эксперта *
+            <Tooltip content="Максимум 100 символов. Выберите имя, отражающее суть эксперта, например: «Скептик-Финансист» или «Креативный Шторм»." />
           </label>
           <input
             type="text"
@@ -49,8 +52,9 @@ export default function BasicInfoSection({ formData, handleChange, validationErr
 
         {/* Селектор для выбора модели */}
         <div>
-          <label htmlFor="model" className="block font-pixel text-base uppercase text-text-main mb-2">
+          <label htmlFor="model" className="flex items-center font-pixel text-base uppercase text-text-main mb-2">
             Базовая Модель AI
+            <Tooltip content="Выбор базовой модели влияет на 'интеллект', скорость и стоимость генерации ответов эксперта." />
           </label>
           <select
             id="model"
@@ -73,7 +77,6 @@ export default function BasicInfoSection({ formData, handleChange, validationErr
               <option value="o3">o3 (Anthropic)</option>
             </optgroup> */}
           </select>
-          <p className="mt-2 text-xs text-text-secondary font-sans">Выбор модели влияет на скорость, 'интеллект' и стоимость генерации.</p>
         </div>
       </div>
     </ConfigSectionCard>

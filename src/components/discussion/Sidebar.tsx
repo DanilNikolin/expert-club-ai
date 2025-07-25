@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { type Expert } from '@/types';
 import { cn } from '@/lib/utils';
 import { ArrowLeft, CheckCircle, CircleDashed } from 'lucide-react';
+import Tooltip from '@/components/ui/Tooltip'; // Импортируем твой Tooltip!
 
 type SidebarProps = {
   brief: string;
@@ -101,6 +102,11 @@ export default function Sidebar({
       
       <SidebarSection title="Ваш Бриф">
         <p className="font-sans text-sm text-text-secondary max-h-24 overflow-y-auto whitespace-pre-wrap">{brief}</p>
+        {/* Типс для брифа */}
+        <div className="mt-2 text-xs text-text-secondary flex items-center">
+            Этот бриф был сформирован Консьержем. Он является отправной точкой для дебатов.
+            <Tooltip content="Бриф – это краткое описание вашей идеи или проблемы. Консьерж-бот помог вам его сформировать. Это основной документ, с которым будут работать эксперты." />
+        </div>
       </SidebarSection>
       
       <SidebarSection title="Цель Дебатов">
@@ -114,12 +120,20 @@ export default function Sidebar({
           disabled={isDebateInProgress}
         />
         {isSavingGoal && <p className="text-xs text-text-secondary animate-pulse mt-1">Сохраняем...</p>}
+        {/* Типс для цели дебатов */}
+        <div className="mt-2 text-xs text-text-secondary flex items-center">
+            Сформулируйте, чего вы хотите достичь дискуссией. Например: "Найти слабые места бизнес-модели" или "Оценить риски проекта".
+            <Tooltip content="Цель дебатов направляет экспертов и Судью. Чем точнее цель, тем релевантнее будут аргументы и финальный отчёт." />
+        </div>
       </SidebarSection>
 
       <SidebarSection title="Настройки Прогона">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2">1. Выберите команду</label>
+            <label className="block text-sm font-medium text-text-secondary mb-2 flex items-center">
+                1. Выберите команду
+                <Tooltip content="Выберите 2 или более экспертов из ваших созданных. Чем разнообразнее команда, тем глубже и многостороннее будет анализ." />
+            </label>
             <ExpertSelector
               availableExperts={availableExperts}
               selectedExperts={selectedExperts}
@@ -128,7 +142,10 @@ export default function Sidebar({
             />
           </div>
           <div>
-            <label htmlFor="rounds" className="block text-sm font-medium text-text-secondary mb-2">2. Количество раундов</label>
+            <label htmlFor="rounds" className="block text-sm font-medium text-text-secondary mb-2 flex items-center">
+                2. Количество раундов
+                <Tooltip content="Определяет продолжительность дебатов. Каждый раунд - это серия ответов от каждого эксперта. Больше раундов - глубже анализ, но и дольше ожидание." />
+            </label>
             <select
               id="rounds"
               value={rounds}
@@ -151,8 +168,9 @@ export default function Sidebar({
               disabled={isDebateInProgress}
               className="h-4 w-4 rounded bg-bg-main border-bg-surface text-accent-primary focus:ring-accent-primary"
             />
-            <label htmlFor="autopause" className="text-sm font-medium text-text-main">
+            <label htmlFor="autopause" className="text-sm font-medium text-text-main flex items-center">
               Автопауза после раунда
+              <Tooltip content="Дебаты будут автоматически останавливаться после каждого раунда, давая вам возможность вмешаться или добавить свою реплику." />
             </label>
           </div>
           <button

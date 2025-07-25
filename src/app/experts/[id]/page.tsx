@@ -297,15 +297,15 @@ export default function CreateExpertPage() {
 
   // СТАЛО:
 return (
-  <div className="container mx-auto max-w-7xl px-4 h-[calc(100vh-80px)] overflow-hidden">
+  <div className="container mx-auto max-w-7xl px-2 py-8 h-[calc(100vh-80px)]"> 
     <form onSubmit={handleSubmit} className="h-full">
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 h-full pt-8">
+      <div className="grid grid-cols-1 gap-20 lg:grid-cols-12 h-full pt-8">
 
         {/* --- ЛЕВАЯ КОЛОНКА (7 из 12) --- */}
         {/* ВНЕШНИЙ БЛОК - ТОЛЬКО СКРОЛЛ */}
         <div className="lg:col-span-7 overflow-y-auto overflow-x-hidden">
           {/* ВНУТРЕННИЙ БЛОК - ТОЛЬКО ОТСТУПЫ И КОНТЕНТ */}
-          <div className="space-y-8 pr-4">
+            <div className="space-y-8"> 
             <BasicInfoSection
               formData={formData}
               handleChange={handleChange}
@@ -336,7 +336,7 @@ return (
         {/* ВНЕШНИЙ БЛОК - ТОЛЬКО СКРОЛЛ */}
         <aside className="lg:col-span-5 overflow-y-auto overflow-x-hidden h-full">
           {/* ВНУТРЕННИЙ БЛОК - ТОЛЬКО ОТСТУПЫ И КОНТЕНТ */}
-          <div className="space-y-8 pr-4">
+          <div className="space-y-8">
             <ConstructorHeader 
               isCreateMode={isCreateMode}
               isAutoSaving={isAutoSaving}

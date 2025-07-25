@@ -1,9 +1,12 @@
+// src/app/experts/_components/ArchetypeSection.tsx
 'use client';
 
 import ConfigSectionCard from './ConfigSectionCard';
 import { type ArchetypeMix, archetypeLabels } from './expert-constructor.logic';
 import { cn } from '@/lib/utils';
 import React from 'react';
+import Tooltip from '@/components/ui/Tooltip'; // Импортируем твой Tooltip!
+
 
 type Props = {
   archetypeMix: ArchetypeMix;
@@ -64,14 +67,17 @@ export default function ArchetypeSection({ archetypeMix, handleArchetypeMixChang
   return (
     <ConfigSectionCard
       title="Уровень 1: Тип Мышления"
-      description="Как эксперт обрабатывает информацию? Распределите 100% между тремя типами."
+      description="Это 'операционная система' эксперта. Распределите 100% между тремя фундаментальными типами мышления, определяя, КАК он будет обрабатывать информацию." // Обновленный description
       actions={actions}
       isCollapsible={true}
       startOpen={false}
     >
       <div className="mb-8">
         <div className="mb-2 flex items-baseline justify-between">
-          <h3 className="font-pixel text-base uppercase text-text-main">Распределение типов</h3>
+          <h3 className="flex items-center font-pixel text-base uppercase text-text-main"> {/* Добавил flex items-center */}
+            Распределение типов
+            <Tooltip content="Сумма всех типов мышления должна быть строго равна 100%. Это определяет основной способ обработки информации экспертом." />
+          </h3>
           <p className={cn(
             'font-mono text-lg',
             totalValue === 100 ? 'text-accent-primary' : 'text-accent-danger'
@@ -87,16 +93,19 @@ export default function ArchetypeSection({ archetypeMix, handleArchetypeMixChang
         {Object.entries(archetypeMix).map(([type, value]) => (
           <div key={type}>
             <div className="flex items-center justify-between">
-              <label className={cn("font-pixel text-base uppercase", archetypeTextClasses[type as keyof typeof archetypeTextClasses])}>
+              <label className={cn("flex items-center font-pixel text-base uppercase", archetypeTextClasses[type as keyof typeof archetypeTextClasses])}>
                 {archetypeLabels[type as keyof typeof archetypeLabels]}
+                <Tooltip 
+                  content={
+                    type === 'analyst' ? 'Фокус на логике, фактах, цифрах и причинно-следственных связях. Разбирает проблему на составные части.' :
+                    type === 'synthesizer' ? 'Фокус на объединении идей, поиске паттернов, креативных подходах и создании нового целого из разрозненных частей.' :
+                    'Фокус на человеческом факторе: эмоциях, ценностях, мотивации и восприятии. Учитывает социальный и психологический аспект.'
+                  } 
+                />
               </label>
               <span className="font-mono text-lg text-text-main">{value}%</span>
             </div>
-            <p className="font-sans text-xs text-text-secondary mt-1">
-              {type === 'analyst' && 'Логика, факты, причинно-следственные связи'}
-              {type === 'synthesizer' && 'Объединение идей, поиск паттернов, креативность'}
-              {type === 'resonator' && 'Эмпатия, человеческий фактор, эмоции'}
-            </p>
+            {/* Убрал старые p, так как их текст перенесён в Tooltip */}
             <input
               type="range"
               min="0"
