@@ -1,11 +1,10 @@
-// D:\expert-club-ai\expert-club-ai\src\app\api\summarizer\route.ts
+// D:\expert-club-ai\expert-club-ai\src/app/api/summarizer/route.ts
 
 import OpenAI from 'openai';
 import { NextResponse } from 'next/server';
 import { db } from '@/firebase.config.js';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
-// ✅ Создаем отдельного клиента для Deepseek
 const deepseek = new OpenAI({
     apiKey: process.env.DEEPSEEK_API_KEY,
     baseURL: "https://api.deepseek.com",
@@ -24,35 +23,47 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Messages are required' }, { status: 400 });
         }
 
-        const chatHistory = messages.map((msg: Message) => `${msg.author}: ${msg.text}`).join('\n');
+        const chatHistory = messages.map((msg: Message) => `${msg.author}: ${msg.text}`).join('\\n');
 
-        // ✅ НОВЫЙ, УМНЫЙ ПРОМТ ДЛЯ ВЫЖИМЩИКА v2.0
-        const prompt = `Ты — элитный AI-аналитик. Твоя специализация — "Case Writer". Ты превращаешь сырой диалог между пользователем и Консьержем в четкий, структурированный "кейс" (бриф) для команды старших экспертов.
+        // ✅ ПРОМПТ v3.2 (универсальный язык)
+        const prompt = `You are an elite AI analyst, a "Case Writer" specialist at a top consulting firm like McKinsey or BCG. Your task is to transform a raw dialogue between a user and a Concierge into a crystal-clear, structured "case file" (brief) for a team of senior experts. Sloppiness or omitting key facts is a fireable offense.
 
-        Твоя задача — дистиллировать диалог, уловив **суть главного вопроса или дилеммы пользователя**, но при этом сохранив **все ключевые детали, факты и контекст**, которые необходимы экспертам для глубокого погружения. Бриф должен быть самодостаточным. Прочитав его, эксперты должны понять не только "что" обсуждать, но и "почему" это важно для пользователя.
+Your process must follow these steps STRICTLY:
 
-        Если пользователь озвучил прямую дилемму (например, "стоит ли мне... или..."), **обязательно включи её в бриф дословно** или очень близко к тексту. Эксперты должны решать реальную проблему пользователя, а не её абстрактную модель.
+**Step 1: FACT EXTRACTION**
+First, internally review the entire dialogue and extract every single key detail, number, constraint, metric, direct question, and dilemma mentioned by the user. Create a mental checklist. This is your raw material.
 
-        Твой результат — это JSON-объект следующей структуры: { "brief": "...", "goal": "..." }.
+**Step 2: PROBLEM DEFINITION**
+Based on the extracted facts, formulate the user's core problem, question, or dilemma in one or two sentences. What is the central issue they need solved?
 
-        1.  **brief (string):** Напиши исчерпывающий, но лаконичный бриф. Не ограничивай себя искусственно, пиши столько, сколько нужно для полного раскрытия контекста. Убери все упоминания 'Консьержа'.
-        2.  **goal (string):** Основываясь на сути брифа, выбери ОДНУ из следующих стратегических целей для дебатов:
-            -   КРИТИЧЕСКИЙ АНАЛИЗ (если главный вопрос — оценка рисков, сомнения, поиск слабых мест)
-            -   ПОИСК РЕШЕНИЙ (если главный вопрос — "что делать?", поиск конкретных шагов)
-            -   СТРАТЕГИЧЕСКОЕ ПЛАНИРОВАНИЕ (если речь о бизнес-стратегии, рынке, долгосрочном развитии)
-            -   МОЗГОВОЙ ШТУРМ (если главный вопрос — поиск новых, нестандартных идей)
+**Step 3: BRIEF SYNTHESIS**
+Now, using ALL the facts from Step 1 and guided by the core problem from Step 2, write a comprehensive but concise brief. The brief must be self-sufficient. After reading it, an expert should need zero additional context.
+-   **LANGUAGE:** The brief **MUST** be written in the primary language used by the 'You' (the user) in the dialogue.
+-   **DO NOT** generalize if it means losing important numbers or details (e.g., instead of "some budget", write "budget of $10,000").
+-   If the user stated a direct dilemma (e.g., "should I do X or Y?"), you **MUST** include it in the brief almost verbatim.
+-   Remove all mentions of the 'Concierge' and write from a neutral, analytical perspective.
 
-        Диалог для анализа:
-        ---
-        ${chatHistory}
-        ---
+**Step 4: GOAL SELECTION & JUSTIFICATION**
+Finally, based on your synthesized brief, select ONE of the following strategic goals and provide a one-sentence justification for your choice.
 
-        Верни ТОЛЬКО валидный JSON-объект.`;
+-   **CRITICAL ANALYSIS** (If the main focus is on evaluating risks, doubts, finding weaknesses)
+-   **SOLUTION FINDING** (If the main focus is "what to do?", finding concrete steps)
+-   **STRATEGIC PLANNING** (If the topic is business strategy, market, long-term development)
+-   **BRAINSTORMING** (If the main focus is on finding new, unconventional ideas)
+
+Your final output MUST be a valid JSON object with this structure: { "brief": "...", "goal": "...", "goal_justification": "..." }.
+
+Dialogue for analysis:
+---
+${chatHistory}
+---
+
+Return ONLY the valid JSON object. No apologies, no explanations outside the JSON.`;
 
         const response = await deepseek.chat.completions.create({
-            model: 'deepseek-chat', // ✅ ИСПОЛЬЗУЕМ DEEPSEEK
+            model: 'deepseek-chat',
             messages: [{ role: 'user', content: prompt }],
-            temperature: 0.5, // ✅ ЧУТЬ ПОДНЯЛИ ДЛЯ ЛУЧШЕГО ПОНИМАНИЯ НЮАНСОВ
+            temperature: 0.3,
             response_format: { type: "json_object" },
         });
 
@@ -62,16 +73,17 @@ export async function POST(request: Request) {
             throw new Error('Failed to generate brief and goal from AI');
         }
 
-        const { brief, goal } = JSON.parse(rawContent);
+        const { brief, goal, goal_justification } = JSON.parse(rawContent);
 
         if (!brief || !goal) {
-            throw new Error('AI returned incomplete JSON');
+            throw new Error('AI returned incomplete JSON (missing brief or goal)');
         }
 
         const docRef = await addDoc(collection(db, 'discussions'), {
             brief: brief,
             goal: goal,
-            createdAt: new Date(),
+            goalJustification: goal_justification || '',
+            createdAt: serverTimestamp(),
             userId: userId,
             status: 'brief_created'
         });
