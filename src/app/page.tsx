@@ -128,20 +128,21 @@ function CtaRow({ isAuthed }: { isAuthed: boolean }) {
   return (
     <div className="flex flex-col sm:flex-row gap-4 justify-center">
       {isAuthed ? (
-        <>
-          <Link href="/discussion/new" className="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/60 rounded-lg">
-            <Button size="default" className="w-full px-8 py-4 text-lg">
-              <Play className="w-5 h-5 mr-2" />
-              Запустить Дискуссию
-            </Button>
-          </Link>
-          <Link href="/dashboard" className="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-secondary/60 rounded-lg">
-            <Button variant="secondary" size="default" className="w-full px-8 py-4 text-lg">
-              Дашборд
-            </Button>
-          </Link>
-        </>
-      ) : (
+          <>
+            {/* ГЛАВНАЯ КНОПКА ТЕПЕРЬ ВЕДЕТ В ДАШБОРД */}
+            <Link href="/dashboard" className="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/60 rounded-lg">
+              <Button size="default" className="w-full px-8 py-4 text-lg">
+                Перейти в Дашборд
+              </Button>
+            </Link>
+            {/* ВТОРУЮ КНОПКУ МОЖНО СДЕЛАТЬ ССЫЛКОЙ НА СОЗДАНИЕ ЭКСПЕРТА ИЛИ УБРАТЬ */}
+            <Link href="/experts/create" className="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-secondary/60 rounded-lg">
+              <Button variant="secondary" size="default" className="w-full px-8 py-4 text-lg">
+                + Новый Эксперт
+              </Button>
+            </Link>
+          </>
+        ) : (
         <>
           <Link href="/signup" className="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/60 rounded-lg">
             <Button size="default" className="w-full px-8 py-4 text-lg">
