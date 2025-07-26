@@ -3,7 +3,7 @@
 
 import { type Run } from '@/types';
 import { Button } from '@/components/ui/Button';
-import { Paperclip, Scale } from 'lucide-react';
+import { Scale } from 'lucide-react';
 
 type DebateControlsProps = {
   stage: 'setup' | 'debating' | 'paused' | 'judging' | 'finished';
@@ -47,7 +47,7 @@ export default function DebateControls({
   }
 
   // --- Кнопка вызова Судьи ---
-  if ((stage === 'paused' || stage === 'finished') && currentRound >= rounds && !activeRun?.report) {
+  if ((stage === 'paused' || stage === 'finished' || stage === 'judging') && currentRound >= rounds && !activeRun?.report) {
     return (
       <div className="mt-6 pt-6 border-t border-bg-surface text-center">
         <h3 className="title-pixel text-amber-400 mb-3">Все раунды завершены!</h3>

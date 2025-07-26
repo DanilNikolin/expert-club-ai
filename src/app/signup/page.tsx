@@ -8,7 +8,7 @@ import {
 } from 'firebase/auth';
 import { auth } from '@/firebase.config.js';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link'; // Добавили Link для перехода на логин
+import Link from 'next/link';
 
 export default function SignUpPage() {
   const [email, setEmail] = useState('');
@@ -16,7 +16,6 @@ export default function SignUpPage() {
   const [error, setError] = useState('');
   const router = useRouter();
 
-  // Регистрация по Email
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -29,28 +28,34 @@ export default function SignUpPage() {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       console.log('Пользователь успешно создан');
-      router.push('/dashboard'); // Редирект в дашборд
-    } catch (err: any) {
-      console.error('Ошибка регистрации:', err.message);
-      if (err.code === 'auth/email-already-in-use') {
-        setError('Этот email уже занят. Попробуйте войти.');
+      router.push('/dashboard');
+    } catch (err: unknown) { // ИСПРАВЛЕНИЕ: Ловим как 'unknown'
+      console.error('Ошибка регистрации:', err);
+      // Проверяем, есть ли у ошибки свойство 'code' - это фишка Firebase
+      if (typeof err === 'object' && err !== null && 'code' in err) {
+        if ((err as { code: string }).code === 'auth/email-already-in-use') {
+          setError('Этот email уже занят. Попробуйте войти.');
+        } else {
+          setError('Не удалось создать аккаунт. Проверьте данные.');
+        }
       } else {
-        setError('Не удалось создать аккаунт. Попробуйте позже.');
+        setError('Произошла неизвестная ошибка.');
       }
     }
   };
 
-  // Вход/Регистрация через Google
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
     setError('');
     try {
       await signInWithPopup(auth, provider);
       console.log('Успешный вход/регистрация через Google');
-      router.push('/dashboard'); // Редирект в дашборд
-    } catch (err: any) {
-      console.error('Ошибка входа через Google:', err.message);
-      setError('Не удалось войти с помощью Google.');
+      router.push('/dashboard');
+    } catch (err) { // ИСПРАВЛЕНИЕ: Ловим как 'unknown'
+      console.error('Ошибка входа через Google:', err);
+      if (err instanceof Error) {
+        setError('Не удалось войти с помощью Google.');
+      }
     }
   };
 
@@ -61,7 +66,6 @@ export default function SignUpPage() {
           Регистрация в Клубе
         </h1>
         
-        {/* КНОПКА GOOGLE СРАЗУ СВЕРХУ - ЭТО САМЫЙ ПРОСТОЙ ПУТЬ */}
         <button
           onClick={handleGoogleSignIn}
           className="w-full flex justify-center items-center px-4 py-2 font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"

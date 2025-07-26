@@ -66,7 +66,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Описание не найдено' }, { status: 400 });
     }
 
-    // Используем обратные кавычки для многострочного текста
     const userPrompt = `
     Вот описание эксперта, полученное в ходе диалога. Создай JSON на его основе.
     Описание: "${conversation}"
@@ -86,8 +85,9 @@ export async function POST(req: NextRequest) {
     try {
         const parsedJson = JSON.parse(jsonString || '{}');
         return NextResponse.json(parsedJson);
+    // ИСПРАВЛЕНИЕ ЗДЕСЬ: убираем '_e', так как console.error нужен
     } catch (e) {
-        console.error("Модель вернула невалидный JSON:", jsonString);
+        console.error("Модель вернула невалидный JSON:", jsonString, e);
         return NextResponse.json({ error: 'Модель сгенерировала хуйню, не могу распарсить.' }, { status: 500 });
     }
 

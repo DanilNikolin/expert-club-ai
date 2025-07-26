@@ -1,22 +1,22 @@
 'use client';
 
 import Link from 'next/link';
-import { type Expert } from './ExpertCard';
+import { type Expert } from '@/types'; // ИСПРАВЛЕНИЕ: Импортируем полный тип
 
 // --- Цвета для архетипов ---
-const archetypeColors = {
+const archetypeColors: Record<string, string> = {
   analyst: 'bg-accent-primary',
   synthesizer: 'bg-accent-secondary',
   resonator: 'bg-accent-success',
 };
 
-const archetypeLabels = {
+const archetypeLabels: Record<string, string> = {
   analyst: 'Аналитик',
   synthesizer: 'Синтезатор',
   resonator: 'Резонатор',
 };
 
-const specializationLabels = {
+const specializationLabels: Record<string, string> = {
   'Product & Technologies': 'Продукт & Технологии',
   'Finance & Resources': 'Финансы & Ресурсы',
   'Marketing & Audience': 'Маркетинг & Аудитория',
@@ -26,7 +26,7 @@ const specializationLabels = {
   'Generalist': 'Широкий Профиль',
 };
 
-const MindsetStackedBar = ({ mix }) => (
+const MindsetStackedBar = ({ mix }: {mix: Expert['archetypeMix']}) => (
   <div className="flex h-2 w-full overflow-hidden rounded-full bg-bg-main ring-1 ring-inset ring-bg-surface">
     {Object.entries(mix).map(([type, value]) =>
       value > 0 && (
@@ -40,7 +40,7 @@ const MindsetStackedBar = ({ mix }) => (
   </div>
 );
 
-const StatBar = ({ value, max = 10 }) => (
+const StatBar = ({ value, max = 10 }: {value: number, max?: number}) => (
   <div className="h-2 w-full rounded-full bg-bg-main ring-1 ring-inset ring-bg-surface">
     <div
       className="h-full rounded-full bg-accent-primary transition-all duration-300"
@@ -55,7 +55,6 @@ type ExpertCardProps = {
 };
 
 export default function ExpertCard({ expert, onDelete }: ExpertCardProps) {
-  // Показать все специализации, не только топ-3
   const specializations = Object.entries(expert.specializations)
     .filter(([, value]) => value > 0)
     .sort(([, a], [, b]) => b - a);
@@ -67,15 +66,12 @@ export default function ExpertCard({ expert, onDelete }: ExpertCardProps) {
       className="flex flex-col rounded-xl border border-bg-surface bg-bg-surface/80 shadow-lg mx-auto
       min-w-[320px] max-w-[400px] h-[520px] md:h-[520px] relative"
     >
-      {/* Контент с прокруткой, если переполнено */}
       <div className="flex flex-col flex-grow px-6 pt-6 pb-4 overflow-y-auto">
-        {/* --- Заголовок --- */}
         <div>
           <p className="font-sans text-xs uppercase tracking-widest text-text-secondary">Паспорт эксперта</p>
           <h3 className="font-pixel text-2xl text-accent-primary mt-1 break-words">{expert.name}</h3>
         </div>
 
-        {/* --- Тип мышления --- */}
         <div className="space-y-2 mt-5">
           <h4 className="font-pixel text-base uppercase text-text-main">Тип мышления</h4>
           <MindsetStackedBar mix={expert.archetypeMix} />
@@ -90,7 +86,6 @@ export default function ExpertCard({ expert, onDelete }: ExpertCardProps) {
           </div>
         </div>
 
-        {/* --- Специализации --- */}
         <div className="space-y-2 mt-5">
           <h4 className="font-pixel text-base uppercase text-text-main">Специализации</h4>
           <div className="font-mono text-sm text-text-main space-y-1 pt-1 max-h-[96px] overflow-y-auto pr-1">
@@ -107,8 +102,7 @@ export default function ExpertCard({ expert, onDelete }: ExpertCardProps) {
           </div>
         </div>
 
-        {/* --- Характер --- */}
-        {'character' in expert && (
+        {expert.character && (
           <div className="space-y-4 mt-5">
             <h4 className="font-pixel text-base uppercase text-text-main">Характер</h4>
             <div className="grid grid-cols-2 gap-x-6 gap-y-3 font-sans text-sm text-text-secondary">
@@ -117,16 +111,16 @@ export default function ExpertCard({ expert, onDelete }: ExpertCardProps) {
                 <StatBar value={character.constructiveness ?? 5} />
               </div>
               <div>
-                <p>Нонконформизм</p>
-                <StatBar value={character.nonconformism ?? 5} />
+                <p>Конформизм</p>
+                <StatBar value={character.conformism ?? 5} />
               </div>
               <div>
                 <p>Убежденность</p>
                 <StatBar value={character.conviction ?? 5} />
               </div>
               <div>
-                <p>Открытость</p>
-                <StatBar value={character.openness ?? 5} />
+                <p>Открытость к данным</p>
+                <StatBar value={character.opennessToData ?? 5} />
               </div>
             </div>
             <div className="flex flex-wrap gap-2 pt-2">
@@ -144,20 +138,19 @@ export default function ExpertCard({ expert, onDelete }: ExpertCardProps) {
           </div>
         )}
 
-        {/* --- Кастомный контекст --- */}
         {expert.customContext && (
           <div className="space-y-2 border-t border-bg-surface pt-4 mt-6">
             <h4 className="font-pixel text-base uppercase text-text-main">Кастомный контекст</h4>
             <div className="max-h-[80px] overflow-y-auto pr-1">
+              {/* ИСПРАВЛЕНИЕ ЗДЕСЬ */}
               <p className="font-sans text-sm italic text-text-secondary border-l-2 border-accent-primary pl-3 break-words">
-                "{expert.customContext}"
+                &quot;{expert.customContext}&quot;
               </p>
             </div>
           </div>
         )}
       </div>
 
-      {/* --- Кнопки всегда внизу, с воздухом --- */}
       <div className="flex gap-3 justify-between border-t border-bg-surface px-6 py-4 bg-bg-surface/95 rounded-b-xl">
         <Link
           href={`/experts/${expert.id}`}

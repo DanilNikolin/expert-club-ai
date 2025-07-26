@@ -1,3 +1,4 @@
+//D:\expert-club-ai\expert-club-ai\src\app\experts\[id]\page.tsx
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -5,7 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/firebase.config';
 import { collection, addDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
-import Link from 'next/link';
+import ConfigSectionCard from '@/app/experts/_components/ConfigSectionCard';
 
 // Импортируем всю логику и типы
 import {
@@ -17,19 +18,15 @@ import {
   type SpecializationMix,
   sanitizeAndNormalizeMix,
 } from '@/app/experts/_components/expert-constructor.logic';
-
 // Импортируем все наши компоненты через абсолютный путь
 import ConstructorHeader from '@/app/experts/_components/ConstructorHeader';
 import BasicInfoSection from '@/app/experts/_components/BasicInfoSection';
 import ChatConfiguratorSection from '@/app/experts/_components/ChatConfiguratorSection';
-import TemplatesSection from '@/app/experts/_components/TemplatesSection';
 import ExpertPreview from '@/app/experts/_components/ExpertPreview';
 import ArchetypeSection from '@/app/experts/_components/ArchetypeSection';
 import SpecializationSection from '@/app/experts/_components/SpecializationSection';
 import CharacterSection from '@/app/experts/_components/CharacterSection';
 import SubmitSection from '@/app/experts/_components/SubmitSection';
-import { expertTemplates } from '@/app/experts/_components/expert-constructor.logic';
-import ConfigSectionCard from '@/app/experts/_components/ConfigSectionCard';
 
 export default function CreateExpertPage() {
   const router = useRouter();
@@ -113,9 +110,10 @@ export default function CreateExpertPage() {
                 } else {
                     router.push('/experts/create');
                 }
-            } catch (err) {
-                router.push('/dashboard');
-            }
+             // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              } catch (_err) {
+                  router.push('/dashboard');
+              }
         }
         setLocalLoading(false);
     };
@@ -211,10 +209,14 @@ export default function CreateExpertPage() {
             character: { ...initialExpertFormData.character, ...expertConfig.character },
         }));
         setChatMessages([]);
-    } catch (err: any) {
-        setChatError(err.message || 'Пиздец, генератор взорвался. Начнем заново?');
-        console.error(err);
-    } finally {
+    } catch (err) {
+        if (err instanceof Error) {
+            setChatError(err.message || 'Пиздец, генератор взорвался. Начнем заново?');
+        } else {
+            setChatError('Произошла неизвестная ошибка при генерации конфига.');
+        }
+        console.error(err);
+    } finally {
         setIsChatLoading(false);
     }
   };
@@ -235,16 +237,7 @@ export default function CreateExpertPage() {
     }
   };
 
-  const applyGlobalTemplate = (key: string) => {
-    const templateData = expertTemplates[key]?.data;
-    if (!templateData) return;
-    setFormData((prev) => ({
-      ...prev, ...templateData,
-      character: { ...initialExpertFormData.character, ...templateData.character },
-      archetypeMix: { ...templateData.archetypeMix },
-      specializations: { ...templateData.specializations },
-    }));
-  };
+ 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

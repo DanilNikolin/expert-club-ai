@@ -1,26 +1,26 @@
-//D:\expert-club-ai\expert-club-ai\src\app\api\concierge\route.ts
 import OpenAI from 'openai';
 import { NextResponse } from 'next/server';
 
-// Инициализируем клиент OpenAI с ключом из переменных окружения
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Определяем тип для сообщений
-type Message = {
-  role: 'user' | 'assistant' | 'system';
+// ИСПРАВЛЕНИЕ: Делаем тип более строгим, чтобы TypeScript не путался
+type IncomingMessage = {
+  role: 'user' | 'assistant';
   content: string;
   name?: string;
+  author?: 'You' | 'Concierge'; // Для совместимости со старым форматом
+  text?: string;               // Для совместимости со старым форматом
 };
 
 export async function POST(request: Request) {
   try {
     const { messages } = await request.json();
 
-    if (!messages || messages.length === 0) {
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json(
-        { error: 'Messages are required' },
+        { error: 'Messages are required and should be an array' },
         { status: 400 }
       );
     }
@@ -67,24 +67,15 @@ This is your character. Stick to it.
 
 Your task is to write the NEXT message in this dialogue, strictly adhering to this persona and rules.`;
     
-    // Проверяем формат сообщений и приводим к стандарту OpenAI
-    const formattedMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = messages.map((msg: any) => {
-      // Этот код для совместимости, если формат вдруг будет старым
+    // ИСПРАВЛЕНИЕ: Переписываем логику маппинга, чтобы она была 100% type-safe
+    const formattedMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = messages.map((msg: IncomingMessage) => {
+      // Сначала обрабатываем старый формат (author/text)
       if (msg.author && msg.text) {
-        return {
-          role: msg.author === 'You' ? 'user' : 'assistant',
-          content: msg.text,
-        };
+        const role = msg.author === 'You' ? 'user' : 'assistant';
+        return { role, content: msg.text };
       }
-      // Основной формат OpenAI
-      if (msg.role && msg.content) {
-        return {
-          role: msg.role,
-          content: msg.content,
-          ...(msg.name && { name: msg.name })
-        };
-      }
-      throw new Error('Invalid message format');
+      // Затем новый формат (role/content)
+      return { role: msg.role, content: msg.content };
     });
 
     const response = await openai.chat.completions.create({
@@ -98,13 +89,13 @@ Your task is to write the NEXT message in this dialogue, strictly adhering to th
 
     const responseContent = response.choices[0].message.content;
 
-    // Возвращаем ответ в формате, который ожидает фронтенд
     return NextResponse.json({ questions: responseContent });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error with OpenAI API in Concierge:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json(
-      { error: 'Failed to get response from AI' },
+      { error: 'Failed to get response from AI', details: errorMessage },
       { status: 500 }
     );
   }

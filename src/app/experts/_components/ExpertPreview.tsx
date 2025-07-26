@@ -70,7 +70,6 @@ export default function ExpertPreview({ formData }: { formData: ExpertFormData }
       {/* --- УРОВЕНЬ 3: ХАРАКТЕР --- */}
       <div className="space-y-4">
         <h4 className="font-pixel text-base uppercase text-text-main">Характер</h4>
-        {/* ИЗМЕНЕНИЕ: Вся сетка была исправлена и дополнена */}
         <div className="grid grid-cols-2 gap-x-6 gap-y-3 font-sans text-sm text-text-secondary">
             <div>
                 <p>Конструктивность</p>
@@ -88,7 +87,6 @@ export default function ExpertPreview({ formData }: { formData: ExpertFormData }
                 <p>Открытость к данным</p>
                 <StatBar value={formData.character.opennessToData} />
             </div>
-            {/* ИЗМЕНЕНИЕ: Добавлена креативность */}
             <div className="col-span-2">
                 <p>Креативность (t°)</p>
                 <StatBar value={formData.character.temperature} max={2.0} />
@@ -104,8 +102,9 @@ export default function ExpertPreview({ formData }: { formData: ExpertFormData }
        {formData.customContext && (
          <div className="space-y-2 border-t border-bg-surface pt-4">
             <h4 className="font-pixel text-base uppercase text-text-main">Кастомный Контекст</h4>
+            {/* ИСПРАВЛЕНИЕ ЗДЕСЬ */}
             <p className="font-sans text-sm italic text-text-secondary border-l-2 border-accent-primary pl-3">
-                "{formData.customContext}"
+                &quot;{formData.customContext}&quot;
             </p>
          </div>
        )}

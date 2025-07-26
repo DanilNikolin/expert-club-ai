@@ -11,6 +11,7 @@ type Props = {
   actions?: React.ReactNode;
   isCollapsible?: boolean;
   startOpen?: boolean;
+  className?: string; // <-- ДОБАВИЛИ ЭТУ СТРОКУ
 };
 
 export default function ConfigSectionCard({
@@ -20,14 +21,14 @@ export default function ConfigSectionCard({
   actions,
   isCollapsible = false,
   startOpen = true,
+  className, // <-- ДОБАВИЛИ ЭТУ СТРОКУ
 }: Props) {
   const [isOpen, setIsOpen] = useState(startOpen);
 
   return (
-    <div className="rounded-lg border border-bg-surface bg-bg-surface/50 shadow-lg">
-      {/* --- ИСПРАВЛЕННЫЙ ЗАГОЛОВОК --- */}
+    // И ПРИМЕНИЛИ ЕГО ЗДЕСЬ VVV
+    <div className={cn("rounded-lg border border-bg-surface bg-bg-surface/50 shadow-lg", className)}>
       <div className="flex items-start justify-between p-6">
-        {/* Кнопкой теперь является только левая часть с текстом */}
         <button
           type="button"
           disabled={!isCollapsible}
@@ -51,11 +52,9 @@ export default function ConfigSectionCard({
           )}
         </button>
 
-        {/* Кнопки-действия ("Сброс") теперь находятся рядом, а не внутри */}
         {actions && <div className="ml-4 flex-shrink-0">{actions}</div>}
       </div>
 
-      {/* Содержимое карточки */}
       {isOpen && (
         <div className="px-6 pb-6 border-t border-bg-surface">
             <div className='pt-6'>

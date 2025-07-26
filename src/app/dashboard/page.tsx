@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import {
   collection,
@@ -20,24 +20,11 @@ import DiscussionCard from '@/components/dashboard/DiscussionCard';
 import MiniExpertCard from '@/components/dashboard/MiniExpertCard';
 import MiniDiscussionCard from '@/components/dashboard/MiniDiscussionCard';
 import { UserPlus, MessagesSquare, Users, MessageCircle } from 'lucide-react';
+// ИСПРАВЛЕНИЕ: Импортируем полный тип Expert, а не только Character
+import { type Expert } from '@/types';
 
 /* ---------- TYPES ---------- */
-type Expert = {
-  id: string;
-  name: string;
-  archetypeMix: { analyst: number; synthesizer: number; resonator: number };
-  specializations: {
-    'Product & Technologies': number;
-    'Finance & Resources': number;
-    'Marketing & Audience': number;
-    'Strategy & Market': number;
-    'Ethics & Society': number;
-    'Law & Risks': number;
-    Generalist: number;
-  };
-  customContext: string;
-  character: any; // Добавил character для ExpertCard
-};
+// ИСПРАВЛЕНИЕ: УДАЛИЛИ ОТСЮДА ЛОКАЛЬНЫЙ, НЕПОЛНЫЙ ТИП 'Expert'
 
 type Discussion = {
   id: string;
@@ -57,7 +44,6 @@ const ActionPanel = () => (
       </Button>
     </Link>
     <Link href="/discussion/new">
-      {/* ИЗМЕНЕНИЕ: Кнопка стала залитой, но другого цвета */}
       <Button
         variant="primary"
         size="default"
@@ -105,10 +91,10 @@ export default function DashboardPage() {
   const [isLoadingDiscussions, setIsLoadingDiscussions] = useState(true);
   const [mode, setMode] = useState<'experts' | 'discussions'>('experts');
 
-  const cardsRef = useRef<HTMLDivElement>(null);
-  const thumbsRef = useRef<HTMLDivElement>(null);
+  const cardsRef = useRef<HTMLDivElement | null>(null);
+  const thumbsRef = useRef<HTMLDivElement | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!user) return;
     setIsLoadingExperts(true);
     setIsLoadingDiscussions(true);
@@ -133,10 +119,10 @@ export default function DashboardPage() {
     
     setDiscussions(discSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as Omit<Discussion, 'id'>) })));
     setIsLoadingDiscussions(false);
-  };
+  }, [user]);
 
   const scrollByStep = (
-    ref: React.RefObject<HTMLDivElement>,
+    ref: React.RefObject<HTMLDivElement | null>,
     dir: 'left' | 'right',
     amount = 400
   ) => {
@@ -154,7 +140,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!loading && !user) router.push('/login');
     else if (user) fetchData();
-  }, [user, loading, router]);
+  }, [user, loading, router, fetchData]);
   
   const handleDeleteExpert = async (id: string) => {
     if (!window.confirm('Удалить эксперта?')) return;
@@ -178,18 +164,14 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto p-4 flex flex-col min-h-[90vh]">
-      {/* HEADER */}
       <div className="text-center md:text-left">
         <h1 className="text-4xl font-pixel text-accent-primary uppercase tracking-wide">
           Командный Центр
         </h1>
-        {/* ИЗМЕНЕНИЕ: Подзаголовок удален */}
       </div>
 
-      {/* NEW ACTION PANEL */}
       <ActionPanel />
 
-      {/* MAIN PANEL */}
       <div className="flex-1 flex flex-col gap-2">
         <h2 className={`text-2xl font-pixel ${mode === 'experts' ? 'text-accent-primary' : 'text-accent-secondary'} uppercase tracking-wider text-center mb-4`}>
           {mode === 'experts' ? 'Ваши Эксперты' : 'Ваши Дискуссии'}
@@ -233,7 +215,6 @@ export default function DashboardPage() {
                 />
               ) : (
                 discussions.map(di => (
-                  // ИЗМЕНЕНИЕ: Добавлена высота для контейнера
                   <div key={di.id} id={`discussions-card-${di.id}`} className="min-w-[400px] max-w-[400px] h-[520px]">
                     <DiscussionCard discussion={di} onDelete={handleDeleteDiscussion} onBriefUpdated={handleBriefUpdate} />
                   </div>

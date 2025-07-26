@@ -1,18 +1,15 @@
-// src/components/discussion/Sidebar.tsx
 'use client';
 
-// ИСПРАВЛЕНО: Добавил useEffect в импорт
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { type Expert } from '@/types';
 import { cn } from '@/lib/utils';
 import { ArrowLeft, CheckCircle, CircleDashed } from 'lucide-react';
-// import Tooltip from '@/components/ui/Tooltip'; // ВРЕМЕННО ОТКЛЮЧЕНО, чтобы не было ошибок, если компонент не создан
 import { Button } from '@/components/ui/Button';
 import { Pencil } from 'lucide-react';
-// --- ПРОПСЫ КОМПОНЕНТА ---
+
 type SidebarProps = {
-  discussionId: string; // ДОБАВЛЕНО: ID нужен для сохранения
+  discussionId: string;
   brief: string;
   onBriefUpdated: (newBrief: string) => void;
   debateGoal: string;
@@ -30,8 +27,6 @@ type SidebarProps = {
   onStartDebate: () => void;
 };
 
-// --- Компонент-хелпер для секций в сайдбаре (можно оставить снаружи) ---
-// --- Компонент для секций в сайдбаре ---
 const SidebarSection = ({ title, children, actions }: { title: string, children: React.ReactNode, actions?: React.ReactNode }) => (
   <div className="rounded-lg border border-bg-surface bg-bg-surface/50 p-4">
     <div className="flex justify-between items-center mb-3">
@@ -42,8 +37,15 @@ const SidebarSection = ({ title, children, actions }: { title: string, children:
   </div>
 );
 
-// --- Компонент-хелпер для выбора экспертов (можно оставить снаружи) ---
-const ExpertSelector = ({ availableExperts, selectedExperts, setSelectedExperts, disabled }: any) => {
+// ИСПРАВЛЕНИЕ ЗДЕСЬ: Убрали 'any', добавили четкие типы для пропсов
+type ExpertSelectorProps = {
+  availableExperts: Expert[];
+  selectedExperts: Expert[];
+  setSelectedExperts: React.Dispatch<React.SetStateAction<Expert[]>>;
+  disabled: boolean;
+};
+
+const ExpertSelector = ({ availableExperts, selectedExperts, setSelectedExperts, disabled }: ExpertSelectorProps) => {
   const toggleExpert = (expert: Expert) => {
     if (disabled) return;
     setSelectedExperts((prev: Expert[]) =>
@@ -85,7 +87,6 @@ const ExpertSelector = ({ availableExperts, selectedExperts, setSelectedExperts,
 };
 
 
-// --- ОСНОВНОЙ КОМПОНЕНТ ---
 export default function Sidebar({
   discussionId,
   brief,
@@ -105,11 +106,9 @@ export default function Sidebar({
   onStartDebate,
 }: SidebarProps) {
 
-  // ✅ ИСПРАВЛЕНО: Вся логика, использующая хуки, теперь ВНУТРИ компонента
   const [isEditingBrief, setIsEditingBrief] = useState(false);
   const [editedBrief, setEditedBrief] = useState(brief);
 
-  // Этот хук будет обновлять локальный стейт, если пропс `brief` изменится извне
   useEffect(() => {
     setEditedBrief(brief);
   }, [brief]);
@@ -121,7 +120,7 @@ export default function Sidebar({
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ brief: editedBrief }),
         });
-        onBriefUpdated(editedBrief); // <--- ВЫЗЫВАЕМ ФУНКЦИЮ ОБНОВЛЕНИЯ
+        onBriefUpdated(editedBrief);
         setIsEditingBrief(false);
     } catch (error) {
         console.error("Failed to update brief:", error);
@@ -139,36 +138,35 @@ export default function Sidebar({
       </Link>
       
       <SidebarSection 
-    title="Ваш Бриф"
-    actions={!isEditingBrief && (
-        <Button
-            onClick={() => setIsEditingBrief(true)}
-            variant="secondary"
-            size="sm"
-            className="px-2 py-1 h-auto" // Убрали позиционирование, теперь всё в потоке
-            title="Редактировать бриф"
-        >
-            <Pencil className="h-4 w-4" />
-        </Button>
-    )}
->
-    {isEditingBrief ? (
-        <div className="space-y-2">
-            <textarea
-                value={editedBrief}
-                onChange={(e) => setEditedBrief(e.target.value)}
-                className="w-full p-2 h-32 bg-bg-main border border-bg-surface rounded-md text-text-main resize-y focus:ring-1 focus:ring-accent-primary"
-            />
-            <div className="flex gap-2">
-                <button onClick={handleSaveBrief} className="w-full px-3 py-1 text-xs font-pixel bg-accent-success text-bg-main rounded hover:opacity-90">Сохранить</button>
-                <button onClick={() => { setIsEditingBrief(false); setEditedBrief(brief); }} className="w-full px-3 py-1 text-xs font-pixel bg-bg-surface text-text-secondary rounded hover:opacity-90">Отмена</button>
+        title="Ваш Бриф"
+        actions={!isEditingBrief && (
+            <Button
+                onClick={() => setIsEditingBrief(true)}
+                variant="secondary"
+                size="sm"
+                className="px-2 py-1 h-auto"
+                title="Редактировать бриф"
+            >
+                <Pencil className="h-4 w-4" />
+            </Button>
+        )}
+      >
+        {isEditingBrief ? (
+            <div className="space-y-2">
+                <textarea
+                    value={editedBrief}
+                    onChange={(e) => setEditedBrief(e.target.value)}
+                    className="w-full p-2 h-32 bg-bg-main border border-bg-surface rounded-md text-text-main resize-y focus:ring-1 focus:ring-accent-primary"
+                />
+                <div className="flex gap-2">
+                    <button onClick={handleSaveBrief} className="w-full px-3 py-1 text-xs font-pixel bg-accent-success text-bg-main rounded hover:opacity-90">Сохранить</button>
+                    <button onClick={() => { setIsEditingBrief(false); setEditedBrief(brief); }} className="w-full px-3 py-1 text-xs font-pixel bg-bg-surface text-text-secondary rounded hover:opacity-90">Отмена</button>
+                </div>
             </div>
-        </div>
-    ) : (
-        // Убрали div-обертку, она больше не нужна
-        <p className="font-sans text-sm text-text-secondary max-h-24 overflow-y-auto whitespace-pre-wrap">{brief}</p>
-    )}
-</SidebarSection>
+        ) : (
+            <p className="font-sans text-sm text-text-secondary max-h-24 overflow-y-auto whitespace-pre-wrap">{brief}</p>
+        )}
+      </SidebarSection>
       
       <SidebarSection title="Цель Дебатов">
         <textarea

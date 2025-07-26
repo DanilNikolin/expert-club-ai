@@ -1,4 +1,4 @@
-// D:\expert-club-ai\expert-club-ai\src\app\page.tsx
+// D:\\expert-club-ai\\expert-club-ai\\src\\app\\page.tsx
 'use client';
 
 import Link from 'next/link';
@@ -129,13 +129,11 @@ function CtaRow({ isAuthed }: { isAuthed: boolean }) {
     <div className="flex flex-col sm:flex-row gap-4 justify-center">
       {isAuthed ? (
           <>
-            {/* ГЛАВНАЯ КНОПКА ТЕПЕРЬ ВЕДЕТ В ДАШБОРД */}
             <Link href="/dashboard" className="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/60 rounded-lg">
               <Button size="default" className="w-full px-8 py-4 text-lg">
                 Перейти в Дашборд
               </Button>
             </Link>
-            {/* ВТОРУЮ КНОПКУ МОЖНО СДЕЛАТЬ ССЫЛКОЙ НА СОЗДАНИЕ ЭКСПЕРТА ИЛИ УБРАТЬ */}
             <Link href="/experts/create" className="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-secondary/60 rounded-lg">
               <Button variant="secondary" size="default" className="w-full px-8 py-4 text-lg">
                 + Новый Эксперт
@@ -226,7 +224,8 @@ export default function HomePage() {
             <br />
             <span className="whitespace-nowrap">Дай им цель.</span>
             <br />
-            <span className="text-amber-400">Скажи 'Фас!'.</span>
+            {/* ИСПРАВЛЕНИЕ ЗДЕСЬ */}
+            <span className="text-amber-400">Скажи &apos;Фас!&apos;.</span>
           </h1>
 
           <p className="text-xl md:text-2xl text-text-secondary mb-10 max-w-3xl mx-auto">
@@ -234,8 +233,6 @@ export default function HomePage() {
           </p>
 
           <CtaRow isAuthed={isAuthed} />
-
-          
         </div>
       </Section>
 

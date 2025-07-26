@@ -65,9 +65,8 @@ export type ConfiguredExpert = { // Экспортируем, чтобы мож�
 // Важно: для OpenAI API в `messages` поле `name` у `role: 'user'` не ожидается.
 // Имя эксперта (role: 'assistant') нужно для взаимодействия между экспертами.
 // Поэтому мы будем убирать `name` из `history` при формировании `messagesForExpert` только для 'user'.
-interface InternalDebateMessage extends OpenAI.Chat.Completions.ChatCompletionMessageParam {
-    // name? - опциональное поле, но мы будем его использовать для идентификации эксперта
-}
+// Просто делаем псевдоним для типа OpenAI. Чище и без ошибок.
+type InternalDebateMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam;
 // ────────────────────────────────────────────────────────────────────────────────
 
 // ## ХЕЛПЕРЫ И УТИЛИТЫ
@@ -307,6 +306,7 @@ export async function POST(req: Request) {
                         { role: 'system', content: systemPrompt },
                         ...truncatedHistory.map(msg => {
                             if (msg.role === 'user') {
+                                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                                 const { name, ...rest } = msg; return rest as OpenAI.Chat.Completions.ChatCompletionMessageParam;
                             }
                             if (msg.role === 'assistant' && msg.name) {

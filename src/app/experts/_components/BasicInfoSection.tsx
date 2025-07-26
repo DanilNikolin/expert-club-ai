@@ -1,7 +1,7 @@
 // D:\expert-club-ai\expert-club-ai\src\app\experts\_components\BasicInfoSection.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import ConfigSectionCard from './ConfigSectionCard';
 import { type ExpertFormData, type ValidationErrors } from './expert-constructor.logic';
 import { cn } from '@/lib/utils';

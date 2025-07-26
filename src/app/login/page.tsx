@@ -26,9 +26,18 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(auth, email, password);
       console.log('Успешный вход через email/пароль');
       router.push('/dashboard'); // ДОБАВИЛИ РЕДИРЕКТ
-    } catch (err: any) {
-      console.error('Ошибка входа:', err.message);
-      setError('Не удалось войти. Проверьте email и пароль.');
+    } catch (err) {
+      // Проверяем, что это объект ошибки, чтобы TypeScript был доволен
+      if (err instanceof Error) {
+        console.error('Ошибка...', err.message);
+        // Тут можно даже более детально ошибку показать, если захочешь
+        // Например, для signup: if (err.code === 'auth/email-already-in-use') ...
+        setError('Неверные данные или произошла ошибка.');
+      } else {
+        // На случай если прилетела вообще какая-то дичь
+        console.error('Неизвестная ошибка:', err);
+        setError('Произошла неизвестная ошибка.');
+      }
     }
   };
 
@@ -40,9 +49,11 @@ export default function LoginPage() {
       await signInWithPopup(auth, provider);
       console.log('Успешный вход через Google');
       router.push('/dashboard'); // ДОБАВИЛИ РЕДИРЕКТ
-    } catch (err: any) {
-      console.error('Ошибка входа через Google:', err.message);
-      setError('Не удалось войти с помощью Google.');
+    } catch (err) {
+      if (err instanceof Error) {
+        console.error('Ошибка входа через Google:', err.message);
+        setError('Не удалось войти с помощью Google.');
+      }
     }
   };
 

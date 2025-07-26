@@ -1,7 +1,6 @@
-// src/app/discussion/[id]/page.tsx
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { collection, doc, getDoc, getDocs, orderBy, query, updateDoc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -15,6 +14,16 @@ import Sidebar from '@/components/discussion/Sidebar';
 import RunSelector from '@/components/discussion/RunSelector';
 import ChatWindow from '@/components/discussion/ChatWindow';
 import DebateControls from '@/components/discussion/DebateControls';
+
+// ИСПРАВЛЕНИЕ #3: Создаем тип для данных из стрима
+type SseEventData = {
+    type: 'expert_start' | 'chunk' | 'expert_end' | 'error';
+    name?: string;
+    content?: string;
+    fullMessage?: DebateMessage;
+    message?: string;
+};
+
 
 export default function DiscussionPage() {
     const { user, loading: authLoading } = useAuth();
@@ -36,13 +45,14 @@ export default function DiscussionPage() {
     const [userIntervention, setUserIntervention] = useState('');
     const [autoPause, setAutoPause] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
-    const [isLoadingCustomExperts, setIsLoadingCustomExperts] = useState(true);
+    // ИСПРАВЛЕНИЕ #1: Удалили неиспользуемый стейт isLoadingCustomExperts
     const chatEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     useEffect(scrollToBottom, [messages]);
 
-    const fetchData = async (currentUser: User) => {
+    // ИСПРАВЛЕНИЕ #2: Оборачиваем fetchData в useCallback
+    const fetchData = useCallback(async (currentUser: User) => {
         if (!discussionId) return;
         setIsLoading(true);
         const discussionDocRef = doc(db, 'discussions', discussionId);
@@ -58,8 +68,9 @@ export default function DiscussionPage() {
 
         const exSnap = await getDocs(query(collection(db, `users/${currentUser.uid}/customExperts`), orderBy('createdAt', 'desc')));
         setAvailableCustomExperts(exSnap.docs.map(x => ({ id: x.id, ...x.data() } as Expert)));
-        setIsLoadingCustomExperts(false);
-
+        
+        // ИСПРАВЛЕНИЕ #1: Удалили setIsLoadingCustomExperts(false)
+        
         const runsSnap = await getDocs(query(collection(db, 'discussions', discussionId, 'runs'), orderBy('createdAt', 'desc')));
         const fetchedRuns = runsSnap.docs.map(x => ({ id: x.id, ...x.data() } as Run));
         setRuns(fetchedRuns);
@@ -70,22 +81,22 @@ export default function DiscussionPage() {
             setStage(fetchedRuns[0].report ? 'finished' : 'setup');
         } else setStage('setup');
         setIsLoading(false);
-    };
+    }, [discussionId, router]); // Зависимости useCallback
 
     useEffect(() => {
         if (!authLoading && !user) {
             router.push('/login');
             return;
         }
-        if (user) fetchData(user);
-    }, [discussionId, user, authLoading, router]);
+        if (user) {
+            fetchData(user);
+        }
+    // ИСПРАВЛЕНИЕ #2: Добавляем fetchData в массив зависимостей
+    }, [user, authLoading, router, fetchData]);
 
     useEffect(() => {
         if (activeRun) {
-            // Копируем существующий транскрипт
             const transcriptWithReport = [...activeRun.transcript];
-
-            // Если в этом прогоне есть отчет (run.report), добавляем его в конец
             if (activeRun.report) {
             transcriptWithReport.push({
                 role: 'assistant',
@@ -93,11 +104,9 @@ export default function DiscussionPage() {
                 content: activeRun.report,
             });
             }
-
-            // Обновляем стейт уже с полным списком
             setMessages(transcriptWithReport);
         }
-        }, [activeRun]);
+    }, [activeRun]);
 
     const handleUpdateGoal = async () => {
         if (!debateGoal) return;
@@ -113,174 +122,161 @@ export default function DiscussionPage() {
     };
 
     const handleBriefUpdate = (newBrief: string) => {
-      setBrief(newBrief);
-    };
+        setBrief(newBrief);
+    };
 
     const handleDeleteRun = async (runIdToDelete: string) => {
-       if (!window.confirm('Это действие ПОЛНОСТЬЮ И БЕЗВОЗВРАТНО удалит прогон. Продолжить?')) return;
-       setIsLoading(true);
-       try {
-           await deleteDoc(doc(db, 'discussions', discussionId, 'runs', runIdToDelete));
-           const remainingRuns = runs.filter(run => run.id !== runIdToDelete);
-           setRuns(remainingRuns);
-           if (remainingRuns.length > 0) {
-               setActiveRun(remainingRuns[0]);
-           } else {
-               setActiveRun(null);
-               setMessages([]);
-           }
-       } catch (error) {
-           console.error("Ошибка при удалении рана:", error);
-           alert("Не удалось удалить прогон.");
-       } finally {
-           setIsLoading(false);
-       }
-     };
+        if (!window.confirm('Это действие ПОЛНОСТЬЮ И БЕЗВОЗВРАТНО удалит прогон. Продолжить?')) return;
+        setIsLoading(true);
+        try {
+            await deleteDoc(doc(db, 'discussions', discussionId, 'runs', runIdToDelete));
+            const remainingRuns = runs.filter(run => run.id !== runIdToDelete);
+            setRuns(remainingRuns);
+            if (remainingRuns.length > 0) {
+                setActiveRun(remainingRuns[0]);
+            } else {
+                setActiveRun(null);
+                setMessages([]);
+            }
+        } catch (error) {
+            console.error("Ошибка при удалении рана:", error);
+            alert("Не удалось удалить прогон.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-    const parseSSE = (line: string): any | null => {
+    // ИСПРАВЛЕНИЕ #3: Убрали 'any', используем SseEventData
+    const parseSSE = (line: string): SseEventData | null => {
         if (!line.startsWith('data:')) return null;
         try { return JSON.parse(line.replace(/^data:\s?/, '')); } catch { return null; }
     };
 
-    // ----- ИЗМЕНЕНИЕ #1: ФУНКЦИЯ ТЕПЕРЬ ПРИНИМАЕТ 'runToProcess' -----
     const handleRunRound = async (runToProcess: Run, opts?: { newHistory?: DebateMessage[] }) => {
-    if (!runToProcess) {
-        alert("Критическая ошибка: в функцию не передали прогон для обработки.");
-        setStage('setup');
-        return;
-    }
-
-    const history = opts?.newHistory ?? messages;
-    // Убрали инкремент раунда отсюда, он будет в конце
-    const roundNumber = currentRound + 1; 
-    setStage('debating');
-    setUserIntervention('');
-
-    try {
-        const response = await fetch('/api/debate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                discussionId,
-                runId: runToProcess.id, // <--- ОБЯЗАТЕЛЬНО ПЕРЕДАЕМ ID ПРОГОНА
-                brief,
-                goal: debateGoal,
-                selectedExperts: runToProcess.team.map(t => availableCustomExperts.find(ex => ex.id === t.id)).filter(Boolean),
-                history,
-                round: roundNumber, // roundNumber - это const roundNumber = currentRound + 1;
-            }),
-        });
-        
-        if (!response.ok) {
-             const errorText = await response.text();
-             throw new Error(`Ошибка сервера: ${response.status} ${response.statusText}. Ответ: ${errorText}`);
+        if (!runToProcess) {
+            alert("Критическая ошибка: в функцию не передали прогон для обработки.");
+            setStage('setup');
+            return;
         }
-        if (!response.body) throw new Error("Стрим ответа пустой.");
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-        let currentAssistantMessageIndex = -1;
+        const history = opts?.newHistory ?? messages;
+        const roundNumber = currentRound + 1; 
+        setStage('debating');
+        setUserIntervention('');
 
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
+        try {
+            const response = await fetch('/api/debate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    discussionId,
+                    runId: runToProcess.id,
+                    brief,
+                    goal: debateGoal,
+                    selectedExperts: runToProcess.team.map(t => availableCustomExperts.find(ex => ex.id === t.id)).filter(Boolean),
+                    history,
+                    round: roundNumber,
+                }),
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Ошибка сервера: ${response.status} ${response.statusText}. Ответ: ${errorText}`);
+            }
+            if (!response.body) throw new Error("Стрим ответа пустой.");
 
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n\n');
-            buffer = lines.pop() || '';
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let currentAssistantMessageIndex = -1;
 
-            for (const line of lines) {
-                if (!line.startsWith('data:')) continue;
-                const parsed = parseSSE(line);
-                if (!parsed) continue;
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
 
-                if (parsed.type === 'expert_start') {
-                    setMessages(prev => {
-                        currentAssistantMessageIndex = prev.length;
-                        return [...prev, { role: 'assistant', name: parsed.name, content: '', isStreaming: true }];
-                    });
-                } else if (parsed.type === 'chunk' && parsed.content) {
-                    // ---> ФИКС #1: ПОЛНОСТЬЮ ИММУТАБЕЛЬНОЕ ОБНОВЛЕНИЕ СООБЩЕНИЯ <---
-                    setMessages(prev => {
-                        if (currentAssistantMessageIndex === -1 || !prev[currentAssistantMessageIndex]) return prev;
-                        
-                        const newMessages = [...prev];
-                        // Создаем ПОЛНОСТЬЮ НОВЫЙ ОБЪЕКТ, а не меняем старый
-                        newMessages[currentAssistantMessageIndex] = {
-                            ...newMessages[currentAssistantMessageIndex],
-                            content: (newMessages[currentAssistantMessageIndex].content || '') + parsed.content,
-                        };
-                        return newMessages;
-                    });
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n\n');
+                buffer = lines.pop() || '';
+
+                for (const line of lines) {
+                    if (!line.startsWith('data:')) continue;
+                    const parsed = parseSSE(line);
+                    if (!parsed) continue;
+
+                    if (parsed.type === 'expert_start') {
+                        setMessages(prev => {
+                            currentAssistantMessageIndex = prev.length;
+                            return [...prev, { role: 'assistant', name: parsed.name, content: '', isStreaming: true }];
+                        });
+                    } else if (parsed.type === 'chunk' && parsed.content) {
+                        setMessages(prev => {
+                            if (currentAssistantMessageIndex === -1 || !prev[currentAssistantMessageIndex]) return prev;
+                            const newMessages = [...prev];
+                            newMessages[currentAssistantMessageIndex] = {
+                                ...newMessages[currentAssistantMessageIndex],
+                                content: (newMessages[currentAssistantMessageIndex].content || '') + (parsed.content || ''),
+                            };
+                            return newMessages;
+                        });
+                    }
                 }
             }
+            
+            let finalTranscript: DebateMessage[] = [];
+            setMessages(prev => {
+                const newMessages = [...prev];
+                if (currentAssistantMessageIndex !== -1 && newMessages[currentAssistantMessageIndex]) {
+                    newMessages[currentAssistantMessageIndex].isStreaming = false;
+                }
+                finalTranscript = newMessages;
+                return newMessages;
+            });
+
+            setCurrentRound(prevRound => {
+                const newRound = prevRound + 1;
+                if (autoPause || newRound >= rounds) {
+                    setStage('paused');
+                } else {
+                    handleRunRound(runToProcess, { newHistory: finalTranscript });
+                }
+                return newRound;
+            });
+
+        } catch (error) {
+            console.error("ОШИБКА ВНУТРИ handleRunRound:", error);
+            alert(`Произошла ошибка во время дебатов. Смотри консоль (F12). \n\nТекст ошибки: ${error}`);
+            setStage('setup');
         }
-        
-        let finalTranscript: DebateMessage[] = [];
-        setMessages(prev => {
-            const newMessages = [...prev];
-            if (currentAssistantMessageIndex !== -1 && newMessages[currentAssistantMessageIndex]) {
-                newMessages[currentAssistantMessageIndex].isStreaming = false;
-            }
-            finalTranscript = newMessages;
-            return newMessages;
-        });
+    };
 
-        
-
-        // ---> ФИКС #2: АТОМАРНАЯ ЛОГИКА ЗАВЕРШЕНИЯ РАУНДА <---
-        setCurrentRound(prevRound => {
-            const newRound = prevRound + 1;
-            if (autoPause || newRound >= rounds) {
-                setStage('paused');
-            } else {
-                handleRunRound(runToProcess, { newHistory: finalTranscript });
-            }
-            return newRound;
-        });
-
-    } catch (error) {
-        console.error("ОШИБКА ВНУТРИ handleRunRound:", error);
-        alert(`Произошла ошибка во время дебатов. Смотри консоль (F12). \n\nТекст ошибки: ${error}`);
-        setStage('setup');
-    }
-};
-
-// Также поправим `onContinue` в `DebateControls`. 
-// Он должен вызывать `handleRunRound` с текущим `activeRun`.
-// ЗАМЕНИ СТАРЫЙ onContinueDebate НА ЭТОТ
+    // ИСПРАВЛЕНИЕ #4: Переписываем функцию, чтобы не мутировать массив и использовать 'const'
     const onContinueDebate = () => {
         if (!activeRun) {
             alert("Невозможно продолжить, не выбран активный прогон.");
             return;
         }
-
-        let historyForNextRound = [...messages];
-
-        // Проверяем, написал ли юзер что-то в поле
+    
+        // Создаем новый массив на основе текущих сообщений
+        const historyForNextRound = [...messages];
+    
+        // Если пользователь что-то ввел, добавляем его сообщение в НОВЫЙ массив
         if (userIntervention.trim()) {
             const userMsg: DebateMessage = {
                 role: 'user',
                 content: userIntervention.trim(),
-                name: 'Ты' // Или user.displayName, если хочешь
+                name: 'Ты'
             };
+            historyForNextRound.push(userMsg); // .push() здесь безопасен, т.к. мы работаем с новой копией
             
-            // Добавляем сообщение в историю
-            historyForNextRound.push(userMsg);
-            
-            // Сразу обновляем UI, чтобы юзер увидел свою реплику
+            // Сразу обновляем UI и очищаем поле
             setMessages(historyForNextRound);
-            
-            // Очищаем поле ввода
             setUserIntervention('');
         }
-
-        // Запускаем следующий раунд с обновленной (или старой, если реплики не было) историей
+    
+        // Запускаем следующий раунд с обновленной историей
         handleRunRound(activeRun, { newHistory: historyForNextRound });
     };
 
-    // СУДЬЯ
     const handleGetVerdict = async () => {
         if (!activeRun) {
             alert("Нет активного прогона для получения вердикта.");
@@ -295,7 +291,7 @@ export default function DiscussionPage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    runId: activeRun.id, // <-- VERY IMPORTANT: SENDING THE RUN ID
+                    runId: activeRun.id,
                     discussionId,
                     brief,
                     debateHistory: messages,
@@ -335,7 +331,7 @@ export default function DiscussionPage() {
                                 judgeMessageIndex = newMessages.length - 1;
                             }
                             if (newMessages[judgeMessageIndex]) {
-                                newMessages[judgeMessageIndex].content = report; // Update with the full report
+                                newMessages[judgeMessageIndex].content = report;
                             }
                             return newMessages;
                         });
@@ -343,7 +339,6 @@ export default function DiscussionPage() {
                 }
             }
             
-            // Update the local state to show the final report correctly
             setMessages(prev => {
                 const newMessages = [...prev];
                 if (newMessages[judgeMessageIndex]) {
@@ -353,7 +348,6 @@ export default function DiscussionPage() {
                 return newMessages;
             });
 
-            // Update the activeRun in the state with the new report
             setActiveRun(prev => prev ? { ...prev, report } : null);
             setStage('finished');
 
@@ -395,7 +389,6 @@ export default function DiscussionPage() {
             setCurrentRound(0);
             setStage('debating');
 
-            // ----- ИЗМЕНЕНИЕ #2: ПЕРЕДАЕМ 'newRun' НАПРЯМУЮ -----
             handleRunRound(newRun, { newHistory: [] });
 
         } catch (error) {
@@ -406,66 +399,59 @@ export default function DiscussionPage() {
         }
     };
 
- 
+    if (authLoading || isLoading || !user) {
+        return <div className="text-center mt-20 font-pixel text-accent-primary animate-pulse">Загрузка рабочего пространства...</div>;
+    }
 
-    if (authLoading || isLoading || !user) { // Убрал isLoadingCustomExperts, т.к. он уже не нужен в таком виде
-    return <div className="text-center mt-20 font-pixel text-accent-primary animate-pulse">Загрузка рабочего пространства...</div>;
-  }
+    return (
+        <div className="container mx-auto mt-6 lg:mt-10 p-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <aside className="lg:col-span-4 col-span-12">
+                <div className="sticky top-6">
+                <Sidebar
+                    discussionId={discussionId}
+                    onBriefUpdated={handleBriefUpdate}
+                    brief={brief}
+                    debateGoal={debateGoal}
+                    setDebateGoal={setDebateGoal}
+                    handleUpdateGoal={handleUpdateGoal}
+                    isSavingGoal={isSavingGoal}
+                    stage={stage}
+                    availableExperts={availableCustomExperts}
+                    selectedExperts={selectedExperts}
+                    setSelectedExperts={setSelectedExperts}
+                    rounds={rounds}
+                    setRounds={setRounds}
+                    autoPause={autoPause}
+                    setAutoPause={setAutoPause}
+                    onStartDebate={handleStartNewDebate}
+                />
+                </div>
+            </aside>
 
-  return (
-    // ИСПОЛЬЗУЕМ GRID ДЛЯ МАКЕТА
-    <div className="container mx-auto mt-6 lg:mt-10 p-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
-      
-      {/* --- САЙДБАР (ЛЕВАЯ КОЛОНКА) --- */}
-      <aside className="col-span-4">
-        <div className="sticky top-6"> {/* Делаем сайдбар липким */}
-          <Sidebar
-            discussionId={discussionId}
-            onBriefUpdated={handleBriefUpdate}
-            brief={brief}
-            debateGoal={debateGoal}
-            setDebateGoal={setDebateGoal}
-            handleUpdateGoal={handleUpdateGoal}
-            isSavingGoal={isSavingGoal}
-            stage={stage}
-            availableExperts={availableCustomExperts}
-            selectedExperts={selectedExperts}
-            setSelectedExperts={setSelectedExperts}
-            rounds={rounds}
-            setRounds={setRounds}
-            autoPause={autoPause}
-            setAutoPause={setAutoPause}
-            onStartDebate={handleStartNewDebate}
-          />
+            <main className="lg:col-span-8 col-span-12 bg-bg-surface/50 border border-bg-surface rounded-lg shadow-inner min-h-[85vh] flex flex-col p-6">
+                <RunSelector
+                    runs={runs}
+                    activeRun={activeRun}
+                    setActiveRun={setActiveRun}
+                    onDeleteRun={handleDeleteRun}
+                    stage={stage}
+                />
+                <ChatWindow
+                    messages={messages}
+                    chatEndRef={chatEndRef}
+                    teamInRun={activeRun?.team || []} 
+                />
+                <DebateControls
+                    stage={stage}
+                    currentRound={currentRound}
+                    rounds={rounds}
+                    userIntervention={userIntervention}
+                    setUserIntervention={setUserIntervention}
+                    onContinue={onContinueDebate}
+                    onGetVerdict={handleGetVerdict}
+                    activeRun={activeRun}
+                />
+            </main>
         </div>
-      </aside>
-
-      {/* --- ОСНОВНОЕ ОКНО (ПРАВАЯ КОЛОНКА) --- */}
-      <main className="col-span-8 bg-bg-surface/50 border border-bg-surface rounded-lg shadow-inner min-h-[85vh] flex flex-col p-6">
-        <RunSelector
-          runs={runs}
-          activeRun={activeRun}
-          setActiveRun={setActiveRun}
-          onDeleteRun={handleDeleteRun}
-          stage={stage}
-        />
-        <ChatWindow
-          messages={messages}
-          chatEndRef={chatEndRef}
-          // Передаем команду, чтобы различать экспертов по цвету
-          teamInRun={activeRun?.team || []} 
-        />
-        <DebateControls
-          stage={stage}
-          currentRound={currentRound}
-          rounds={rounds}
-          userIntervention={userIntervention}
-          setUserIntervention={setUserIntervention}
-          onContinue={onContinueDebate}
-          onGetVerdict={handleGetVerdict}
-          activeRun={activeRun}
-        />
-      </main>
-    </div>
-  );
+    );
 }

@@ -3,12 +3,11 @@
 
 import React from 'react';
 import ConfigSectionCard from './ConfigSectionCard';
-import type { ExpertCharacter } from './expert-constructor.logic';
+import type { Character } from './expert-constructor.logic';
 import Tooltip from '@/components/ui/Tooltip';
-import { cn } from '@/lib/utils';
 
 type Props = {
-  character: ExpertCharacter;
+  character: Character;
   handleCharacterSliderChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleCharacterCheckboxChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 };
