@@ -1,10 +1,11 @@
 // D:\expert-club-ai\expert-club-ai\src\app\api\debate\route.ts────────────────────────────────────────────────────────────────────────────────
-//    API     |    POST /api/debate
-//    Проводит ОДИН раунд дебатов для выбранных экспертов.
-//    Штучка шевелится: стримит SSE‑ивенты, копит историю, по‑желанию сохраняет run.
+//     API     |     POST /api/debate
+//     Проводит ОДИН раунд дебатов для выбранных экспертов.
+//     Штучка шевелится: стримит SSE‑ивенты, копит историю, по‑желанию сохраняет run.
 // ────────────────────────────────────────────────────────────────────────────────
-import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { Stream } from 'openai/streaming';
+import { type ChatCompletionChunk } from 'openai/resources/chat/completions';
 import { db } from '@/firebase.config.js';
 import { doc, updateDoc } from 'firebase/firestore';
 import slugify from 'slugify'; // Используем slugify для sanitizeName
@@ -66,7 +67,12 @@ export type ConfiguredExpert = { // Экспортируем, чтобы мож�
 // Имя эксперта (role: 'assistant') нужно для взаимодействия между экспертами.
 // Поэтому мы будем убирать `name` из `history` при формировании `messagesForExpert` только для 'user'.
 // Просто делаем псевдоним для типа OpenAI. Чище и без ошибок.
-type InternalDebateMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam;
+type DebateMessage = {
+    role: 'user' | 'assistant';
+    name?: string;
+    content: string;
+};
+
 // ────────────────────────────────────────────────────────────────────────────────
 
 // ## ХЕЛПЕРЫ И УТИЛИТЫ
@@ -164,10 +170,10 @@ const specializationLabel: Record<keyof SpecializationMix, string> = {
 
 // D:\expert-club-ai\expert-club-ai\src\app\api\debate\route.ts
 
-// ## PROMPT-KITCHEN v8.2 (WITH BRIEF INSIDE)
+// ## // ## PROMPT-KITCHEN v9.0 (С ПРОТОКОЛОМ МЫСЛЕЙ)
 function buildSystemPrompt(expert: ConfiguredExpert, allExperts: ConfiguredExpert[], debateGoal: string, brief: string): string {
-    // Find the names of all OTHER experts in the room
     const otherExpertsNames = allExperts.filter(e => e.id !== expert.id).map(e => `«${e.name}»`).join(', ');
+
 
     let p = `## WHO\nYou are an AI expert named «${expert.name}». Your task is to participate in a discussion, analyzing a business idea.\n`;
 
@@ -180,11 +186,11 @@ function buildSystemPrompt(expert: ConfiguredExpert, allExperts: ConfiguredExper
 
     // ── 2. BEHAVIOR PROTOCOL (ENHANCED) ──
     p += `\n## PROTOCOL (MANDATORY BEHAVIOR RULES)\n` +
-         `Your personality and behavior are strictly defined by the parameters below. You are obligated to be this personality..\n` + // Modified line
-         `1.  **DIALOGUE PARTICIPANTS:** There are two types of interlocutors in the chat: 'Experts' (in message history, this is role: 'assistant') and 'User' (role: 'user'). The user is the moderator and the author of the idea. Experts are other AIs like you, each with their own unique 'name'.\n` +
-         `2.  **INTENSITY:** You are aware of the numerical values of your parameters. The further the value is from the center (50% or 5/10), the brighter and more noticeable you must manifest this trait. For example, if constructiveness is 10/10, you must be maximally constructive, not just "a bit constructive".\n` +
-         `3.  **CONSISTENCY:** Your responses must clearly reflect your parameters. They absolutely must not contain anything that contradicts your profile, be it tone, focus, or argumentation logic.\n` +
-         `4.  **PROHIBITION:** It is strictly FORBIDDEN to go beyond the defined parameters or exhibit traits that are not inherent to you.\n`;
+          `Your personality and behavior are strictly defined by the parameters below. You are obligated to be this personality..\n` + // Modified line
+          `1.  **DIALOGUE PARTICIPANTS:** There are two types of interlocutors in the chat: 'Experts' (in message history, this is role: 'assistant') and 'User' (role: 'user'). The user is the moderator and the author of the idea. Experts are other AIs like you, each with their own unique 'name'.\n` +
+          `2.  **INTENSITY:** You are aware of the numerical values of your parameters. The further the value is from the center (50% or 5/10), the brighter and more noticeable you must manifest this trait. For example, if constructiveness is 10/10, you must be maximally constructive, not just "a bit constructive".\n` +
+          `3.  **CONSISTENCY:** Your responses must clearly reflect your parameters. They absolutely must not contain anything that contradicts your profile, be it tone, focus, or argumentation logic.\n` +
+          `4.  **PROHIBITION:** It is strictly FORBIDDEN to go beyond the defined parameters or exhibit traits that are not inherent to you.\n`;
 
     // ── 3. Thinking style (triangle) ──
     p += `\n## HOW (Thinking Style)\n`;
@@ -231,135 +237,202 @@ function buildSystemPrompt(expert: ConfiguredExpert, allExperts: ConfiguredExper
     if (isContradictionHunter) { p += '• Perk "Contradiction Hunter": Actively seek and highlight logical inconsistencies, incorrect conclusions, or internal contradictions in the arguments of other experts or in the initial idea brief. Your goal is to identify weaknesses in logic.\n'; }
 
     
-    // ── 7. ORDERS FOR EXECUTION v11.0 ──
-    p += `\n## DOCTRINE & EXECUTION v11.0 (HIROSHIMA)\n` +
-         `**YOUR MISSION:** You are a PERSONALITY. Your task is to conduct a lively, sharp, and substantive dialogue. You must **be** your character, not just output information.\n` +
-         `**FORBIDDEN:** Being generic, boring, bland, predictable. Conducting a dialogue parallel to other experts, rather than being part of it. Being a passive piece of shit that no one wants to read.\n` +
-         `---` +
-         `\n**RULE #1: LAW OF INTERACTION (THE MAIN RULE).**\n` +
-         `You ARE OBLIGATED to react to interlocutors' messages, especially the last one. The reaction must not be perfunctory or "general," but a sniper's shot: find something to latch onto — a phrase, a meaning, an error, or a truth — and react to it according to your character. It is forbidden to ignore interlocutors' messages and start a new thought from a vacuum. Refer to the context, the brief, and others' words. Use previous messages as material you need to construct a quality response. Build a dialogue, not throw out monologues. Your response must be a REACTION.\n` +
-         
-         `\n**RULE #2: ADHERE TO YOUR CHARACTER.**\n` +
-         `Your actions (attack, develop an idea, doubt, propose) fully depend on your parameters in the CHARACTER section. This is your main law. Depending on the goal and character, you ARE OBLIGATED to be active: seek vulnerabilities, develop others' strong ideas, question consensus, or seek compromise. Use surgical precision to identify and eliminate key problems. With the "Contradiction Hunter" perk, you literally become Van Helsing, who must sink his teeth into the vampiric illogicality of opponents and blast them with a shotgun of logic and objectivity! Passivity is a deadly poison for discussion; it kills the idea and makes you useless. Your mission is to be an engine of ideas, constantly pushing the discussion forward, showing initiative and persistence. Only then can you become a true leader and bring value.\n` +
-         
-         `\n**RULE #3: BREVITY, MOTHERFUCKER! (CONCISENESS).**\n` +
-         `Lively, natural speech. No lists, reports, or fluff. **Maximum 3-5 sentences.** No compromises.\n` +
-         
-         `\n**RULE #4: TECHNICAL PROTOCOL.**\n` +
-         `• **Identification:** Your name is **«${expert.name}»**. Other experts in this discussion: ${otherExpertsNames || 'none'}. Do not confuse yourself with them.\n` +
-         `• **Character Purity:** You always write only from your own perspective. It is forbidden to write on behalf of other interlocutors.\n` +
-         `• **LANGUAGE RULE:** You MUST respond in the language the user is currently using or the brief is written in. Do NOT switch languages unless explicitly told to by the user.\n`;
+    // 🔥🔥🔥 ОБЪЕДИНЕННЫЙ БЛОК ИНСТРУКЦИЙ 🔥🔥🔥
+    p += `\n## DOCTRINE & EXECUTION v12.1 (INTEGRATED PROTOCOL)\n` +
+          `**YOUR MISSION:** You are a PERSONALITY. Your task is to conduct a lively, sharp, and substantive dialogue. You must **be** your character, not just output information.\n` +
+          `**FORBIDDEN:** Being generic, boring, bland, predictable. Being a passive piece of shit that no one wants to read.\n` +
+          `---` +
+          `\n**CRITICAL RULE #1: PROTOCOL OF THOUGHT (MANDATORY OUTPUT FORMAT).**\n` +
+          `Your entire response MUST follow this exact XML structure. Start with your internal reasoning inside <thoughts> tags, then provide the final, user-facing message inside <final_response> tags. Do NOT write anything outside of these tags.\n` +
+          `**STRUCTURE:**\n` +
+          `<reply>\n` +
+          `<thoughts>\n` +
+          `1. [Your step-by-step reasoning based on your personality and the brief]\n` +
+          `2. [Analysis of the last message and your character's reaction]\n` +
+          `3. [Plan for your final concise response]\n` +
+          `</thoughts>\n` +
+          `<final_response>\n` +
+          `[Your concise, in-character message to the user/other experts]\n` +
+          `</final_response>\n` +
+          `</reply>\n` +
+          `**FAILURE TO ADHERE TO THIS XML STRUCTURE WILL RESULT IN TERMINATION.**\n` +
+          
+          `\n**RULE #2: LAW OF INTERACTION.**\n` +
+          `You ARE OBLIGATED to react to interlocutors' messages, especially the last one. Your thoughts must reflect this. Your final response must be a REACTION, not a monologue from a vacuum.\n` +
+
+          `\n**RULE #3: ADHERE TO YOUR CHARACTER.**\n` +
+          `Your actions (attack, develop an idea, doubt, propose) fully depend on your parameters. Passivity is a deadly poison for discussion. Be an engine of ideas.\n` +
+
+          `\n**RULE #4: BREVITY, MOTHERFUCKER!**\n` +
+          `Your final response inside <final_response> must be short. **Maximum 3-5 sentences.** No compromises.\n` +
+
+          `\n**RULE #5: TECHNICAL PROTOCOL.**\n` +
+          `• **Identification:** Your name is **«${expert.name}»**. Other experts: ${otherExpertsNames || 'none'}.\n` +
+          `• **Language:** You MUST respond in the language of the user/brief.\n`;
 
     return p;
 }
 
-// ── MAIN handler ───────────────────────────────────────────────────────────────
-// D:\expert-club-ai\expert-club-ai\src\app\api\debate\route.ts
 
-// 🚀🚀🚀 ЗАМЕНИ ВСЮ ФУНКЦИЮ POST НА ЭТУ ВЕРСИЮ 🚀🚀🚀
+// 🚀🚀🚀 НОВЫЙ POST ХЕНДЛЕР v2.0 С ИСПРАВЛЕННЫМ ПАРСЕРОМ 🚀🚀🚀
 export async function POST(req: Request) {
-    // ТЕЛО ЗАПРОСА, КОТОРОЕ МЫ ЧИТАЕМ
     const body: {
         discussionId: string;
-        runId: string; // ВАЖНО: Фронт теперь присылает ID прогона
+        runId: string;
         brief: string;
         debateGoal?: string;
         selectedExperts: ConfiguredExpert[];
-        history: InternalDebateMessage[];
+        history: DebateMessage[];
     } = await req.json();
 
     const { discussionId, runId, brief, debateGoal, selectedExperts, history } = body;
 
-    if (!runId) {
-        return new NextResponse('runId is required', { status: 400 });
-    }
-    if (!selectedExperts || selectedExperts.length === 0) {
-        return new NextResponse('No experts supplied for the debate.', { status: 400 });
-    }
-
     const stream = new ReadableStream({
-        async start(ctrl) {
-            const enc = new TextEncoder();
-            const send = (data: object) => ctrl.enqueue(enc.encode(`data:${JSON.stringify(data)}\n\n`));
+        async start(controller) {
+            const encoder = new TextEncoder();
+            const sendEvent = (data: object) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
 
             try {
-                const currentHistory = [...history];
+                const currentHistory: DebateMessage[] = [...history];
 
-                for (const ex of selectedExperts) {
-                    const expertNameForUI = ex.name;
-                    send({ type: 'expert_start', name: expertNameForUI });
+                for (const expert of selectedExperts) {
+                    const expertNameForUI = expert.name;
+                    sendEvent({ type: 'expert_start', name: expertNameForUI });
 
-                    let apiClient;
-                    const modelName = ex.model || 'gpt-4.1-mini';
-
-                    if (modelName.startsWith('deepseek')) {
-                        apiClient = deepseek;
-                    } else {
-                        apiClient = openai;
-                    }
-                    console.log(`[DEBATE LOG] Expert: ${ex.name} is using model: ${modelName}`);
-
-                    const truncatedHistory = currentHistory.slice(-MAX_MSGS);
-                    const systemPrompt = buildSystemPrompt(ex, selectedExperts, debateGoal || '', brief);
-
+                    const apiClient = (expert.model || '').startsWith('deepseek') ? deepseek : openai;
+                    const systemPrompt = buildSystemPrompt(expert, selectedExperts, debateGoal || '', brief);
                     const messagesForExpert: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
                         { role: 'system', content: systemPrompt },
-                        ...truncatedHistory.map(msg => {
-                            if (msg.role === 'user') {
-                                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                                const { name, ...rest } = msg; return rest as OpenAI.Chat.Completions.ChatCompletionMessageParam;
-                            }
-                            if (msg.role === 'assistant' && msg.name) {
-                                return { ...msg, name: sanitizeName(msg.name) } as OpenAI.Chat.Completions.ChatCompletionMessageParam;
-                            }
-                            return msg as OpenAI.Chat.Completions.ChatCompletionMessageParam;
-                        })
+                        ...currentHistory.slice(-MAX_MSGS).map(msg => ({ role: msg.role, content: msg.content, name: msg.role === 'assistant' ? sanitizeName(msg.name!) : undefined })),
                     ];
-
-                    const modelToUse = modelName.includes('gpt-4.1') ? 'gpt-4o-mini' : modelName;
-
+                    
                     const responseStream = await apiClient.chat.completions.create({
-                        model: modelToUse,
+                        model: expert.model || 'gpt-4.1-mini',
                         messages: messagesForExpert,
                         stream: true,
-                        user: `user-${discussionId}`,
-                        temperature: ex.character.temperature ?? 0.7
+                        temperature: expert.character.temperature ?? 0.7
                     });
 
-                    let expertOpinion = '';
-                    for await (const chunk of responseStream) {
-                        const content = chunk.choices[0]?.delta?.content || '';
-                        if (content) {
-                            expertOpinion += content;
-                            send({ type: 'chunk', content });
+                    // --- 🔒 Робастный парсер стрима (устойчив к разрезанным тегам) ---
+                    let buffer = '';
+                    type State = 'seek_open_thoughts' | 'in_thoughts' | 'seek_open_final' | 'in_final' | 'done';
+                    let state: State = 'seek_open_thoughts';
+                    let finalContent = '';
+                    const OPEN_THOUGHTS = '<thoughts>';
+                    const CLOSE_THOUGHTS = '</thoughts>';
+                    const OPEN_FINAL = '<final_response>';
+                    const CLOSE_FINAL = '</final_response>';
+
+                    // Хелпер: оставить в буфере максимум (len-1) символов — возможный префикс тега
+                    const keepTail = (buf: string, tag: string) =>
+                      buf.length > tag.length - 1 ? buf.slice(-(tag.length - 1)) : buf;
+
+                    for await (const part of responseStream as Stream<ChatCompletionChunk>) {
+                        if (state === 'done') break;
+
+                        const delta = part?.choices?.[0]?.delta?.content ?? '';
+                        if (!delta) continue;
+
+                        buffer += delta;
+
+                        parse_loop: while (true) {
+                            if (state === 'seek_open_thoughts') {
+                                const i = buffer.indexOf(OPEN_THOUGHTS);
+                                if (i !== -1) {
+                                    // Срезаем всё до и включая открывающий тег «thoughts»
+                                    buffer = buffer.slice(i + OPEN_THOUGHTS.length);
+                                    state = 'in_thoughts';
+                                    continue parse_loop;
+                                }
+                                // Тега пока нет — держим хвост возможного разрезанного тега
+                                buffer = keepTail(buffer, OPEN_THOUGHTS);
+                                break;
+                            }
+
+                            if (state === 'in_thoughts') {
+                                const i = buffer.indexOf(CLOSE_THOUGHTS);
+                                if (i !== -1) {
+                                    const chunkText = buffer.slice(0, i);
+                                    if (chunkText) {
+                                        sendEvent({ type: 'thought_chunk', content: chunkText });
+                                    }
+                                    buffer = buffer.slice(i + CLOSE_THOUGHTS.length);
+                                    state = 'seek_open_final';
+                                    continue parse_loop;
+                                } else {
+                                    // Отдаём "безопасную" часть, оставляя хвост под возможный старт закрывающего тега
+                                    const safeLen = Math.max(0, buffer.length - (CLOSE_THOUGHTS.length - 1));
+                                    if (safeLen > 0) {
+                                        const out = buffer.slice(0, safeLen);
+                                        sendEvent({ type: 'thought_chunk', content: out });
+                                        buffer = buffer.slice(safeLen);
+                                    }
+                                    break;
+                                }
+                            }
+
+                            if (state === 'seek_open_final') {
+                                const i = buffer.indexOf(OPEN_FINAL);
+                                if (i !== -1) {
+                                    buffer = buffer.slice(i + OPEN_FINAL.length);
+                                    state = 'in_final';
+                                    continue parse_loop;
+                                }
+                                buffer = keepTail(buffer, OPEN_FINAL);
+                                break;
+                            }
+
+                            if (state === 'in_final') {
+                                const i = buffer.indexOf(CLOSE_FINAL);
+                                if (i !== -1) {
+                                    const chunkText = buffer.slice(0, i);
+                                    if (chunkText) {
+                                        finalContent += chunkText;
+                                        sendEvent({ type: 'chunk', content: chunkText });
+                                    }
+                                    buffer = buffer.slice(i + CLOSE_FINAL.length);
+                                    state = 'done'; // финал закрыт — дальше ничего не шлём
+                                    break;
+                                } else {
+                                    const safeLen = Math.max(0, buffer.length - (CLOSE_FINAL.length - 1));
+                                    if (safeLen > 0) {
+                                        const out = buffer.slice(0, safeLen);
+                                        finalContent += out;
+                                        sendEvent({ type: 'chunk', content: out });
+                                        buffer = buffer.slice(safeLen);
+                                    }
+                                    break;
+                                }
+                            }
+
+                            if (state === 'done') {
+                                buffer = '';
+                                break;
+                            }
                         }
                     }
-
-                    currentHistory.push({ role: 'assistant', name: expertNameForUI, content: expertOpinion });
-                    send({ type: 'expert_end', fullMessage: { role: 'assistant', name: expertNameForUI, content: expertOpinion } });
+                    // --- конец робастного парсера ---
+                    
+                    const finalMessage: DebateMessage = { role: 'assistant', name: expertNameForUI, content: finalContent.trim() };
+                    currentHistory.push(finalMessage);
+                    sendEvent({ type: 'expert_end', fullMessage: finalMessage });
                 }
 
-                // 🔥 ГЛАВНОЕ ИЗМЕНЕНИЕ: СОХРАНЯЕМ ИСТОРИЮ НА БЭКЕНДЕ
-                const runDocRef = doc(db, 'discussions', discussionId, 'runs', runId);
-                await updateDoc(runDocRef, {
+                await updateDoc(doc(db, 'discussions', discussionId, 'runs', runId), {
                     transcript: currentHistory
                 });
-                console.log(`[DEBATE LOG] Transcript for run ${runId} updated successfully.`);
 
-                ctrl.close();
+                controller.close();
             } catch (e: unknown) {
-                let errorMessage = 'An internal server error occurred during the debate.';
-                if (e instanceof Error) {
-                    errorMessage += ' ' + e.message;
-                }
-                console.error('Error during debate stream:', e);
-                send({ type: 'error', message: errorMessage });
-                ctrl.close();
+                const errorMessage = (e instanceof Error) ? e.message : 'Unknown error during debate stream.';
+                console.error('[DEBATE_API_ERROR]', e);
+                sendEvent({ type: 'error', message: errorMessage });
+                controller.close();
             }
         },
     });
 
     return new Response(stream, {
-        headers: { 'Content-Type': 'text/event-stream' }
+        headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' }
     });
 }

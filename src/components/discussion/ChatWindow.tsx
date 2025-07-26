@@ -1,27 +1,62 @@
-// src/components/discussion/ChatWindow.tsx
 'use client';
 
 import { type DebateMessage } from '@/types';
 import { LegacyRef } from 'react';
-import { Bot, BrainCircuit, User, Scale } from 'lucide-react';
+import { Bot, BrainCircuit, User, Scale, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Компонент для отображения мыслей (с марафетом)
+const ThoughtBubble = ({ text, isCollapsed, onToggle }: { text: string; isCollapsed: boolean; onToggle: () => void; }) => {
+    if (!text || !text.trim()) return null;
+    return (
+        <div className="relative max-w-xl animate-fade-in-fast">
+            {/* 🔥 МАРАФЕТ #1: Убрали mb-1, чтобы пузыри прилипли друг к другу */}
+            <div className={cn(
+                "rounded-lg bg-bg-main/50 border border-dashed border-bg-surface overflow-hidden",
+                !isCollapsed && "rounded-b-none border-b-0" // 🔥 МАРАФЕТ #2: Убираем нижнее скругление и границу, когда мысль развёрнута
+            )}>
+                <button
+                    onClick={onToggle}
+                    className="flex w-full items-center justify-between px-4 py-2 text-left text-xs text-text-secondary/80 hover:bg-bg-surface/50 transition-colors"
+                >
+                    <div className="flex items-center gap-2 font-pixel uppercase">
+                        <BrainCircuit size={14} />
+                        <span>Процесс мышления...</span>
+                    </div>
+                    <ChevronDown size={16} className={cn("transition-transform duration-300", isCollapsed && "-rotate-90")} />
+                </button>
+                <div className={cn(
+                    'grid transition-all duration-300 ease-in-out',
+                    isCollapsed ? 'grid-rows-[0fr]' : 'grid-rows-[1fr]'
+                )}>
+                    <div className="overflow-hidden">
+                        <div className="px-4 pb-3 pt-1">
+                            <pre className="whitespace-pre-wrap break-words font-sans text-sm italic text-text-secondary">
+                                {text}
+                            </pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 type ChatWindowProps = {
   messages: DebateMessage[];
   chatEndRef: LegacyRef<HTMLDivElement> | undefined;
   teamInRun: { id: string; name: string }[];
+  currentThoughts: Record<number, string>;
+  collapsedThoughts: Set<number>;
+  onToggleThought: (index: number) => void;
 };
 
 const expertTextColors = [
-  'text-accent-primary',
-  'text-accent-secondary',
-  'text-accent-success',
-  'text-amber-400',
-  'text-rose-400',
-  'text-teal-400',
+    'text-accent-primary', 'text-accent-secondary', 'text-accent-success',
+    'text-amber-400', 'text-rose-400', 'text-teal-400',
 ];
 
-export default function ChatWindow({ messages, chatEndRef, teamInRun }: ChatWindowProps) {
+export default function ChatWindow({ messages, chatEndRef, teamInRun, currentThoughts, collapsedThoughts, onToggleThought }: ChatWindowProps) {
   const expertColorMap = new Map<string, string>();
   teamInRun.forEach((member, index) => {
     expertColorMap.set(member.name, expertTextColors[index % expertTextColors.length]);
@@ -40,13 +75,16 @@ export default function ChatWindow({ messages, chatEndRef, teamInRun }: ChatWind
                 <Scale className="h-6 w-6 text-amber-400" />
                 <h3 className="title-pixel text-amber-400 text-xl">Вердикт Судьи</h3>
               </div>
-              {/* ИСПРАВЛЕНИЕ ЗДЕСЬ */}
               <div className="prose prose-invert prose-sm max-w-none font-sans text-text-main whitespace-pre-wrap"
-                   dangerouslySetInnerHTML={{ __html: (m.content as string).replace(/### (.*?)\\\\n/g, "<h3 class='font-pixel text-lg text-amber-400 mt-4 mb-2'>$1</h3>") }}
+                   dangerouslySetInnerHTML={{ __html: (m.content as string).replace(/### (.*?)\n/g, "<h3 class='font-pixel text-lg text-amber-400 mt-4 mb-2'>$1</h3>") }}
               />
             </div>
           )
         }
+
+        const thoughts = (!isUser && currentThoughts[i]) || '';
+        const isThoughtCollapsed = collapsedThoughts.has(i);
+        const hasThoughts = thoughts.trim() !== '';
 
         return (
           <div key={i} className={cn('flex items-start gap-4', isUser && 'justify-end')}>
@@ -55,16 +93,26 @@ export default function ChatWindow({ messages, chatEndRef, teamInRun }: ChatWind
                 <Bot className={`h-5 w-5 ${expertColorMap.get(m.name || '') || 'text-text-secondary'}`} />
               </div>
             )}
-
-            <div className={cn(
-              'max-w-xl rounded-lg px-4 py-3 font-sans text-base',
-              isUser ? 'bg-accent-primary/20 text-text-main' : 'bg-bg-main text-text-secondary'
-            )}>
-              <p className={`font-pixel text-sm mb-1 ${isUser ? 'text-accent-primary' : expertColorMap.get(m.name || '')}`}>
-                {m.name || (isUser ? 'Ты' : 'Эксперт')}
-                {m.isStreaming && <span className="animate-pulse">...</span>}
-              </p>
-              <p className="text-text-main whitespace-pre-wrap">{m.content as string}</p>
+            
+            <div className={cn("flex flex-col", isUser ? 'items-end' : 'items-start')}>
+              <ThoughtBubble
+                  text={thoughts}
+                  isCollapsed={isThoughtCollapsed}
+                  onToggle={() => onToggleThought(i)}
+              />
+            
+              <div className={cn(
+                'max-w-xl rounded-lg px-4 py-3 font-sans text-base',
+                isUser ? 'bg-accent-primary/20 text-text-main' : 'bg-bg-main text-text-secondary',
+                // 🔥 МАРАФЕТ #3: Убираем верхний радиус у основного сообщения, если есть РАЗВЁРНУТЫЙ пузырь мыслей
+                hasThoughts && !isThoughtCollapsed && (isUser ? '!rounded-tr-none' : '!rounded-tl-none')
+              )}>
+                <p className={`font-pixel text-sm mb-1 ${isUser ? 'text-accent-primary' : expertColorMap.get(m.name || '')}`}>
+                  {m.name || (isUser ? 'Ты' : 'Эксперт')}
+                  {m.isStreaming && <span className="animate-pulse">...</span>}
+                </p>
+                <p className="text-text-main whitespace-pre-wrap">{m.content as string}</p>
+              </div>
             </div>
 
             {isUser && (
@@ -82,6 +130,15 @@ export default function ChatWindow({ messages, chatEndRef, teamInRun }: ChatWind
         </div>
       )}
       <div ref={chatEndRef} />
+      <style jsx global>{`
+        @keyframes fadeInFastAnimation {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-fast {
+          animation: fadeInFastAnimation 0.3s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 // src/types/index.ts
-import OpenAI from 'openai';
+
 
 export type ArchetypeMix = { analyst: number; synthesizer: number; resonator: number };
 
@@ -36,7 +36,9 @@ export type Expert = {
     updatedAt: { seconds: number; nanoseconds: number };
 };
 
-export type DebateMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam & {
+export type DebateMessage = {
+    role: 'user' | 'assistant' | 'system';
+    content: string; // <-- ГЛАВНОЕ ИЗМЕНЕНИЕ: ТЕПЕРЬ ЭТО ВСЕГДА СТРОКА!
     name?: string;
     isStreaming?: boolean;
 };

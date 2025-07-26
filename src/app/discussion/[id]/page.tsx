@@ -1,3 +1,4 @@
+//D:\expert-club-ai\expert-club-ai\src\app\discussion\[id]\page.tsx
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -15,15 +16,13 @@ import RunSelector from '@/components/discussion/RunSelector';
 import ChatWindow from '@/components/discussion/ChatWindow';
 import DebateControls from '@/components/discussion/DebateControls';
 
-// ИСПРАВЛЕНИЕ #3: Создаем тип для данных из стрима
 type SseEventData = {
-    type: 'expert_start' | 'chunk' | 'expert_end' | 'error';
+    type: 'expert_start' | 'chunk' | 'expert_end' | 'error' | 'thought_chunk'; // <-- ДОБАВИЛИ НОВЫЙ ТИП
     name?: string;
     content?: string;
     fullMessage?: DebateMessage;
     message?: string;
 };
-
 
 export default function DiscussionPage() {
     const { user, loading: authLoading } = useAuth();
@@ -45,13 +44,26 @@ export default function DiscussionPage() {
     const [userIntervention, setUserIntervention] = useState('');
     const [autoPause, setAutoPause] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
-    // ИСПРАВЛЕНИЕ #1: Удалили неиспользуемый стейт isLoadingCustomExperts
     const chatEndRef = useRef<HTMLDivElement>(null);
+    
+    // 🔥 НОВЫЙ СТЕЙТ ДЛЯ ХРАНЕНИЯ МЫСЛЕЙ В РЕАЛЬНОМ ВРЕМЕНИ
+    const [currentThoughts, setCurrentThoughts] = useState<Record<number, string>>({});
+    const [collapsedThoughts, setCollapsedThoughts] = useState<Set<number>>(new Set());
 
+    const toggleThoughtVisibility = (messageIndex: number) => {
+        setCollapsedThoughts(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(messageIndex)) {
+                newSet.delete(messageIndex);
+            } else {
+                newSet.add(messageIndex);
+            }
+            return newSet;
+        });
+    };
     const scrollToBottom = () => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     useEffect(scrollToBottom, [messages]);
 
-    // ИСПРАВЛЕНИЕ #2: Оборачиваем fetchData в useCallback
     const fetchData = useCallback(async (currentUser: User) => {
         if (!discussionId) return;
         setIsLoading(true);
@@ -69,8 +81,6 @@ export default function DiscussionPage() {
         const exSnap = await getDocs(query(collection(db, `users/${currentUser.uid}/customExperts`), orderBy('createdAt', 'desc')));
         setAvailableCustomExperts(exSnap.docs.map(x => ({ id: x.id, ...x.data() } as Expert)));
         
-        // ИСПРАВЛЕНИЕ #1: Удалили setIsLoadingCustomExperts(false)
-        
         const runsSnap = await getDocs(query(collection(db, 'discussions', discussionId, 'runs'), orderBy('createdAt', 'desc')));
         const fetchedRuns = runsSnap.docs.map(x => ({ id: x.id, ...x.data() } as Run));
         setRuns(fetchedRuns);
@@ -81,7 +91,7 @@ export default function DiscussionPage() {
             setStage(fetchedRuns[0].report ? 'finished' : 'setup');
         } else setStage('setup');
         setIsLoading(false);
-    }, [discussionId, router]); // Зависимости useCallback
+    }, [discussionId, router]);
 
     useEffect(() => {
         if (!authLoading && !user) {
@@ -91,18 +101,13 @@ export default function DiscussionPage() {
         if (user) {
             fetchData(user);
         }
-    // ИСПРАВЛЕНИЕ #2: Добавляем fetchData в массив зависимостей
     }, [user, authLoading, router, fetchData]);
 
     useEffect(() => {
         if (activeRun) {
             const transcriptWithReport = [...activeRun.transcript];
             if (activeRun.report) {
-            transcriptWithReport.push({
-                role: 'assistant',
-                name: 'Судья',
-                content: activeRun.report,
-            });
+              transcriptWithReport.push({ role: 'assistant', name: 'Судья', content: activeRun.report });
             }
             setMessages(transcriptWithReport);
         }
@@ -146,134 +151,142 @@ export default function DiscussionPage() {
         }
     };
 
-    // ИСПРАВЛЕНИЕ #3: Убрали 'any', используем SseEventData
     const parseSSE = (line: string): SseEventData | null => {
         if (!line.startsWith('data:')) return null;
         try { return JSON.parse(line.replace(/^data:\s?/, '')); } catch { return null; }
     };
-
+    
     const handleRunRound = async (runToProcess: Run, opts?: { newHistory?: DebateMessage[] }) => {
-        if (!runToProcess) {
-            alert("Критическая ошибка: в функцию не передали прогон для обработки.");
-            setStage('setup');
-            return;
+    if (!runToProcess) {
+        alert("Критическая ошибка: в функцию не передали прогон для обработки.");
+        setStage('setup');
+        return;
+    }
+
+    const history = opts?.newHistory ?? messages;
+    setStage('debating');
+    setUserIntervention('');
+
+    try {
+        const response = await fetch('/api/debate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                discussionId,
+                runId: runToProcess.id,
+                brief,
+                goal: debateGoal,
+                selectedExperts: runToProcess.team.map(t => availableCustomExperts.find(ex => ex.id === t.id)).filter(Boolean) as Expert[],
+                history,
+            }),
+        });
+
+        if (!response.ok || !response.body) {
+            throw new Error(`Ошибка сервера: ${response.status}`);
         }
 
-        const history = opts?.newHistory ?? messages;
-        const roundNumber = currentRound + 1; 
-        setStage('debating');
-        setUserIntervention('');
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let currentAssistantMessageIndex = -1;
 
-        try {
-            const response = await fetch('/api/debate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    discussionId,
-                    runId: runToProcess.id,
-                    brief,
-                    goal: debateGoal,
-                    selectedExperts: runToProcess.team.map(t => availableCustomExperts.find(ex => ex.id === t.id)).filter(Boolean),
-                    history,
-                    round: roundNumber,
-                }),
-            });
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Ошибка сервера: ${response.status} ${response.statusText}. Ответ: ${errorText}`);
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+                if (!line.startsWith('data:')) continue;
+                const parsed = parseSSE(line);
+                if (!parsed) continue;
+
+                if (parsed.type === 'expert_start' && parsed.name) {
+    setMessages(prev => {
+        currentAssistantMessageIndex = prev.length;
+        setCurrentThoughts(prevThoughts => ({ ...prevThoughts, [currentAssistantMessageIndex]: '' }));
+        return [...prev, { role: 'assistant', name: parsed.name, content: '', isStreaming: true }];
+    });
+} else if (parsed.type === 'thought_chunk' && parsed.content) {
+    setCurrentThoughts(prev => ({ ...prev, [currentAssistantMessageIndex]: (prev[currentAssistantMessageIndex] || '') + parsed.content }));
+} else if (parsed.type === 'chunk' && parsed.content) {
+    setMessages(currentMessages => {
+        if (currentAssistantMessageIndex === -1) return currentMessages;
+        
+        // Вместо мутации используем .map() для создания нового массива с новым объектом
+        return currentMessages.map((msg, index) => {
+            if (index === currentAssistantMessageIndex) {
+                // Нашли нужный объект? Возвращаем его ПОЛНУЮ КОПИЮ с обновленным контентом.
+                return { ...msg, content: (msg.content || '') + (parsed.content || '') };
             }
-            if (!response.body) throw new Error("Стрим ответа пустой.");
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = '';
-            let currentAssistantMessageIndex = -1;
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-
-                buffer += decoder.decode(value, { stream: true });
-                const lines = buffer.split('\n\n');
-                buffer = lines.pop() || '';
-
-                for (const line of lines) {
-                    if (!line.startsWith('data:')) continue;
-                    const parsed = parseSSE(line);
-                    if (!parsed) continue;
-
-                    if (parsed.type === 'expert_start') {
-                        setMessages(prev => {
-                            currentAssistantMessageIndex = prev.length;
-                            return [...prev, { role: 'assistant', name: parsed.name, content: '', isStreaming: true }];
-                        });
-                    } else if (parsed.type === 'chunk' && parsed.content) {
-                        setMessages(prev => {
-                            if (currentAssistantMessageIndex === -1 || !prev[currentAssistantMessageIndex]) return prev;
-                            const newMessages = [...prev];
-                            newMessages[currentAssistantMessageIndex] = {
-                                ...newMessages[currentAssistantMessageIndex],
-                                content: (newMessages[currentAssistantMessageIndex].content || '') + (parsed.content || ''),
-                            };
-                            return newMessages;
-                        });
-                    }
-                }
-            }
-            
-            let finalTranscript: DebateMessage[] = [];
-            setMessages(prev => {
-                const newMessages = [...prev];
-                if (currentAssistantMessageIndex !== -1 && newMessages[currentAssistantMessageIndex]) {
-                    newMessages[currentAssistantMessageIndex].isStreaming = false;
-                }
-                finalTranscript = newMessages;
-                return newMessages;
-            });
-
-            setCurrentRound(prevRound => {
-                const newRound = prevRound + 1;
-                if (autoPause || newRound >= rounds) {
-                    setStage('paused');
-                } else {
-                    handleRunRound(runToProcess, { newHistory: finalTranscript });
-                }
-                return newRound;
-            });
-
-        } catch (error) {
-            console.error("ОШИБКА ВНУТРИ handleRunRound:", error);
-            alert(`Произошла ошибка во время дебатов. Смотри консоль (F12). \n\nТекст ошибки: ${error}`);
-            setStage('setup');
+            // Остальные объекты возвращаем как есть.
+            return msg;
+        });
+    });
+} else if (parsed.type === 'expert_end' && parsed.fullMessage) {
+    setMessages(currentMessages => { // Сразу применяем фикс из пункта 1
+        const newMessages = [...currentMessages];
+        const existingMessage = newMessages[currentAssistantMessageIndex];
+        // Проверяем, что и fullMessage прилетел, и в нашем массиве есть что обновлять
+        if (parsed.fullMessage && existingMessage) {
+            newMessages[currentAssistantMessageIndex] = {
+                ...existingMessage,
+                // Явно берём только нужные поля и приводим content к строке
+                role: parsed.fullMessage.role,
+                content: String(parsed.fullMessage.content || ''), // Гарантируем, что это строка
+                isStreaming: false
+            };
         }
-    };
+        return newMessages;
+    });
+    // И БОЛЬШЕ НИХУЯ НЕ ДЕЛАЕМ. Мысли остаются в стейте currentThoughts.
+}
+            }
+        }
 
-    // ИСПРАВЛЕНИЕ #4: Переписываем функцию, чтобы не мутировать массив и использовать 'const'
+        setCurrentRound(prev => {
+            const newRound = prev + 1;
+            if (autoPause || newRound >= rounds) {
+                setStage('paused');
+            } else {
+                // Рекурсивный вызов для следующего раунда, если нет паузы
+                setMessages(prevMessages => {
+                    handleRunRound(runToProcess, { newHistory: prevMessages });
+                    return prevMessages;
+                });
+            }
+            return newRound;
+        });
+
+    } catch (error) {
+        console.error("ОШИБКА ВНУТРИ handleRunRound:", error);
+        alert(`Произошла ошибка во время дебатов. Смотри консоль (F12). \n\nТекст ошибки: ${error}`);
+        setStage('setup');
+    }
+};
+
     const onContinueDebate = () => {
         if (!activeRun) {
             alert("Невозможно продолжить, не выбран активный прогон.");
             return;
         }
     
-        // Создаем новый массив на основе текущих сообщений
         const historyForNextRound = [...messages];
     
-        // Если пользователь что-то ввел, добавляем его сообщение в НОВЫЙ массив
         if (userIntervention.trim()) {
             const userMsg: DebateMessage = {
                 role: 'user',
                 content: userIntervention.trim(),
                 name: 'Ты'
             };
-            historyForNextRound.push(userMsg); // .push() здесь безопасен, т.к. мы работаем с новой копией
+            historyForNextRound.push(userMsg);
             
-            // Сразу обновляем UI и очищаем поле
             setMessages(historyForNextRound);
             setUserIntervention('');
         }
     
-        // Запускаем следующий раунд с обновленной историей
         handleRunRound(activeRun, { newHistory: historyForNextRound });
     };
 
@@ -325,22 +338,24 @@ export default function DiscussionPage() {
 
                     if (parsed.type === 'chunk' && parsed.content) {
                         report += parsed.content;
-                        setMessages(prev => {
-                            const newMessages = [...prev];
+                        setMessages(currentMessages => {
+                            const newMessages = [...currentMessages];
                             if (judgeMessageIndex === -1) {
                                 judgeMessageIndex = newMessages.length - 1;
                             }
-                            if (newMessages[judgeMessageIndex]) {
-                                newMessages[judgeMessageIndex].content = report;
+                            return currentMessages.map((msg, index) => {
+                            if (index === judgeMessageIndex) {
+                                return { ...msg, content: report };
                             }
-                            return newMessages;
+                            return msg;
+                        });
                         });
                     }
                 }
             }
             
-            setMessages(prev => {
-                const newMessages = [...prev];
+            setMessages(currentMessages => {
+                const newMessages = [...currentMessages];
                 if (newMessages[judgeMessageIndex]) {
                     newMessages[judgeMessageIndex].isStreaming = false;
                     newMessages[judgeMessageIndex].content = report;
@@ -407,24 +422,24 @@ export default function DiscussionPage() {
         <div className="container mx-auto mt-6 lg:mt-10 p-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
             <aside className="lg:col-span-4 col-span-12">
                 <div className="sticky top-6">
-                <Sidebar
-                    discussionId={discussionId}
-                    onBriefUpdated={handleBriefUpdate}
-                    brief={brief}
-                    debateGoal={debateGoal}
-                    setDebateGoal={setDebateGoal}
-                    handleUpdateGoal={handleUpdateGoal}
-                    isSavingGoal={isSavingGoal}
-                    stage={stage}
-                    availableExperts={availableCustomExperts}
-                    selectedExperts={selectedExperts}
-                    setSelectedExperts={setSelectedExperts}
-                    rounds={rounds}
-                    setRounds={setRounds}
-                    autoPause={autoPause}
-                    setAutoPause={setAutoPause}
-                    onStartDebate={handleStartNewDebate}
-                />
+                    <Sidebar
+                        discussionId={discussionId}
+                        onBriefUpdated={handleBriefUpdate}
+                        brief={brief}
+                        debateGoal={debateGoal}
+                        setDebateGoal={setDebateGoal}
+                        handleUpdateGoal={handleUpdateGoal}
+                        isSavingGoal={isSavingGoal}
+                        stage={stage}
+                        availableExperts={availableCustomExperts}
+                        selectedExperts={selectedExperts}
+                        setSelectedExperts={setSelectedExperts}
+                        rounds={rounds}
+                        setRounds={setRounds}
+                        autoPause={autoPause}
+                        setAutoPause={setAutoPause}
+                        onStartDebate={handleStartNewDebate}
+                    />
                 </div>
             </aside>
 
@@ -439,7 +454,10 @@ export default function DiscussionPage() {
                 <ChatWindow
                     messages={messages}
                     chatEndRef={chatEndRef}
-                    teamInRun={activeRun?.team || []} 
+                    teamInRun={activeRun?.team || []}
+                    currentThoughts={currentThoughts}
+                    collapsedThoughts={collapsedThoughts} // <-- Добавили
+                    onToggleThought={toggleThoughtVisibility} // <-- Добавили
                 />
                 <DebateControls
                     stage={stage}
