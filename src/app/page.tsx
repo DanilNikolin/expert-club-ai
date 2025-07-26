@@ -219,8 +219,13 @@ export default function HomePage() {
       {/* Hero */}
       <Section className="pt-20 pb-14 text-center">
         <div id="content" className="max-w-5xl mx-auto">
+          
           <h1 className="text-4xl md:text-6xl font-pixel text-accent-primary uppercase leading-tight mb-6 tracking-tight">
-            Собери команду AI. Дай им цель. <span className="text-amber-400">Скажи 'Фас!'.</span>
+            <span className="whitespace-nowrap">Собери команду AI.</span>
+            <br />
+            <span className="whitespace-nowrap">Дай им цель.</span>
+            <br />
+            <span className="text-amber-400">Скажи 'Фас!'.</span>
           </h1>
 
           <p className="text-xl md:text-2xl text-text-secondary mb-10 max-w-3xl mx-auto">
