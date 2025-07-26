@@ -23,7 +23,11 @@ export default function ChatWindow({ messages, isLoading, chatEndRef }: Props) {
         <div className="flex h-full flex-col items-center justify-center text-center">
           <Sparkles className="h-16 w-16 text-bg-surface" />
           <p className="mt-4 font-pixel text-xl text-text-secondary">ГОТОВ СЛУШАТЬ</p>
-          <p className="mt-1 text-sm text-text-secondary/70">Начните с общей идеи, а я задам уточняющие вопросы.</p>
+          <p className="mt-2 text-base text-text-secondary/80 max-w-md">
+            Начните с общей идеи, а я задам уточняющие вопросы.
+            <br />
+            <span className="font-bold text-text-main">Когда решите, что данных достаточно — жмите зелёную кнопку наверху.</span>
+          </p>
         </div>
       )}
       {messages.map((msg, index) => {
