@@ -71,7 +71,7 @@ export default function DiscussionCard({ discussion, onDelete, onBriefUpdated }:
             </div>
           ) : (
             // ИЗМЕНЕНИЕ: Убрали кнопку-иконку и div-обертку
-            <p className="font-sans text-sm text-text-main hover:text-accent-primary transition-colors line-clamp-5 break-words cursor-pointer">
+            <p className="font-sans text-base text-text-main hover:text-accent-primary transition-colors break-words cursor-pointer">
               {discussion.brief}
             </p>
           )}
