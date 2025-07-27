@@ -1,7 +1,9 @@
+//D:\expert-club-ai\expert-club-ai\src\components\discussion\Sidebar.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation'; // <-- ДОБАВЬ ЭТУ СТРОКУ
 import { type Expert } from '@/types';
 import { cn } from '@/lib/utils';
 import { ArrowLeft, CheckCircle, CircleDashed } from 'lucide-react';
@@ -108,6 +110,7 @@ export default function Sidebar({
 
   const [isEditingBrief, setIsEditingBrief] = useState(false);
   const [editedBrief, setEditedBrief] = useState(brief);
+  const router = useRouter(); // <-- ДОБАВЬ ЭТУ СТРОКУ
 
   useEffect(() => {
     setEditedBrief(brief);
@@ -116,9 +119,9 @@ export default function Sidebar({
   const handleSaveBrief = async () => {
     try {
         await fetch(`/api/discussion/${discussionId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ brief: editedBrief }),
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ brief: editedBrief }),
         });
         onBriefUpdated(editedBrief);
         setIsEditingBrief(false);
@@ -193,6 +196,22 @@ export default function Sidebar({
               setSelectedExperts={setSelectedExperts}
               disabled={isDebateInProgress}
             />
+            {stage === 'setup' && (
+              <div className="text-center my-2">
+                <span className="text-xs text-text-secondary/80">или</span>
+                <Button
+                  onClick={() => {
+                    const encodedBrief = encodeURIComponent(brief);
+                    router.push(`/experts/create?brief=${encodedBrief}`);
+                  }}
+                  variant="secondary"
+                  size="sm"
+                  className="w-full mt-1"
+                >
+                  Создать команду под этот бриф
+                </Button>
+              </div>
+            )}
           </div>
           <div>
             <label htmlFor="rounds" className="block text-sm font-medium text-text-secondary mb-2 flex items-center">

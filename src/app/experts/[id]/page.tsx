@@ -1,8 +1,8 @@
 //D:\expert-club-ai\expert-club-ai\src\app\experts\[id]\page.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/firebase.config';
 import { collection, addDoc, doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
@@ -36,6 +36,7 @@ import SubmitSection from '@/app/experts/_components/SubmitSection';
 export default function CreateExpertPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const { user, loading } = useAuth();
 
   // --- СТЕЙТЫ ---
@@ -59,6 +60,7 @@ export default function CreateExpertPage() {
   const [creationQueue, setCreationQueue] = useState<ExpertSuggestion[]>([]);
   const [isWizardActive, setIsWizardActive] = useState(false);
   const [initialQueueSize, setInitialQueueSize] = useState<number | null>(null);
+  const briefSentRef = useRef(false);
 
   // --- ЛОГИКА (НЕ ТРОНУТА) ---
 
@@ -131,7 +133,54 @@ export default function CreateExpertPage() {
     setValidationErrors(validateForm(formData));
   }, [formData, validateForm]);
 
-  // ... после других useEffect ...
+  // ЭТОТ useEffect сработает один раз при загрузке страницы, чтобы перехватить бриф из URL
+  useEffect(() => {
+    const briefFromUrl = searchParams.get('brief');
+    
+    // Если мы в режиме создания, в URL есть бриф, чат пуст И ФЛАГ ЕЩЕ НЕ ПОДНЯТ
+    if (isCreateMode && briefFromUrl && chatMessages.length === 0 && !briefSentRef.current) {
+      briefSentRef.current = true; // <-- ПРАВКА №1: СРАЗУ ПОДНИМАЕМ ФЛАГ
+
+      const initialPrompt = `Привет! Вот мой бриф, нужна команда для его анализа:\n\n---\n${decodeURIComponent(briefFromUrl.replace(/\+/g, ' '))}\n---`;
+      
+      const userMessage: ConstructorChatMessage = { role: 'user', content: initialPrompt };
+      
+      // Сразу отправляем его на сервер, имитируя клик пользователя
+      const sendInitialBrief = async () => {
+        setChatMessages([userMessage]); // Сначала показываем сообщение пользователя
+        setIsChatLoading(true);
+        setChatError('');
+        try {
+          const res = await fetch('/api/chat-configurator', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages: [userMessage], editingExpert: null }),
+          });
+
+          if (!res.ok) throw new Error('Ошибка сети или сервера при авто-отправке брифа');
+          
+          const data = await res.json();
+          const assistantMessage: ConstructorChatMessage = {
+            role: 'assistant',
+            content: data.message,
+            suggestions: data.suggestions || [],
+          };
+          setChatMessages(prev => [...prev, assistantMessage]);
+
+        } catch (err) {
+          setChatError('Упс, что-то пошло не так при обработке брифа.');
+          console.error(err);
+        } finally {
+          setIsChatLoading(false);
+          // Очищаем URL, чтобы при перезагрузке не отправлялось заново
+          router.replace('/experts/create', { scroll: false });
+        }
+      };
+      
+      sendInitialBrief();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCreateMode, searchParams, chatMessages.length, router]); // <-- ПРАВКА №2: ДОБАВЬ 'router' В МАССИВ ЗАВИСИМОСТЕЙ
 
   useEffect(() => {
     if (isWizardActive && creationQueue.length > 0) {
