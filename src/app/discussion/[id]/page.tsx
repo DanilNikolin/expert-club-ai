@@ -232,12 +232,13 @@ export default function DiscussionPage() {
         // Проверяем, что и fullMessage прилетел, и в нашем массиве есть что обновлять
         if (parsed.fullMessage && existingMessage) {
             newMessages[currentAssistantMessageIndex] = {
-                ...existingMessage,
-                // Явно берём только нужные поля и приводим content к строке
-                role: parsed.fullMessage.role,
-                content: String(parsed.fullMessage.content || ''), // Гарантируем, что это строка
-                isStreaming: false
-            };
+                      ...existingMessage,
+                      // Явно берём только нужные поля и приводим content к строке
+                      role: parsed.fullMessage.role,
+                      content: String(parsed.fullMessage.content || ''),
+                      name: parsed.fullMessage.name,
+                      isStreaming: false,
+                  } as DebateMessage; // <-- ВОТ ОН, ФИКС
         }
         return newMessages;
     });

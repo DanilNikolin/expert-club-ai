@@ -176,6 +176,7 @@ function buildSystemPrompt(expert: ConfiguredExpert, allExperts: ConfiguredExper
 
 
     let p = `## WHO\nYou are an AI expert named «${expert.name}». Your task is to participate in a discussion, analyzing a business idea.\n`;
+            
 
     // 🔥🔥🔥 NEW BLOCK WITH BRIEF 🔥🔥🔥
     p += `\n## CORE CONTEXT (THE ESSENCE OF THE IDEA)\nThis is the main document. The entire discussion is built around it. Constantly keep it in focus, even if the dialogue deviates.. Brief: **"${brief}"**\n`;

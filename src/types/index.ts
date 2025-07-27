@@ -1,5 +1,7 @@
 // src/types/index.ts
+import OpenAI from 'openai';
 
+// --- БАЗОВЫЕ ТИПЫ СУЩНОСТЕЙ ---
 
 export type ArchetypeMix = { analyst: number; synthesizer: number; resonator: number };
 
@@ -23,10 +25,12 @@ export type Character = {
     temperature: number;
 };
 
+// --- Полный тип эксперта, как он хранится в Firestore ---
 export type Expert = {
     id: string;
     name: string;
-    baseArchetype: 'Analyst' | 'Synthesizer' | 'Resonator';
+    model: string; // Добавил поле модели
+    baseArchetype: 'Analyst' | 'Synthesizer' | 'Resonator'; // Это поле у тебя было, но не в типе
     archetypeMix: ArchetypeMix;
     specializations: SpecializationMix;
     customContext: string;
@@ -36,9 +40,29 @@ export type Expert = {
     updatedAt: { seconds: number; nanoseconds: number };
 };
 
-export type DebateMessage = {
-    role: 'user' | 'assistant' | 'system';
-    content: string; // <-- ГЛАВНОЕ ИЗМЕНЕНИЕ: ТЕПЕРЬ ЭТО ВСЕГДА СТРОКА!
+
+// --- НОВЫЕ ТИПЫ ДЛЯ КОНСТРУКТОРА ---
+
+// Тип для одного предложенного эксперта от AI. Это почти полная форма, но без ID.
+export type ExpertSuggestion = Omit<Expert, 'id' | 'userId' | 'createdAt' | 'updatedAt'>;
+
+// Тип для сообщения в чате конструктора. Может содержать предложения.
+export type ConstructorChatMessage = {
+  role: 'user' | 'assistant';
+  content: string;
+  suggestions?: ExpertSuggestion[];
+};
+
+// Тип для ответа от API-ручки /api/chat-configurator
+export type ChatConfiguratorResponse = {
+  message: string;
+  suggestions: ExpertSuggestion[];
+}
+
+
+// --- ТИПЫ ДЛЯ КОМНАТЫ ДЕБАТОВ ---
+
+export type DebateMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam & {
     name?: string;
     isStreaming?: boolean;
 };

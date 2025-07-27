@@ -7,7 +7,7 @@ import { AlertTriangle } from "lucide-react";
 type Props = {
   isSaving: boolean;
   isFormValid: boolean;
-  expertId: string | undefined;
+  // expertId: string | undefined; // УДАЛЯЕМ ЭТУ СТРОКУ
   isCreateMode: boolean;
   clearDraft: () => void;
   validationErrors: ValidationErrors;
@@ -35,7 +35,7 @@ const ValidationErrorBlock = ({ errors }: { errors: ValidationErrors }) => {
 };
 
 
-export default function SubmitSection({ isSaving, isFormValid, expertId, isCreateMode, clearDraft, validationErrors, formName }: Props) {
+export default function SubmitSection({ isSaving, isFormValid, /* expertId, */ isCreateMode, clearDraft, validationErrors, formName }: Props) { // УДАЛЯЕМ expertId ИЗ ДЕСТРУКТУРИЗАЦИИ
   return (
     <div className="border-t border-bg-surface pt-6">
       <div className="flex flex-col gap-4 sm:flex-row">
@@ -45,7 +45,7 @@ export default function SubmitSection({ isSaving, isFormValid, expertId, isCreat
           isLoading={isSaving}
           className="flex-1" // Растягиваем на всю ширину
         >
-          {isSaving ? 'Сохранение...' : (expertId ? 'Обновить Эксперта' : 'Создать Эксперта')}
+          {isSaving ? 'Сохранение...' : (isCreateMode ? 'Создать Эксперта' : 'Обновить Эксперта')}
         </Button>
 
         {isCreateMode && (

@@ -1,28 +1,25 @@
+// src/app/experts/_components/ChatConfiguratorSection.tsx
 'use client';
 
 import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
 import { AlertTriangle, Bot, SendHorizonal, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-type Message = {
-  role: 'user' | 'assistant';
-  content: string;
-};
+import { type ConstructorChatMessage, type ExpertSuggestion } from '@/types'; // ИМПОРТИРУЕМ НОВЫЕ ТИПЫ
+import SuggestedTeam from './SuggestedTeam'; // ИМПОРТИРУЕМ НАШ НОВЫЙ КОМПОНЕНТ
 
 type Props = {
-  chatMessages: Message[];
+  chatMessages: ConstructorChatMessage[];
   isChatLoading: boolean;
   chatInput: string;
   setChatInput: (value: string) => void;
   handleChatSubmit: (e: React.FormEvent) => void;
-  needsConfirmation: boolean;
-  handleConfirmGeneration: () => void;
-  handleCancelGeneration: () => void;
   chatError: string;
+  startCreationWizard: (suggestions: ExpertSuggestion[], selectedNames: string[]) => void;
+  isCreateMode: boolean; // <-- ДОБАВЬ ЭТУ СТРОКУ
 };
 
-const ChatMessage = ({ msg }: { msg: Message }) => {
+const ChatMessage = ({ msg }: { msg: ConstructorChatMessage }) => {
     const isUser = msg.role === 'user';
     return (
         <div className={cn('flex items-start gap-3', isUser && 'justify-end')}>
@@ -31,7 +28,7 @@ const ChatMessage = ({ msg }: { msg: Message }) => {
                 'max-w-xs rounded-lg p-3 font-sans text-sm md:max-w-sm',
                 isUser ? 'rounded-br-none bg-bg-main ring-1 ring-bg-surface' : 'rounded-bl-none bg-bg-surface'
             )}>
-                {msg.content}
+                <p className="whitespace-pre-wrap">{msg.content}</p>
             </div>
             {isUser && <User className="h-5 w-5 flex-shrink-0 text-text-secondary mt-1" />}
         </div>
@@ -44,10 +41,9 @@ export default function ChatConfiguratorSection({
   chatInput,
   setChatInput,
   handleChatSubmit,
-  needsConfirmation,
-  handleConfirmGeneration,
-  handleCancelGeneration,
   chatError,
+  startCreationWizard,
+  isCreateMode // <-- ДОБАВЬ ЭТУ СТРОКУ
 }: Props) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -55,29 +51,48 @@ export default function ChatConfiguratorSection({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages, isChatLoading]);
 
-  // --- Функция-обертка для отправки по Enter ---
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      // Создаем фейковый FormEvent, так как у родителя он типизирован
       handleChatSubmit(e as unknown as React.FormEvent);
     }
   };
+  
+  const handleConfirmSuggestions = (selectedNames: string[]) => {
+      const lastMessage = chatMessages[chatMessages.length - 1];
+      if (lastMessage && lastMessage.suggestions) {
+          startCreationWizard(lastMessage.suggestions, selectedNames);
+      }
+  };
 
   return (
-    <div className="flex h-[28rem] flex-col">
-      <div className="flex-grow space-y-4 overflow-y-auto p-1 pr-3">
+    <div className="flex h-full flex-col">
+      <div className="flex-grow space-y-2 overflow-y-auto p-1 pr-3">
         {chatMessages.length === 0 && !isChatLoading && (
           <p className="flex h-full items-center justify-center text-center font-sans text-sm text-text-secondary">
             Начните диалог, чтобы создать эксперта...
           </p>
         )}
-        {chatMessages.map((msg, index) => <ChatMessage key={index} msg={msg} />)}
+        
+        {chatMessages.map((msg, index) => (
+            <div key={index}>
+                {/* Показываем текстовую часть сообщения, только если она есть */}
+                {msg.content && <ChatMessage msg={msg} />}
+                {/* Показываем интерактивный блок ТОЛЬКО в режиме создания */}
+                {msg.suggestions && msg.suggestions.length > 0 && isCreateMode && (
+                    <SuggestedTeam 
+                        suggestions={msg.suggestions} 
+                        onConfirm={handleConfirmSuggestions}
+                    />
+                )}
+            </div>
+        ))}
+
         {isChatLoading && (
             <div className="flex items-start gap-3">
-                <Bot className="h-5 w-5 flex-shrink-0 text-accent-primary mt-1" />
+                <Bot className="h-5 w-5 flex-shrink-0 text-accent-primary mt-1 animate-pulse" />
                 <div className="rounded-lg rounded-bl-none bg-bg-surface p-3 font-sans text-sm text-text-secondary italic">
-                    Ассистент печатает...
+                    Ассистент думает...
                 </div>
             </div>
         )}
@@ -90,44 +105,31 @@ export default function ChatConfiguratorSection({
                 <AlertTriangle size={16} /> <span>{chatError}</span>
             </div>
         )}
-        {needsConfirmation ? (
-          <div className="grid grid-cols-2 gap-2">
-            <Button onClick={handleConfirmGeneration} disabled={isChatLoading} isLoading={isChatLoading} size="sm">
-              Создавай!
-            </Button>
-            <Button onClick={handleCancelGeneration} disabled={isChatLoading} variant="destructive" size="sm">
-              Отмена
-            </Button>
-          </div>
-        ) : (
-          // ИЗМЕНЕНИЕ: Заменили <form> на <div>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              placeholder="Опиши эксперта..."
-              disabled={isChatLoading}
-              onKeyDown={handleKeyDown} // ИЗМЕНЕНИЕ: Вернули обработчик Enter
-              className={cn(
-                'w-full flex-grow rounded-md p-2 font-sans text-text-main placeholder:text-text-secondary/50',
-                // ИЗМЕНЕНИЕ: Сделали фон темнее, как ты просил
-                'bg-black/20 ring-1 ring-inset ring-bg-surface transition-all duration-150',
-                'focus:outline-none focus:ring-2 focus:ring-accent-primary',
-                'disabled:opacity-50'
-              )}
+        <div className="flex gap-2">
+            <textarea
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Начните диалог..."
+                disabled={isChatLoading}
+                className={cn(
+                    'w-full flex-grow rounded-md p-3 font-sans text-text-main placeholder:text-text-secondary/50',
+                    'bg-black/20 ring-1 ring-inset ring-bg-surface transition-all duration-150',
+                    'focus:outline-none focus:ring-2 focus:ring-accent-primary',
+                    'disabled:opacity-50',
+                    'resize-none min-h-[44px]' // Увеличили высоту и паддинги
+                )}
             />
             <Button
-              type="button" // ИЗМЕНЕНИЕ: Явно указываем тип, чтобы избежать сабмита формы
-              onClick={handleChatSubmit} // ИЗМЕНЕНИЕ: Вернули onClick
-              disabled={isChatLoading || !chatInput.trim()}
-              size="sm"
-              className="px-3"
+                type="button"
+                onClick={handleChatSubmit}
+                disabled={isChatLoading || !chatInput.trim()}
+                size="sm"
+                className="px-3"
             >
               <SendHorizonal size={16} />
             </Button>
           </div>
-        )}
       </div>
     </div>
   );
