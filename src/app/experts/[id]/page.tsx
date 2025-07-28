@@ -226,12 +226,48 @@ export default function CreateExpertPage() {
   };
 
   const handleArchetypeMixChange = (type: keyof ArchetypeMix, value: number) => {
-    setFormData(prev => ({ ...prev, archetypeMix: sanitizeAndNormalizeMix({ ...prev.archetypeMix, [type]: value }) as ArchetypeMix }));
-  };
+  setFormData(prev => {
+    // 1. Считаем, сколько уже "занято" другими ползунками.
+    const otherTotal = Object.entries(prev.archetypeMix)
+      .filter(([key]) => key !== type)
+      .reduce((sum, [, val]) => sum + val, 0);
+
+    // 2. Вычисляем "потолок" для текущего ползунка. Больше этого значения он не прыгнет.
+    const maxAllowed = 100 - otherTotal;
+
+    // 3. Устанавливаем новое значение, но не больше "потолка". И не меньше нуля, на всякий случай.
+    const newValue = Math.max(0, Math.min(value, maxAllowed));
+
+    // 4. Обновляем стейт, меняя ТОЛЬКО ОДИН ползунок, который мы двигали.
+    return {
+      ...prev,
+      archetypeMix: {
+        ...prev.archetypeMix,
+        [type]: newValue,
+      },
+    };
+  });
+};
 
   const handleSpecializationMixChange = (spec: keyof SpecializationMix, value: number) => {
-    setFormData(prev => ({ ...prev, specializations: sanitizeAndNormalizeMix({ ...prev.specializations, [spec]: value }) as SpecializationMix }));
-  };
+  setFormData(prev => {
+    // Та же самая логика, один в один.
+    const otherTotal = Object.entries(prev.specializations)
+      .filter(([key]) => key !== spec)
+      .reduce((sum, [, val]) => sum + val, 0);
+
+    const maxAllowed = 100 - otherTotal;
+    const newValue = Math.max(0, Math.min(value, maxAllowed));
+
+    return {
+      ...prev,
+      specializations: {
+        ...prev.specializations,
+        [spec]: newValue,
+      },
+    };
+  });
+};
 
   // --- НОВАЯ ЛОГИКА "МАСТЕРА СОЗДАНИЯ" И ЧАТА ---
 
