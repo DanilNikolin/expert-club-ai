@@ -10,8 +10,8 @@ module.exports = {
   'bg-main': '#23272b',        // Графитовый, чуть холоднее
   'bg-surface': '#31353b',     // Светло-графитовый, для карточек и блоков
   'accent-primary': '#42a5f5', // Мягкий синий, очень технологичный
-  'accent-secondary': '#faf600ff', // Пастельный фиолетовый
-  'accent-success': '#81c784', // Приглушённый зеленый
+  'accent-secondary': '#ddc705ff', // Пастельный фиолетовый
+  'accent-success': '#5bac5fff', // Приглушённый зеленый
   'accent-danger': '#e57373',  // Спокойный красный (не кислотный)
   'text-main': '#e0e6ed',
   'text-secondary': '#8e99a7',
