@@ -40,6 +40,13 @@ export type Expert = {
     updatedAt: { seconds: number; nanoseconds: number };
 };
 
+export type Discussion = {
+  id: string;
+  userId: string; // Добавим userId для полноты картины
+  brief: string;
+  createdAt: { seconds: number; nanoseconds: number };
+  status: string;
+};
 
 // --- НОВЫЕ ТИПЫ ДЛЯ КОНСТРУКТОРА ---
 

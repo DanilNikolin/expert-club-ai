@@ -1,9 +1,11 @@
+// D:\expert-club-ai\expert-club-ai\src\app\dashboard\page.tsx
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
+import { type Discussion } from '@/types';
 import {
   collection,
   query,
@@ -17,21 +19,10 @@ import { db } from '@/firebase.config.js';
 import { Button } from '@/components/ui/Button';
 import ExpertCard from '@/components/dashboard/ExpertCard';
 import DiscussionCard from '@/components/dashboard/DiscussionCard';
-import MiniExpertCard from '@/components/dashboard/MiniExpertCard';
-import MiniDiscussionCard from '@/components/dashboard/MiniDiscussionCard';
 import { UserPlus, MessagesSquare, Users, MessageCircle } from 'lucide-react';
-// ИСПРАВЛЕНИЕ: Импортируем полный тип Expert, а не только Character
 import { type Expert } from '@/types';
 
-/* ---------- TYPES ---------- */
-// ИСПРАВЛЕНИЕ: УДАЛИЛИ ОТСЮДА ЛОКАЛЬНЫЙ, НЕПОЛНЫЙ ТИП 'Expert'
 
-type Discussion = {
-  id: string;
-  brief: string;
-  createdAt: { seconds: number; nanoseconds: number };
-  status: string;
-};
 
 /* ---------- UI HELPERS ---------- */
 
@@ -45,9 +36,9 @@ const ActionPanel = () => (
     </Link>
     <Link href="/discussion/new">
       <Button
-        variant="primary"
+        variant="action"
         size="default"
-        className="w-full h-full py-6 text-lg bg-accent-success hover:opacity-90 focus:ring-accent-success"
+        className="w-full h-full py-6 text-lg"
       >
         <MessagesSquare className="mr-3 h-6 w-6" />
         Новая Дискуссия
@@ -90,15 +81,14 @@ export default function DashboardPage() {
   const [isLoadingExperts, setIsLoadingExperts] = useState(true);
   const [isLoadingDiscussions, setIsLoadingDiscussions] = useState(true);
   const [mode, setMode] = useState<'experts' | 'discussions'>('experts');
-
-  const cardsRef = useRef<HTMLDivElement | null>(null);
-  const thumbsRef = useRef<HTMLDivElement | null>(null);
+  const [expandedExperts, setExpandedExperts] = useState<string[]>([]);
+  const [expandedDiscussions, setExpandedDiscussions] = useState<string[]>([]);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
     setIsLoadingExperts(true);
     setIsLoadingDiscussions(true);
-    
+
     const expertsQuery = query(
       collection(db, `users/${user.uid}/customExperts`),
       orderBy('createdAt', 'desc')
@@ -116,32 +106,40 @@ export default function DashboardPage() {
 
     setExperts(expertsSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as Omit<Expert, 'id'>) })));
     setIsLoadingExperts(false);
-    
+
     setDiscussions(discSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as Omit<Discussion, 'id'>) })));
     setIsLoadingDiscussions(false);
   }, [user]);
 
-  const scrollByStep = (
-    ref: React.RefObject<HTMLDivElement | null>,
-    dir: 'left' | 'right',
-    amount = 400
-  ) => {
-    if (!ref.current) return;
-    ref.current.scrollBy({ left: dir === 'left' ? -amount : amount, behavior: 'smooth' });
-  };
+  const handleToggleExpert = useCallback((expertId: string) => {
+    setExpandedExperts(prev =>
+      prev.includes(expertId)
+        ? prev.filter(id => id !== expertId)
+        : [...prev, expertId]
+    );
+  }, []);
 
-  const scrollToCard = (id: string, zone: 'experts' | 'discussions') => {
-    setTimeout(() => {
-      const el = document.getElementById(`${zone}-card-${id}`);
-      el?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-    }, 100);
-  };
+  const handleCollapseAll = useCallback(() => {
+    setExpandedExperts([]);
+  }, []);
+
+  const handleToggleDiscussion = useCallback((discussionId: string) => {
+    setExpandedDiscussions(prev =>
+      prev.includes(discussionId)
+        ? prev.filter(id => id !== discussionId)
+        : [...prev, discussionId]
+    );
+  }, []);
+
+  const handleCollapseAllDiscussions = useCallback(() => {
+    setExpandedDiscussions([]);
+}, []);
 
   useEffect(() => {
     if (!loading && !user) router.push('/login');
     else if (user) fetchData();
   }, [user, loading, router, fetchData]);
-  
+
   const handleDeleteExpert = async (id: string) => {
     if (!window.confirm('Удалить эксперта?')) return;
     await deleteDoc(firebaseDoc(db, `users/${user?.uid}/customExperts`, id));
@@ -153,7 +151,7 @@ export default function DashboardPage() {
     await deleteDoc(firebaseDoc(db, 'discussions', id));
     setDiscussions(prev => prev.filter(d => d.id !== id));
   };
-  
+
   const handleBriefUpdate = (discussionId: string, newBrief: string) => {
     setDiscussions(prev => prev.map(d => d.id === discussionId ? { ...d, brief: newBrief } : d));
   };
@@ -172,74 +170,107 @@ export default function DashboardPage() {
 
       <ActionPanel />
 
-      <div className="flex-1 flex flex-col gap-2">
-        <h2 className={`text-2xl font-pixel ${mode === 'experts' ? 'text-accent-primary' : 'text-accent-secondary'} uppercase tracking-wider text-center mb-4`}>
-          {mode === 'experts' ? 'Ваши Эксперты' : 'Ваши Дискуссии'}
-        </h2>
-
-        <div className="relative bg-bg-surface/40 border-2 border-bg-surface rounded-xl p-4">
-          <button type="button" onClick={() => scrollByStep(cardsRef, 'left')} className="absolute left-2 md:left-8 top-1/2 -translate-y-1/2 z-10 p-2 bg-bg-main/60 hover:bg-bg-main rounded-full text-xl shadow-lg">
-            ‹
-          </button>
-          <button type="button" onClick={() => scrollByStep(cardsRef, 'right')} className="absolute right-2 md:right-8 top-1/2 -translate-y-1/2 z-10 p-2 bg-bg-main/60 hover:bg-bg-main rounded-full text-xl shadow-lg">
-            ›
-          </button>
+      <div className="flex-1 flex flex-col gap-4 mt-4">
+        <div className="flex justify-between items-center">
+          <h2 className={`text-2xl font-pixel ${mode === 'experts' ? 'text-accent-primary' : 'text-accent-secondary'} uppercase tracking-wider`}>
+            {mode === 'experts' ? 'Ваши Эксперты' : 'Ваши Дискуссии'}
+          </h2>
           
-          <div ref={cardsRef} className="flex gap-8 overflow-x-auto scroll-smooth pb-4 scrollbar-thin scrollbar-thumb-accent-primary/60 min-h-[540px] max-h-[560px] items-center">
+          {/* Кнопка "Свернуть все" для Экспертов */}
+          {mode === 'experts' && expandedExperts.length > 0 && (
+            <button
+              onClick={handleCollapseAll}
+              className="font-pixel text-xs uppercase text-text-secondary transition-colors hover:text-text-main animate-fade-in-fast"
+            >
+              [ Свернуть все ]
+            </button>
+          )}
+
+          {/* Кнопка "Свернуть все" для Дискуссий */}
+          {mode === 'discussions' && expandedDiscussions.length > 0 && (
+            <button
+              onClick={handleCollapseAllDiscussions}
+              className="font-pixel text-xs uppercase text-text-secondary transition-colors hover:text-text-main animate-fade-in-fast"
+            >
+              [ Свернуть все ]
+            </button>
+          )}
+        </div>
+
+        {/* АДАПТИВНЫЙ КОНТЕЙНЕР */}
+        <div className="flex-grow bg-bg-main/30 rounded-xl p-4 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 380px)' }}>
+          {/* ИСПРАВЛЕНИЕ: Убрали ref={cardsRef} отсюда */}
+          <div className="flex flex-wrap gap-6 justify-center">
             {mode === 'experts' ? (
-              isLoadingExperts ? <p className="text-text-secondary text-center w-full">Загрузка экспертов…</p> : 
-              experts.length === 0 ? (
-                <EmptyState 
-                  icon={Users}
-                  title="У вас пока нет экспертов"
-                  description="Создайте своего первого AI-эксперта, чтобы сформировать команду для будущих дебатов."
-                  buttonText="+ Создать первого эксперта"
-                  buttonLink="/experts/create"
-                />
-              ) : (
-                experts.map(ex => (
-                  <div key={ex.id} id={`experts-card-${ex.id}`} className="transform transition-all duration-50 ease-in-out saturate-50 brightness-75 hover:saturate-100 hover:brightness-100 scale-95 hover:scale-100">
-                    <ExpertCard expert={ex} onDelete={handleDeleteExpert} />
-                  </div>
-                ))
-              )
+              isLoadingExperts ? <p className="text-text-secondary text-center w-full">Загрузка экспертов…</p> :
+                experts.length === 0 ? (
+                  <EmptyState
+                    icon={Users}
+                    title="У вас пока нет экспертов"
+                    description="Создайте своего первого AI-эксперта, чтобы сформировать команду для будущих дебатов."
+                    buttonText="+ Создать первого эксперта"
+                    buttonLink="/experts/create"
+                  />
+                ) : (
+                  (() => {
+                    const sortedExperts = [...experts].sort((a, b) => {
+                      const aIsExpanded = expandedExperts.includes(a.id);
+                      const bIsExpanded = expandedExperts.includes(b.id);
+                      if (aIsExpanded === bIsExpanded) return 0;
+                      return aIsExpanded ? -1 : 1;
+                    });
+
+                    return sortedExperts.map(ex => (
+                      <div key={ex.id} id={`experts-card-${ex.id}`}>
+                        <ExpertCard
+                          expert={ex}
+                          isExpanded={expandedExperts.includes(ex.id)}
+                          onToggle={() => handleToggleExpert(ex.id)}
+                          onDelete={handleDeleteExpert}
+                        />
+                      </div>
+                    ));
+                  })()
+                )
             ) : (
-              isLoadingDiscussions ? <p className="text-text-secondary text-center w-full">Загрузка дискуссий…</p> : 
-              discussions.length === 0 ? (
-                <EmptyState 
-                  icon={MessageCircle}
-                  title="Пока нет ни одной дискуссии"
-                  description="Сформулируйте задачу, соберите команду из созданных экспертов и запустите первые дебаты."
-                  buttonText="+ Начать первую дискуссию"
-                  buttonLink="/discussion/new"
-                />
-              ) : (
-                discussions.map(di => (
-                  <div key={di.id} id={`discussions-card-${di.id}`} className="min-w-[400px] max-w-[400px] h-[520px]">
-                    <DiscussionCard discussion={di} onDelete={handleDeleteDiscussion} onBriefUpdated={handleBriefUpdate} />
+              isLoadingDiscussions ? <p className="text-text-secondary text-center w-full">Загрузка дискуссий…</p> :
+                discussions.length === 0 ? (
+                  <EmptyState
+                    icon={MessageCircle}
+                    title="Пока нет ни одной дискуссии"
+                    description="Сформулируйте задачу, соберите команду из созданных экспертов и запустите первые дебаты."
+                    buttonText="+ Начать первую дискуссию"
+                    buttonLink="/discussion/new"
+                  />
+                ) : (
+                  discussions.map(di => (
+                  <div key={di.id} id={`discussions-card-${di.id}`}>
+                    <DiscussionCard
+                      discussion={di}
+                      onDelete={handleDeleteDiscussion}
+                      onBriefUpdated={handleBriefUpdate}
+                      isExpanded={expandedDiscussions.includes(di.id)}
+                      onToggle={() => handleToggleDiscussion(di.id)}
+                    />
                   </div>
                 ))
-              )
+                )
             )}
           </div>
-          
-          <div className="w-full flex justify-center mt-4">
-            <button
-              type="button"
-              onClick={() => setMode(mode === 'experts' ? 'discussions' : 'experts')}
-              className="flex items-center gap-2 px-8 py-3 bg-bg-main rounded-xl border-2 border-bg-surface shadow-lg font-pixel text-base uppercase text-accent-primary hover:text-accent-secondary hover:border-accent-secondary transition"
-            >
-              <span className="text-2xl">⇅</span>
-              <span>{mode === 'experts' ? 'К Дискуссиям' : 'К Экспертам'}</span>
-            </button>
-          </div>
         </div>
-        
-        <div ref={thumbsRef} className="flex gap-4 overflow-x-auto px-2 scrollbar-thin scrollbar-thumb-bg-main/30 py-2 scroll-smooth">
-          {mode === 'experts'
-            ? discussions.map(d => <MiniDiscussionCard key={d.id} brief={d.brief} onClick={() => { setMode('discussions'); scrollToCard(d.id, 'discussions'); }}/>)
-            : experts.map(e => <MiniExpertCard key={e.id} name={e.name} onClick={() => { setMode('experts'); scrollToCard(e.id, 'experts'); }}/>)}
+
+        {/* КНОПКА ПЕРЕКЛЮЧЕНИЯ ТЕПЕРЬ ВНЕ СКРОЛЛ-ЗОНЫ */}
+        <div className="w-full flex justify-center flex-shrink-0">
+          <button
+            type="button"
+            onClick={() => setMode(mode === 'experts' ? 'discussions' : 'experts')}
+            className="flex items-center gap-2 px-8 py-3 bg-bg-surface rounded-xl border border-border-main shadow-lg font-pixel text-base uppercase text-text-secondary hover:text-text-main transition"
+          >
+            <span className="text-2xl">⇅</span>
+            <span>{mode === 'experts' ? 'К Дискуссиям' : 'К Экспертам'}</span>
+          </button>
         </div>
+
       </div>
     </div>
   );

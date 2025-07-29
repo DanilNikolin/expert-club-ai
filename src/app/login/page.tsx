@@ -25,7 +25,7 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       console.log('Успешный вход через email/пароль');
-      router.push('/dashboard'); // ДОБАВИЛИ РЕДИРЕКТ
+      router.push('/'); // ДОБАВИЛИ РЕДИРЕКТ
     } catch (err) {
       // Проверяем, что это объект ошибки, чтобы TypeScript был доволен
       if (err instanceof Error) {
@@ -48,7 +48,7 @@ export default function LoginPage() {
     try {
       await signInWithPopup(auth, provider);
       console.log('Успешный вход через Google');
-      router.push('/dashboard'); // ДОБАВИЛИ РЕДИРЕКТ
+      router.push('/');
     } catch (err) {
       if (err instanceof Error) {
         console.error('Ошибка входа через Google:', err.message);

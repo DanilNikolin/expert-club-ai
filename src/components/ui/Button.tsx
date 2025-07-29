@@ -6,16 +6,26 @@ import { LoaderCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  // --- Базовые стили для всех кнопок ---
-  'inline-flex items-center justify-center rounded-md font-pixel text-base uppercase tracking-wider transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-bg-main disabled:cursor-not-allowed disabled:opacity-50',
+  // Базовые стили для всех кнопок
+  'inline-flex items-center justify-center gap-2 rounded-md font-pixel text-base uppercase tracking-wider transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-main disabled:cursor-not-allowed disabled:opacity-60',
   {
     variants: {
       variant: {
-        // --- Основная кнопка ---
-        primary: 'bg-accent-primary text-bg-main hover:opacity-90 focus:ring-accent-primary disabled:bg-bg-surface disabled:text-text-secondary',
-        // --- Второстепенная (прозрачная) кнопка ---
-        secondary: 'border border-bg-surface bg-transparent text-text-secondary hover:border-accent-primary hover:text-accent-primary focus:ring-accent-primary',
-        destructive: 'border border-bg-surface bg-transparent text-text-secondary hover:border-accent-danger hover:text-accent-danger focus:ring-accent-danger',
+        // Главная, "костюмная" кнопка: 'Призрачная', с толстой рамкой.
+        primary:
+          'bg-transparent border-2 border-accent-primary text-accent-primary hover:bg-accent-primary hover:text-text-on-accent focus-visible:ring-accent-primary',
+
+        // Для ключевых действий, "пиджак": залита спокойным цветом.
+        action:
+          'bg-accent-secondary text-text-main hover:bg-accent-secondary/90 focus-visible:ring-accent-secondary',
+
+        // Второстепенная: тёмная, для "тихих" действий.
+        secondary:
+          'bg-bg-surface text-text-secondary hover:bg-bg-elevated hover:text-text-main focus-visible:ring-accent-secondary',
+
+        // "Опасная" кнопка: не кричащая, а строгая.
+        destructive:
+          'bg-transparent border border-accent-danger/50 text-accent-danger hover:bg-accent-danger/10 hover:border-accent-danger/80 focus-visible:ring-accent-danger',
       },
       size: {
         default: 'px-8 py-4',
@@ -29,11 +39,20 @@ const buttonVariants = cva(
   }
 );
 
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
   isLoading?: boolean;
 }
 
-export const Button = ({ className, variant, size, isLoading, children, ...props }: ButtonProps) => {
+export const Button = ({
+  className,
+  variant,
+  size,
+  isLoading,
+  children,
+  ...props
+}: ButtonProps) => {
   return (
     <button
       className={cn(buttonVariants({ variant, size, className }))}

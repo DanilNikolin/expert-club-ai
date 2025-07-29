@@ -14,7 +14,6 @@ import {
   type ValidationErrors,
   type ArchetypeMix,
   type SpecializationMix,
-  sanitizeAndNormalizeMix,
   type ExpertFormData,
 } from '@/app/experts/_components/expert-constructor.logic';
 
@@ -179,7 +178,7 @@ export default function CreateExpertPage() {
       
       sendInitialBrief();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [isCreateMode, searchParams, chatMessages.length, router]); // <-- ПРАВКА №2: ДОБАВЬ 'router' В МАССИВ ЗАВИСИМОСТЕЙ
 
   useEffect(() => {
@@ -415,21 +414,18 @@ export default function CreateExpertPage() {
   }
 
 return (
-  <div className="container mx-auto max-w-7xl px-2 py-8 h-[calc(100vh-80px)]"> 
-    <form onSubmit={handleSubmit} className="h-full">
-      <div className="grid grid-cols-1 gap-20 lg:grid-cols-12 h-full pt-8">
+    <div className="container mx-auto max-w-7xl px-4 py-8">
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-1 gap-x-12 gap-y-16 lg:grid-cols-12">
 
-        {/* --- ЛЕВАЯ КОЛОНКА (7 из 12) --- */}
-        {/* ВНЕШНИЙ БЛОК - ТОЛЬКО СКРОЛЛ */}
-        <div className="lg:col-span-7 overflow-y-auto overflow-x-hidden">
-          {/* ВНУТРЕННИЙ БЛОК - ТОЛЬКО ОТСТУПЫ И КОНТЕНТ */}
-            <div className="space-y-8"> 
+          {/* --- ЛЕВАЯ КОЛОНКА (7 из 12) --- */}
+          <div className="lg:col-span-7 space-y-8">
             <BasicInfoSection
               formData={formData}
               handleChange={handleChange}
               validationErrors={validationErrors}
             />
-            <ArchetypeSection 
+            <ArchetypeSection
               archetypeMix={formData.archetypeMix}
               handleArchetypeMixChange={handleArchetypeMixChange}
               resetArchetypeMix={resetArchetypeMix}
@@ -442,60 +438,54 @@ return (
               handleChange={handleChange}
               resetSpecializationMix={resetSpecializationMix}
             />
-            <CharacterSection 
+            <CharacterSection
               character={formData.character}
               handleCharacterSliderChange={handleCharacterSliderChange}
               handleCharacterCheckboxChange={handleCharacterCheckboxChange}
             />
           </div>
-        </div>
 
-        {/* --- ПРАВАЯ КОЛОНКА (5 из 12) --- */}
-        {/* ВНЕШНИЙ БЛОК - ТОЛЬКО СКРОЛЛ */}
-        <aside className="lg:col-span-5 overflow-y-auto overflow-x-hidden h-full">
-          {/* ВНУТРЕННИЙ БЛОК - ТОЛЬКО ОТСТУПЫ И КОНТЕНТ */}
-          <div className="space-y-8">
-            <ConstructorHeader 
-              isCreateMode={isCreateMode}
-              isAutoSaving={isAutoSaving}
-              lastSaved={lastSaved}
-              completionProgress={completionProgress}
-            />
-          {/* УСЛОВИЕ: ПОКАЗЫВАЕМ ПРЕВЬЮ В РЕЖИМЕ МАСТЕРА, ИНАЧЕ - ЧАТ */}
-          {isWizardActive ? (
-            <ExpertPreview formData={formData} />
-          ) : (
-            <ConfigSectionCard
-              className="mt-8"
-              title="AI-Ассистент"
-              description={isCreateMode ? "Говори любую идею, даже самую сырую. Я пойму и сделаю как надо." : "Говори, что поправить. Сделаю твоего бойца лучше."}
-              isCollapsible={true}
-              startOpen={true}
-            >
-              <ChatConfiguratorSection 
-                chatMessages={chatMessages}
-                isChatLoading={isChatLoading}
-                chatInput={chatInput}
-                setChatInput={setChatInput}
-                handleChatSubmit={handleChatSubmit}
-                chatError={chatError}
-                startCreationWizard={startCreationWizard}
-                isCreateMode={isCreateMode} // <-- ДОБАВЬ ЭТУ СТРОКУ
+          {/* --- ПРАВАЯ КОЛОНКА (5 из 12) --- */}
+          <aside className="lg:col-span-5 lg:sticky lg:top-28 h-fit">
+            <div className="space-y-8">
+              <ConstructorHeader
+                isCreateMode={isCreateMode}
+                isAutoSaving={isAutoSaving}
+                lastSaved={lastSaved}
+                completionProgress={completionProgress}
               />
-            </ConfigSectionCard>
-          )}
-            <SubmitSection 
-              isSaving={isSaving}
-              isFormValid={isFormValid}
-              isCreateMode={isCreateMode}
-              clearDraft={clearDraft}
-              validationErrors={validationErrors}
-              formName={formData.name}
-            />
-          </div>
-        </aside>
-      </div>
-    </form>
-  </div>
-);
+              {isWizardActive ? (
+                <ExpertPreview formData={formData} />
+              ) : (
+                <ConfigSectionCard
+                  title="AI-Ассистент"
+                  description={isCreateMode ? "Опиши эксперта, я соберу его за тебя." : "Говори, что поправить. Сделаю бойца лучше."}
+                  isCollapsible={false} // Больше не сворачиваем
+                >
+                  <ChatConfiguratorSection
+                    chatMessages={chatMessages}
+                    isChatLoading={isChatLoading}
+                    chatInput={chatInput}
+                    setChatInput={setChatInput}
+                    handleChatSubmit={handleChatSubmit}
+                    chatError={chatError}
+                    startCreationWizard={startCreationWizard}
+                    isCreateMode={isCreateMode}
+                  />
+                </ConfigSectionCard>
+              )}
+              <SubmitSection
+                isSaving={isSaving}
+                isFormValid={isFormValid}
+                isCreateMode={isCreateMode}
+                clearDraft={clearDraft}
+                validationErrors={validationErrors}
+                formName={formData.name}
+              />
+            </div>
+          </aside>
+        </div>
+      </form>
+    </div>
+  );
 }

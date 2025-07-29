@@ -1,13 +1,66 @@
 // src/components/Header.tsx
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { auth } from '@/firebase.config.js';
-import { signOut } from 'firebase/auth';
+import { signOut, type User } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { Button } from './ui/Button'; // Импортируем нашу кастомную кнопку
-import { UserCircle } from 'lucide-react';
+import { Button } from './ui/Button';
+import { UserCircle, LogOut, Home } from 'lucide-react';
+
+// Выносим меню профиля в отдельный компонент для чистоты
+const ProfileMenu = ({ user, onLogout }: { user: User; onLogout: () => void; }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="rounded-full transition-opacity hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+      >
+        <UserCircle size={28} className="text-text-secondary" />
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-64 origin-top-right rounded-lg border border-border-main bg-bg-surface shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none animate-fade-in-fast">
+          <div className="p-4">
+            <p className="font-sans text-sm text-text-secondary truncate">Вошли как:</p>
+            <p className="font-sans font-medium text-text-main truncate">{user.email}</p>
+          </div>
+          <div className="border-t border-border-main py-1">
+            <Link
+              href="/"
+              className="flex w-full items-center gap-3 rounded-md px-4 py-3 font-pixel text-sm uppercase text-text-secondary transition-colors hover:bg-bg-elevated hover:text-text-main"
+            >
+              <Home size={16} />
+              <span>Главная страница</span>
+            </Link>
+            <button
+              onClick={onLogout}
+              className="flex w-full items-center gap-3 rounded-md px-4 py-3 font-pixel text-sm uppercase text-accent-danger transition-colors hover:bg-accent-danger/10"
+            >
+              <LogOut size={16} />
+              <span>Выйти</span>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function Header() {
   const { user } = useAuth();
@@ -15,51 +68,54 @@ export default function Header() {
 
   const handleLogout = async () => {
     await signOut(auth);
-    router.push('/login'); // После выхода кидаем на страницу логина
+    router.push('/login');
   };
 
-  // Определяем, куда будет вести ссылка-логотип
   const logoHref = user ? '/dashboard' : '/';
 
   return (
-    <header className="bg-bg-main border-b border-bg-surface sticky top-0 z-50">
-      <nav className="container mx-auto flex h-20 items-center justify-between px-4">
-        
-        {/* ЛОГОТИП */}
-        <Link href={logoHref} className="title-pixel text-amber-400 hover:text-amber-400/80 transition-colors">
-          Клуб Экспертов AI
-        </Link>
-        
-        {/* ПРАВАЯ ЧАСТЬ: НАВИГАЦИЯ И ПРОФИЛЬ */}
-        <div className="flex items-center space-x-4">
-          {user ? (
-            // --- Если пользователь залогинен ---
-            <>
-              <div className="flex items-center gap-2 font-sans text-sm text-text-secondary">
-                <UserCircle size={16} />
-                <span>{user.email}</span>
-              </div>
-              <Button onClick={handleLogout} variant="destructive" size="sm">
-                Выйти
-              </Button>
-            </>
-          ) : (
-            // --- Если пользователь НЕ залогинен ---
-            <>
-              <Link href="/login">
-                 <Button variant="secondary" size="sm">
+    <>
+      <header className="bg-bg-main/80 border-b border-bg-surface sticky top-0 z-50 backdrop-blur-sm">
+        <nav className="container mx-auto flex h-16 items-center justify-between px-4">
+          
+          {/* ЛОГОТИП */}
+          <Link href={logoHref} className="title-pixel text-accent-primary hover:text-accent-primary/80 transition-colors">
+            Клуб Экспертов AI
+          </Link>
+          
+          {/* ПРАВАЯ ЧАСТЬ: НАВИГАЦИЯ И ПРОФИЛЬ */}
+          <div className="flex items-center space-x-4">
+            {user ? (
+              // --- Если пользователь залогинен ---
+              <ProfileMenu user={user} onLogout={handleLogout} />
+            ) : (
+              // --- Если пользователь НЕ залогинен ---
+              <>
+                <Link href="/login">
+                  <Button variant="secondary" size="sm">
                     Войти
-                 </Button>
-              </Link>
-              <Link href="/signup">
-                <Button size="sm">
+                  </Button>
+                </Link>
+                <Link href="/signup">
+                  <Button size="sm">
                     Регистрация
-                </Button>
-              </Link>
-            </>
-          )}
-        </div>
-      </nav>
-    </header>
+                  </Button>
+                </Link>
+              </>
+            )}
+          </div>
+        </nav>
+      </header>
+       {/* Стиль для анимации выпадающего меню */}
+      <style jsx global>{`
+        @keyframes fadeInFastAnimation {
+          from { opacity: 0; transform: translateY(-10px) scale(0.95); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .animate-fade-in-fast {
+          animation: fadeInFastAnimation 0.15s ease-out forwards;
+        }
+      `}</style>
+    </>
   );
 }

@@ -28,7 +28,7 @@ export default function SignUpPage() {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       console.log('Пользователь успешно создан');
-      router.push('/dashboard');
+      router.push('/');
     } catch (err: unknown) { // ИСПРАВЛЕНИЕ: Ловим как 'unknown'
       console.error('Ошибка регистрации:', err);
       // Проверяем, есть ли у ошибки свойство 'code' - это фишка Firebase
@@ -50,7 +50,7 @@ export default function SignUpPage() {
     try {
       await signInWithPopup(auth, provider);
       console.log('Успешный вход/регистрация через Google');
-      router.push('/dashboard');
+      router.push('/');
     } catch (err) { // ИСПРАВЛЕНИЕ: Ловим как 'unknown'
       console.error('Ошибка входа через Google:', err);
       if (err instanceof Error) {

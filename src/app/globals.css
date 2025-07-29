@@ -1,18 +1,14 @@
-/* D:\expert-club-ai\expert-club-ai\src\app\globals.css */
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+/* src/app/globals.css - ВЕРСИЯ ПОД "CLAUDE" ВАЙБ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* --- БАЗОВЫЕ СТИЛИ --- */
 @layer base {
   html {
-    /* Магия здесь:
-      - Мы говорим, что базовый размер шрифта = 0.833vw. 
-        (Это ~16px на экране шириной 1920px).
-      - clamp() — это предохранитель. Он не даст шрифту стать 
-        меньше 12px на мобилках и больше 18px на гигантских мониторах.
-    */
-    font-size: clamp(12px, 0.833vw, 18px);
+    font-size: clamp(14px, 0.833vw, 18px); /* Чуть увеличил минимальный размер для читаемости */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   body {
@@ -20,57 +16,55 @@
   }
 }
 
+
 /* --- СТИЛИ ДЛЯ КОМПОНЕНТОВ --- */
 @layer components {
 
-  /* --- Шрифты --- */
+  /* --- Шрифты (Pixel только для брендинга) --- */
   .title-pixel {
     @apply font-pixel uppercase tracking-wider;
     font-size: 18px;
-    text-shadow: 2px 2px 0px theme('colors.bg-main');
-    image-rendering: -webkit-crisp-edges;
-    image-rendering: -moz-crisp-edges;
+    text-shadow: none; /* Убираем тень, она удешевляет */
     image-rendering: pixelated;
   }
 
   .page-title-pixel {
     @apply font-pixel uppercase tracking-wider;
-    font-size: 44px;
-    line-height: 1;
-    text-shadow: 2px 2px 0px theme('colors.bg-main');
-    image-rendering: -webkit-crisp-edges;
-    image-rendering: -moz-crisp-edges;
+    font-size: clamp(28px, 4vw, 44px); /* Адаптивный размер */
+    line-height: 1.1;
+    text-shadow: none;
     image-rendering: pixelated;
   }
 
-  /* --- Формы --- */
+  /* --- Формы (адаптированы под новую палитру) --- */
   .select-primary {
-    @apply w-full rounded-md p-3 font-sans text-text-main placeholder:text-text-secondary/50;
-    @apply bg-bg-main ring-1 ring-inset ring-bg-surface transition-all duration-150;
-    @apply focus:outline-none focus:ring-2 focus:ring-accent-primary;
+    @apply w-full rounded-md p-3 font-sans text-text-main placeholder:text-text-muted;
+    @apply bg-bg-surface ring-1 ring-inset ring-border-main transition-colors duration-150;
+    @apply focus:outline-none focus:ring-1 focus:ring-border-active;
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-    background-position: right 0.5rem center;
+    /* Стрелка теперь цвета text-secondary */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23A0A0A0' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.75rem center;
     background-repeat: no-repeat;
     background-size: 1.5em 1.5em;
   }
-
+  
   .select-primary option, 
   .select-primary optgroup {
-      @apply bg-bg-main text-text-main font-sans;
+      @apply bg-bg-elevated text-text-main font-sans;
   }
 
-  /* --- Ползунки --- */
+  /* --- Ползунки (адаптированы) --- */
   .slider-primary {
     -webkit-appearance: none;
     appearance: none;
     height: 8px;
-    background-color: theme('colors.bg-main');
+    background-color: theme('colors.bg-surface');
     border-radius: 4px;
     outline: none;
-    border: 1px solid theme('colors.bg-surface');
+    border: 1px solid theme('colors.border-main');
   }
 
   .slider-primary::-webkit-slider-thumb {
@@ -78,21 +72,22 @@
     appearance: none;
     width: 16px;
     height: 20px;
-    background-color: var(--slider-thumb-color, theme('colors.accent-primary'));
+    background-color: var(--slider-thumb-color, theme('colors.accent-secondary'));
     cursor: pointer;
-    border-radius: 0;
+    border-radius: 2px; /* Чуть смягчили */
     border: 2px solid theme('colors.bg-main');
     transition: background-color 150ms ease-in-out;
   }
 
-  .slider-thumb-primary { --slider-thumb-color: theme('colors.accent-primary'); }
-  .slider-thumb-secondary { --slider-thumb-color: theme('colors.accent-secondary'); }
+  /* Обновленные переменные для ползунков */
+  .slider-thumb-primary { --slider-thumb-color: theme('colors.accent-secondary'); }
+  .slider-thumb-secondary { --slider-thumb-color: theme('colors.accent-maroon'); }
   .slider-thumb-success { --slider-thumb-color: theme('colors.accent-success'); }
 
   .slider-primary::-moz-range-thumb {
     width: 16px;
     height: 16px;
-    background-color: var(--slider-thumb-color, theme('colors.accent-primary'));
+    background-color: var(--slider-thumb-color, theme('colors.accent-secondary'));
     cursor: pointer;
     border-radius: 2px;
     border: 2px solid theme('colors.bg-main');
@@ -101,37 +96,28 @@
   .slider-primary:hover::-webkit-slider-thumb {
       filter: brightness(1.2);
   }
-} /* --- КОНЕЦ СЛОЯ КОМПОНЕНТОВ --- */
-
-
-/* --- ГЛОБАЛЬНЫЕ СТИЛИ ДЛЯ СКРОЛЛБАРА (ВЫНЕСЕНЫ ИЗ СЛОЯ) --- */
-
-/* Для Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: theme('colors.accent-primary') theme('colors.bg-main');
 }
 
-/* Для Chrome, Safari, Edge */
+/* --- ГЛОБАЛЬНЫЕ СТИЛИ ДЛЯ СКРОЛЛБАРА --- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: theme('colors.bg-elevated') theme('colors.bg-main');
+}
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
-
 ::-webkit-scrollbar-track {
   background-color: theme('colors.bg-main');
 }
-
 ::-webkit-scrollbar-thumb {
-  background-color: theme('colors.accent-primary');
+  background-color: theme('colors.bg-elevated');
   border-radius: 4px;
   border: 2px solid theme('colors.bg-main');
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #67e8f9; /* Более светлый циан */
+  background-color: theme('colors.text-muted');
 }
-
 ::-webkit-scrollbar-corner {
   background-color: transparent;
 }

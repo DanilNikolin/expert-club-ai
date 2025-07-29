@@ -1,186 +1,18 @@
-// D:\\expert-club-ai\\expert-club-ai\\src\\app\\page.tsx
+// D:\expert-club-ai\expert-club-ai\src\app\page.tsx
 'use client';
 
 import Link from 'next/link';
-import type { LucideIcon } from 'lucide-react';
-import { Users, MessageSquare, Play, ArrowRight, Zap, Target } from 'lucide-react';
+import { Users, MessageSquare, ArrowRight, Zap, Target } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
-
-/* ------------------------------- UI Helpers ------------------------------ */
-
-const cn = (...c: (string | false | undefined)[]) => c.filter(Boolean).join(' ');
-
-type Tone = 'primary' | 'secondary' | 'success' | 'danger';
-const tone = {
-  primary: {
-    text: 'text-accent-primary',
-    border: 'border-accent-primary/30',
-    dot: 'bg-accent-primary/20',
-  },
-  secondary: {
-    text: 'text-accent-secondary',
-    border: 'border-accent-secondary/30',
-    dot: 'bg-accent-secondary/20',
-  },
-  success: {
-    text: 'text-accent-success',
-    border: 'border-accent-success/30',
-    dot: 'bg-accent-success/20',
-  },
-  danger: {
-    text: 'text-accent-danger',
-    border: 'border-accent-danger/30',
-    dot: 'bg-accent-danger/20',
-  },
-} as const;
-
-function Section({
-  id,
-  children,
-  className,
-}: {
-  id?: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <section id={id} className={cn('relative container mx-auto px-4 py-16', className)}>
-      {children}
-    </section>
-  );
-}
-
-function SectionHeader({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <h2 className={cn('text-3xl font-pixel text-center text-accent-primary uppercase mb-12', className)}>
-      {children}
-    </h2>
-  );
-}
-
-function CardBase({
-  children,
-  color,
-  className,
-}: {
-  children: React.ReactNode;
-  color: Tone;
-  className?: string;
-}) {
-  const c = tone[color];
-  return (
-    <div
-      className={cn(
-        'relative rounded-2xl border bg-bg-surface/40 backdrop-blur',
-        c.border,
-        className
-      )}
-    >
-      {children}
-    </div>
-  );
-}
-
-function StepCard({ icon: Icon, title, color, description }: {
-  icon: LucideIcon;
-  title: string;
-  color: Tone;
-  description: string;
-}) {
-  const c = tone[color];
-  return (
-    <CardBase color={color} className="p-6 text-center">
-      <div className="flex items-center justify-center mb-4">
-        <div className={cn('w-16 h-16 rounded-full flex items-center justify-center', c.dot)}>
-          <Icon className={cn('w-8 h-8', c.text)} aria-hidden="true" />
-        </div>
-      </div>
-      <h3 className={cn('font-pixel uppercase mb-2', c.text)}>{title}</h3>
-      <p className="text-sm text-text-secondary">{description}</p>
-    </CardBase>
-  );
-}
-
-function FeatureCard({ icon: Icon, title, color, text }: {
-  icon: LucideIcon;
-  title: string;
-  color: Tone;
-  text: string;
-}) {
-  const c = tone[color];
-  return (
-    <CardBase color={color} className="p-8 text-center">
-      <Icon className={cn('w-16 h-16 mx-auto mb-4', c.text)} />
-      <h3 className={cn('text-xl font-pixel uppercase mb-3', c.text)}>{title}</h3>
-      <p className="text-text-secondary">{text}</p>
-    </CardBase>
-  );
-}
-
-function CtaRow({ isAuthed }: { isAuthed: boolean }) {
-  return (
-    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-      {isAuthed ? (
-          <>
-            <Link href="/dashboard" className="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/60 rounded-lg">
-              <Button size="default" className="w-full px-8 py-4 text-lg">
-                Перейти в Дашборд
-              </Button>
-            </Link>
-            <Link href="/experts/create" className="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-secondary/60 rounded-lg">
-              <Button variant="secondary" size="default" className="w-full px-8 py-4 text-lg">
-                + Новый Эксперт
-              </Button>
-            </Link>
-          </>
-        ) : (
-        <>
-          <Link href="/signup" className="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/60 rounded-lg">
-            <Button size="default" className="w-full px-8 py-4 text-lg">
-              <Play className="w-5 h-5 mr-2" />
-              Попробовать бесплатно
-            </Button>
-          </Link>
-          <Link href="/login" className="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-secondary/60 rounded-lg">
-            <Button variant="secondary" size="default" className="w-full px-8 py-4 text-lg">
-              Войти
-            </Button>
-          </Link>
-        </>
-      )}
-    </div>
-  );
-}
-
-function FixedCtaBar({ isAuthed }: { isAuthed: boolean }) {
-  if (isAuthed) return null;
-  return (
-    <div className="md:hidden fixed bottom-0 inset-x-0 z-40">
-      <div className="mx-4 mb-4 rounded-2xl border border-accent-primary/20 bg-bg-surface/80 backdrop-blur px-4 py-3 shadow-lg">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-accent-primary/20 flex items-center justify-center shrink-0">
-            <Play className="w-4 h-4 text-accent-primary" />
-          </div>
-          <div className="text-sm text-text-secondary">
-            <span className="text-text-main font-medium">Готов?</span> Первая сессия — бесплатно.
-          </div>
-          <Link href="/signup" className="ml-auto">
-            <Button size="sm" className="px-4">
-              Начать
-            </Button>
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
+import { Section } from '@/components/landing/Section';
+import { SectionHeader } from '@/components/landing/SectionHeader';
+import { CardBase } from '@/components/landing/CardBase';
+import { StepCard } from '@/components/landing/StepCard';
+import { FeatureCard } from '@/components/landing/FeatureCard';
+import { CtaRow } from '@/components/landing/CtaRow';
+import { FixedCtaBar } from '@/components/landing/FixedCtaBar';
+import { TimelineConnector } from '@/components/landing/TimelineConnector';
 
 /* --------------------------------- Page ---------------------------------- */
 
@@ -219,13 +51,16 @@ export default function HomePage() {
       <Section className="pt-20 pb-14 text-center">
         <div id="content" className="max-w-5xl mx-auto">
           
-          <h1 className="text-4xl md:text-6xl font-pixel text-accent-primary uppercase leading-tight mb-6 tracking-tight">
-            <span className="whitespace-nowrap">Собери команду AI.</span>
-            <br />
-            <span className="whitespace-nowrap">Дай им цель.</span>
-            <br />
-            {/* ИСПРАВЛЕНИЕ ЗДЕСЬ */}
-            <span className="text-amber-400">Скажи &apos;Фас!&apos;.</span>
+          <h1 className="flex flex-col items-center gap-y-3 text-4xl md:text-6xl font-pixel uppercase mb-8">
+            <span className="inline-block whitespace-nowrap rounded-md bg-bg-surface/50 px-4 py-2 text-accent-primary">
+              Собери команду AI.
+            </span>
+            <span className="inline-block whitespace-nowrap rounded-md bg-bg-surface/50 px-4 py-2 text-accent-primary">
+              Дай им цель.
+            </span>
+            <span className="inline-block whitespace-nowrap rounded-md bg-bg-surface/50 px-4 py-2 text-accent-secondary">
+              Скажи &apos;Фас!&apos;.
+            </span>
           </h1>
 
           <p className="text-xl md:text-2xl text-text-secondary mb-10 max-w-3xl mx-auto">
@@ -245,32 +80,71 @@ export default function HomePage() {
       <Section aria-labelledby="how" className="relative">
         <SectionHeader>Как это работает</SectionHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-8">
-          <StepCard
-            icon={Users}
-            color="primary"
-            title="1. Создай экспертов"
-            description="Собери команду с нуля в мощном конструкторе или выбери готовых."
-          />
-          <StepCard
-            icon={MessageSquare}
-            color="secondary"
-            title="2. Сформулируй задачу"
-            description="Опиши свою идею. Наш AI-Консьерж поможет превратить ее в четкий бриф для команды."
-          />
-          <StepCard
-            icon={Zap}
-            color="success"
-            title="3. Запусти дебаты"
-            description="Наблюдай, как твои AI-эксперты спорят, соглашаются и ищут истину, следуя заданным характерам."
-          />
-          <StepCard
-            icon={Target}
-            color="danger"
-            title="4. Получи выводы"
-            description="В конце — вся суть на одном экране. Никакой воды. Только главные аргументы, риски и пошаговый план."
-          />
-        </div>
+        <div className="flex flex-col gap-6 md:hidden">
+  <StepCard
+    step={1}
+    icon={Users}
+    color="primary"
+    title="Создай экспертов"
+    description="Собери команду с нуля в мощном конструкторе или выбери готовых."
+  />
+  <StepCard
+    step={2}
+    icon={MessageSquare}
+    color="secondary"
+    title="Сформулируй задачу"
+    description="Опиши свою идею. Наш AI-Консьерж поможет превратить ее в четкий бриф для команды."
+  />
+  <StepCard
+    step={3}
+    icon={Zap}
+    color="success"
+    title="Запусти дебаты"
+    description="Наблюдай, как твои AI-эксперты спорят, соглашаются и ищут истину, следуя заданным характерам."
+  />
+  <StepCard
+    step={4}
+    icon={Target}
+    color="danger"
+    title="Получи выводы"
+    description="В конце — вся суть на одном экране. Никакой воды. Только главные аргументы, риски и пошаговый план."
+  />
+</div>
+
+{/* --- ВЕРСИЯ ДЛЯ ДЕСКТОПА (наша новая жесткая сетка) --- */}
+      <div className="hidden md:grid md:grid-cols-[4fr_1fr_4fr_1fr_4fr_1fr_4fr] md:items-stretch md:gap-x-4">
+        <StepCard
+          step={1}
+          icon={Users}
+          color="primary"
+          title="Создай экспертов"
+          description="Собери команду с нуля в мощном конструкторе или выбери готовых."
+        />
+        <TimelineConnector />
+        <StepCard
+          step={2}
+          icon={MessageSquare}
+          color="secondary"
+          title="Сформулируй задачу"
+          description="Опиши свою идею. Наш AI-Консьерж поможет превратить ее в четкий бриф для команды."
+        />
+        <TimelineConnector />
+        <StepCard
+          step={3}
+          icon={Zap}
+          color="success"
+          title="Запусти дебаты"
+          description="Наблюдай, как твои AI-эксперты спорят, соглашаются и ищут истину, следуя заданным характерам."
+        />
+        <TimelineConnector />
+        <StepCard
+          step={4}
+          icon={Target}
+          color="danger"
+          title="Получи выводы"
+          description="В конце — вся суть на одном экране. Никакой воды. Только главные аргументы, риски и пошаговый план."
+        />
+      </div>
       </Section>
 
       {/* Why it works */}
@@ -329,7 +203,7 @@ export default function HomePage() {
             </div>
 
             <p className="text-sm text-text-secondary mt-4">
-              1‑я сессия бесплатно • Без карты • Регистрация ~30 секунд
+              Бесплатно все (режим разработки)
             </p>
           </CardBase>
         </div>

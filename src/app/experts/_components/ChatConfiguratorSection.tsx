@@ -70,7 +70,7 @@ export default function ChatConfiguratorSection({
       <div className="flex-grow space-y-2 overflow-y-auto p-1 pr-3">
         {chatMessages.length === 0 && !isChatLoading && (
           <p className="flex h-full items-center justify-center text-center font-sans text-sm text-text-secondary">
-            Начните диалог, чтобы создать эксперта...
+            Начните диалог, чтобы создать или изменить эксперта...
           </p>
         )}
         

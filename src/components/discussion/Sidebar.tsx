@@ -1,15 +1,15 @@
-//D:\expert-club-ai\expert-club-ai\src\components\discussion\Sidebar.tsx
+// D:\expert-club-ai\expert-club-ai\src\components\discussion\Sidebar.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; // <-- ДОБАВЬ ЭТУ СТРОКУ
+import { useRouter } from 'next/navigation';
 import { type Expert } from '@/types';
 import { cn } from '@/lib/utils';
-import { ArrowLeft, CheckCircle, CircleDashed } from 'lucide-react';
+import { ArrowLeft, CheckCircle, CircleDashed, Pencil, ChevronDown, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Pencil } from 'lucide-react';
 
+// --- PROPS ---
 type SidebarProps = {
   discussionId: string;
   brief: string;
@@ -29,28 +29,64 @@ type SidebarProps = {
   onStartDebate: () => void;
 };
 
-const SidebarSection = ({ title, children, actions }: { title: string, children: React.ReactNode, actions?: React.ReactNode }) => (
-  <div className="rounded-lg border border-bg-surface bg-bg-surface/50 p-4">
-    <div className="flex justify-between items-center mb-3">
-      <h3 className="title-pixel text-accent-primary">{title}</h3>
-      {actions && <div>{actions}</div>}
+// --- HELPER COMPONENTS ---
+
+const SidebarSection = ({
+  title,
+  children,
+  isOpen,
+  onToggle,
+  isComplete,
+}: {
+  title: string;
+  children: React.ReactNode;
+  isOpen: boolean;
+  onToggle: () => void;
+  isComplete: boolean;
+}) => (
+  <div className="rounded-lg border border-bg-surface bg-bg-surface/50 overflow-hidden transition-all duration-300">
+    <button
+      type="button"
+      onClick={onToggle}
+      className="flex w-full justify-between items-center p-4 hover:bg-bg-elevated/50"
+    >
+      <div className="flex items-center gap-3">
+        {isComplete ? (
+          <CheckCircle size={20} className="text-accent-success flex-shrink-0" />
+        ) : (
+          <CircleDashed size={20} className={cn("flex-shrink-0", isOpen ? "text-accent-primary" : "text-text-secondary")} />
+        )}
+        <h3 className={cn("title-pixel", isOpen ? "text-accent-primary" : "text-text-main")}>{title}</h3>
+      </div>
+      <ChevronDown
+        size={20}
+        className={cn("text-text-secondary transition-transform duration-300", isOpen && "rotate-180")}
+      />
+    </button>
+    <div
+      className={cn(
+        'grid transition-all duration-300 ease-in-out',
+        isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+      )}
+    >
+      <div className="overflow-hidden">
+        <div className="px-4 pb-4 border-t border-bg-surface">
+          <div className="pt-4">{children}</div>
+        </div>
+      </div>
     </div>
-    {children}
   </div>
 );
 
-// ИСПРАВЛЕНИЕ ЗДЕСЬ: Убрали 'any', добавили четкие типы для пропсов
-type ExpertSelectorProps = {
+const ExpertSelector = ({ availableExperts, selectedExperts, setSelectedExperts, disabled }: {
   availableExperts: Expert[];
   selectedExperts: Expert[];
   setSelectedExperts: React.Dispatch<React.SetStateAction<Expert[]>>;
   disabled: boolean;
-};
-
-const ExpertSelector = ({ availableExperts, selectedExperts, setSelectedExperts, disabled }: ExpertSelectorProps) => {
+}) => {
   const toggleExpert = (expert: Expert) => {
     if (disabled) return;
-    setSelectedExperts((prev: Expert[]) =>
+    setSelectedExperts((prev) =>
       prev.some(e => e.id === expert.id)
         ? prev.filter(e => e.id !== expert.id)
         : [...prev, expert]
@@ -65,20 +101,22 @@ const ExpertSelector = ({ availableExperts, selectedExperts, setSelectedExperts,
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto pr-2">
-          {availableExperts.map((ex: Expert) => {
+          {availableExperts.map((ex) => {
             const isSelected = selectedExperts.some(e => e.id === ex.id);
             return (
               <div
                 key={ex.id}
                 onClick={() => toggleExpert(ex)}
                 className={cn(
-                  'flex items-center gap-3 p-2 rounded-md border border-bg-surface transition-colors',
-                  disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:bg-bg-surface',
-                  isSelected && 'bg-accent-primary/20 border-accent-primary'
+                  'flex items-center gap-3 p-2 rounded-md border transition-colors',
+                  disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:bg-bg-elevated',
+                  isSelected ? 'bg-accent-secondary/20 border-accent-secondary' : 'border-bg-surface'
                 )}
               >
-                {isSelected ? <CheckCircle className="h-4 w-4 text-accent-primary" /> : <CircleDashed className="h-4 w-4 text-text-secondary" />}
-                <span className="font-sans font-medium text-text-main">{ex.name}</span>
+                <div className="flex h-5 w-5 items-center justify-center rounded-sm border-2 border-current">
+                  {isSelected && <Check className="h-3 w-3" />}
+                </div>
+                <span className="font-sans font-medium text-text-main truncate">{ex.name}</span>
               </div>
             );
           })}
@@ -88,171 +126,145 @@ const ExpertSelector = ({ availableExperts, selectedExperts, setSelectedExperts,
   );
 };
 
-
+// --- MAIN SIDEBAR COMPONENT ---
 export default function Sidebar({
-  discussionId,
-  brief,
-  onBriefUpdated,
-  debateGoal,
-  setDebateGoal,
-  handleUpdateGoal,
-  isSavingGoal,
-  stage,
-  availableExperts,
-  selectedExperts,
-  setSelectedExperts,
-  rounds,
-  setRounds,
-  autoPause,
-  setAutoPause,
-  onStartDebate,
+  discussionId, brief, onBriefUpdated, debateGoal, setDebateGoal, handleUpdateGoal, isSavingGoal,
+  stage, availableExperts, selectedExperts, setSelectedExperts, rounds, setRounds, autoPause, setAutoPause, onStartDebate,
 }: SidebarProps) {
-
+  const [openSections, setOpenSections] = useState({ mission: true, team: true, rules: false });
   const [isEditingBrief, setIsEditingBrief] = useState(false);
   const [editedBrief, setEditedBrief] = useState(brief);
-  const router = useRouter(); // <-- ДОБАВЬ ЭТУ СТРОКУ
+  const router = useRouter();
 
-  useEffect(() => {
-    setEditedBrief(brief);
-  }, [brief]);
+  useEffect(() => { setEditedBrief(brief); }, [brief]);
 
+  const toggleSection = (section: keyof typeof openSections) => {
+    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+  
   const handleSaveBrief = async () => {
     try {
-        await fetch(`/api/discussion/${discussionId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ brief: editedBrief }),
-        });
-        onBriefUpdated(editedBrief);
-        setIsEditingBrief(false);
+      await fetch(`/api/discussion/${discussionId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ brief: editedBrief }),
+      });
+      onBriefUpdated(editedBrief);
+      setIsEditingBrief(false);
     } catch (error) {
-        console.error("Failed to update brief:", error);
-        alert("Ошибка сохранения брифа!");
+      console.error("Failed to update brief:", error);
+      alert("Ошибка сохранения брифа!");
     }
   };
 
   const isDebateInProgress = stage === 'debating' || stage === 'judging' || stage === 'paused';
+  const isMissionComplete = brief.trim() !== '' && debateGoal.trim() !== '';
+  const isTeamComplete = selectedExperts.length > 0;
 
   return (
-    <div className="space-y-6">
-      <Link href="/dashboard" className="mb-4 flex items-center gap-2 font-sans text-sm text-text-secondary transition-colors hover:text-accent-primary">
-        <ArrowLeft size={16} />
-        <span>Вернуться в Дашборд</span>
-      </Link>
-      
-      <SidebarSection 
-        title="Ваш Бриф"
-        actions={!isEditingBrief && (
-            <Button
-                onClick={() => setIsEditingBrief(true)}
-                variant="secondary"
-                size="sm"
-                className="px-2 py-1 h-auto"
-                title="Редактировать бриф"
-            >
-                <Pencil className="h-4 w-4" />
-            </Button>
-        )}
-      >
-        {isEditingBrief ? (
-            <div className="space-y-2">
-                <textarea
-                    value={editedBrief}
-                    onChange={(e) => setEditedBrief(e.target.value)}
-                    className="w-full p-2 h-32 bg-bg-main border border-bg-surface rounded-md text-text-main resize-y focus:ring-1 focus:ring-accent-primary"
-                />
-                <div className="flex gap-2">
-                    <button onClick={handleSaveBrief} className="w-full px-3 py-1 text-xs font-pixel bg-accent-success text-bg-main rounded hover:opacity-90">Сохранить</button>
-                    <button onClick={() => { setIsEditingBrief(false); setEditedBrief(brief); }} className="w-full px-3 py-1 text-xs font-pixel bg-bg-surface text-text-secondary rounded hover:opacity-90">Отмена</button>
+    <div className="flex flex-col h-full">
+      <div className="flex-shrink-0">
+       
+          <Link href="/dashboard" className="mb-6 flex items-center gap-2 font-sans text-sm text-text-secondary transition-colors hover:text-accent-primary">
+            <ArrowLeft size={16} />
+            <span>В Дашборд</span>
+          </Link>
                 </div>
-            </div>
-        ) : (
-            <p className="font-sans text-sm text-text-secondary max-h-24 overflow-y-auto whitespace-pre-wrap">{brief}</p>
-        )}
-      </SidebarSection>
-      
-      <SidebarSection title="Цель Дебатов">
-        <textarea
-          value={debateGoal}
-          onChange={(e) => setDebateGoal(e.target.value)}
-          onBlur={handleUpdateGoal}
-          placeholder="Опишите главную цель..."
-          className="w-full p-2 bg-bg-main border border-bg-surface rounded-md text-text-main resize-none focus:ring-1 focus:ring-accent-primary"
-          rows={2}
-          disabled={isDebateInProgress}
-        />
-        {isSavingGoal && <p className="text-xs text-text-secondary animate-pulse mt-1">Сохраняем...</p>}
-      </SidebarSection>
 
-      <SidebarSection title="Настройки Прогона">
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-text-secondary mb-2 flex items-center">
-              1. Выберите команду
-            </label>
-            <ExpertSelector
-              availableExperts={availableExperts}
-              selectedExperts={selectedExperts}
-              setSelectedExperts={setSelectedExperts}
-              disabled={isDebateInProgress}
-            />
-            {stage === 'setup' && (
-              <div className="text-center my-2">
-                <span className="text-xs text-text-secondary/80">или</span>
-                <Button
-                  onClick={() => {
-                    const encodedBrief = encodeURIComponent(brief);
-                    router.push(`/experts/create?brief=${encodedBrief}`);
-                  }}
-                  variant="secondary"
-                  size="sm"
-                  className="w-full mt-1"
-                >
-                  Создать команду под этот бриф
-                </Button>
+      <div className="flex-grow space-y-4 overflow-y-auto pr-2">
+        <SidebarSection title="Тема и Цель" isOpen={openSections.mission} onToggle={() => toggleSection('mission')} isComplete={isMissionComplete}>
+          <div className="space-y-4">
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm font-medium text-text-secondary">Ваш Бриф</label>
+                {!isEditingBrief && (
+                  <Button onClick={() => setIsEditingBrief(true)} variant="secondary" size="sm" className="px-2 py-1 h-auto" title="Редактировать бриф">
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
-            )}
+              {isEditingBrief ? (
+                 <div className="space-y-2">
+                   <textarea value={editedBrief} onChange={(e) => setEditedBrief(e.target.value)} className="w-full p-2 h-48 bg-bg-main border border-border-main rounded-md text-text-main resize-y focus:ring-1 focus:ring-accent-primary" />
+                   <div className="flex gap-2">
+                     <Button onClick={handleSaveBrief} size="sm" variant="primary" className="w-full border-accent-success text-accent-success hover:bg-accent-success hover:text-text-on-accent">Сохранить</Button>
+                     <Button onClick={() => { setIsEditingBrief(false); setEditedBrief(brief); }} size="sm" variant="secondary" className="w-full">Отмена</Button>
+                   </div>
+                 </div>
+              ) : (
+                <p className="font-sans text-base text-text-secondary max-h-48 overflow-y-auto whitespace-pre-wrap pr-2">{brief}</p>
+              )}
+            </div>
+            <div className="mt-4 pt-4 border-t border-border-main">
+              <label htmlFor="debateGoal" className="block text-sm font-medium text-text-secondary">Цель Дебатов</label>
+              <p className="text-xs text-text-muted mb-2">Вы можете написать любую Вашу цель</p>
+              <textarea id="debateGoal" value={debateGoal} onChange={(e) => setDebateGoal(e.target.value)} onBlur={handleUpdateGoal} placeholder="Опишите главную цель..."
+                className="w-full p-2 bg-bg-main border border-border-main rounded-md text-text-main resize-none focus:ring-1 focus:ring-accent-primary"
+                rows={2} disabled={isDebateInProgress} />
+              {isSavingGoal && <p className="text-xs text-text-secondary animate-pulse mt-1">Сохраняем...</p>}
+            </div>
           </div>
-          <div>
-            <label htmlFor="rounds" className="block text-sm font-medium text-text-secondary mb-2 flex items-center">
-              2. Количество раундов
-            </label>
-            <select
-              id="rounds"
-              value={rounds}
-              onChange={e => setRounds(Number(e.target.value))}
-              className="select-primary"
-              disabled={isDebateInProgress}
-            >
-              <option value={1}>1 Раунд</option>
-              <option value={2}>2 Раунда</option>
-              <option value={3}>3 Раунда</option>
-              <option value={6}>6 Раундов</option>
-            </select>
+        </SidebarSection>
+
+        <SidebarSection title="Экспертная Группа" isOpen={openSections.team} onToggle={() => toggleSection('team')} isComplete={isTeamComplete}>
+          <ExpertSelector availableExperts={availableExperts} selectedExperts={selectedExperts} setSelectedExperts={setSelectedExperts} disabled={isDebateInProgress} />
+          
+          {isTeamComplete && !isDebateInProgress && (
+            <div className="mt-4 border-t border-border-main pt-4">
+              <h4 className="font-pixel text-sm uppercase text-text-secondary mb-2">Итоговая команда:</h4>
+              <div className="flex flex-wrap gap-2">
+                {selectedExperts.map(expert => (
+                  <div key={expert.id} className="flex items-center gap-2 rounded-full bg-accent-secondary/20 pl-3 pr-2 py-1 text-sm text-accent-secondary font-medium">
+                    <span>{expert.name}</span>
+                    <button onClick={() => setSelectedExperts(prev => prev.filter(e => e.id !== expert.id))} className="rounded-full hover:bg-white/20">
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {stage === 'setup' && (
+            <div className="mt-4 border-t border-border-main pt-4">
+              <span className="block text-center text-xs text-text-secondary/80 mb-2">или</span>
+              <Button onClick={() => router.push(`/experts/create?brief=${encodeURIComponent(brief)}`)} variant="secondary" size="sm" className="w-full">
+                Создать команду под этот бриф
+              </Button>
+            </div>
+          )}
+        </SidebarSection>
+
+        <SidebarSection title="Регламент Дебатов" isOpen={openSections.rules} onToggle={() => toggleSection('rules')} isComplete={true}>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="rounds" className="block text-sm font-medium text-text-secondary mb-2">Количество раундов</label>
+              <select id="rounds" value={rounds} onChange={e => setRounds(Number(e.target.value))} className="select-primary" disabled={isDebateInProgress}>
+                <option value={1}>1 Раунд</option>
+                <option value={2}>2 Раунда</option>
+                <option value={3}>3 Раунда</option>
+                <option value={6}>6 Раундов</option>
+              </select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <input type="checkbox" id="autopause" checked={autoPause} onChange={e => setAutoPause(e.target.checked)} disabled={isDebateInProgress}
+                className="h-4 w-4 rounded bg-bg-main border-bg-surface text-accent-primary focus:ring-accent-primary" />
+              <label htmlFor="autopause" className="text-sm font-medium text-text-main">Автопауза после раунда</label>
+            </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <input 
-              type="checkbox" 
-              id="autopause" 
-              checked={autoPause} 
-              onChange={e => setAutoPause(e.target.checked)}
-              disabled={isDebateInProgress}
-              className="h-4 w-4 rounded bg-bg-main border-bg-surface text-accent-primary focus:ring-accent-primary"
-            />
-            <label htmlFor="autopause" className="text-sm font-medium text-text-main flex items-center">
-              Автопауза после раунда
-            </label>
-          </div>
-          <button
-            type="button"
-            onClick={onStartDebate}
-            disabled={!selectedExperts.length || isDebateInProgress}
-            className="w-full py-3 font-pixel text-lg text-bg-main bg-accent-success rounded-lg hover:bg-accent-success/90 disabled:bg-bg-main disabled:text-text-secondary disabled:cursor-not-allowed transition-colors"
-          >
-            {isDebateInProgress ? 'Дебаты Идут' : 'Начать Новые Дебаты'}
-          </button>
-        </div>
-      </SidebarSection>
+        </SidebarSection>
+      </div>
+
+      <div className="mt-6 pt-6 border-t border-bg-surface flex-shrink-0">
+        <Button
+          type="button"
+          onClick={onStartDebate}
+          disabled={!isTeamComplete || isDebateInProgress}
+          className="w-full py-3 text-lg"
+          variant="action"
+        >
+          {isDebateInProgress ? 'Дебаты Идут...' : 'Начать Дебаты'}
+        </Button>
+      </div>
     </div>
   );
 }

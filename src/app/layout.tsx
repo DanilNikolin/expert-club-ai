@@ -1,5 +1,6 @@
+// D:\expert-club-ai\expert-club-ai\src\app\layout.tsx
 import type { Metadata } from 'next';
-import { Inter, Press_Start_2P } from 'next/font/google';
+import { Inter, Press_Start_2P, JetBrains_Mono } from 'next/font/google'; // 1. Добавили JetBrains_Mono
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import Header from '@/components/Header';
@@ -17,8 +18,15 @@ const pressStart = Press_Start_2P({
   variable: '--font-pixel',
 });
 
+// 2. Инициализировали JetBrains Mono
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin', 'cyrillic'],
+  weight: ['400', '700'],
+  variable: '--font-jetbrains-mono',
+});
+
 export const metadata: Metadata = {
-  title: 'Клуб Экспертов Идеи',
+  title: 'Клуб Экспертов AI',
   description: 'Создай свою команду AI-экспертов',
 };
 
@@ -28,8 +36,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} ${pressStart.variable} font-sans`}>
+    // 3. Сменили язык и добавили новую переменную шрифта
+    <html lang="ru" className={`${inter.variable} ${pressStart.variable} ${jetbrainsMono.variable}`}>
+      <body className="font-sans"> {/* 4. Убрали лишний font-sans отсюда, он будет в globals.css */}
         <AuthProvider>
           <Header />
           <main>{children}</main>
