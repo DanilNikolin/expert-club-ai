@@ -38,6 +38,7 @@ export type Expert = {
     userId: string;
     createdAt: { seconds: number; nanoseconds: number };
     updatedAt: { seconds: number; nanoseconds: number };
+    thinkingBudget?: number;
 };
 
 export type Discussion = {

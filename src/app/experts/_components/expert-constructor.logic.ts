@@ -25,6 +25,7 @@ export type Character = {
   hasHumor: boolean;
   isContradictionHunter: boolean;
   temperature: number;
+  thinkingBudget: number;
 };
 
 export type ExpertFormData = {
@@ -56,7 +57,7 @@ export const initialExpertFormData: ExpertFormData = {
   customContext: '',
   character: {
     constructiveness: 1, conformism: 1, conviction: 1, opennessToData: 1,
-    hasHumor: false, isContradictionHunter: false, temperature: 0.7,
+    hasHumor: false, isContradictionHunter: false, temperature: 0.7, thinkingBudget: 100,
   },
 };
 

@@ -5,6 +5,7 @@ import { type DebateMessage } from '@/types';
 import { LegacyRef } from 'react';
 import { Bot, BrainCircuit, User, Scale, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { type Expert } from '@/types';
 
 // Компонент для отображения мыслей
 const ThoughtBubble = ({ text, isCollapsed, onToggle }: { text: string; isCollapsed: boolean; onToggle: () => void; }) => {
@@ -44,11 +45,12 @@ const ThoughtBubble = ({ text, isCollapsed, onToggle }: { text: string; isCollap
 
 type ChatWindowProps = {
   messages: DebateMessage[];
-  chatEndRef: LegacyRef<HTMLDivElement> | undefined;
-  teamInRun: { id: string; name: string }[];
-  currentThoughts: Record<number, string>;
+  chatEndRef?: LegacyRef<HTMLDivElement> | undefined;
+  teamInRun: Expert[];
+  currentThoughts: Record<string, string>;
   collapsedThoughts: Set<number>;
   onToggleThought: (index: number) => void;
+  expertStates: Record<string, 'typing' | 'done' | 'idle'>;
 };
 
 const expertTextColors = [
@@ -56,7 +58,7 @@ const expertTextColors = [
     'text-amber-400', 'text-rose-400', 'text-teal-400',
 ];
 
-export default function ChatWindow({ messages, chatEndRef, teamInRun, currentThoughts, collapsedThoughts, onToggleThought }: ChatWindowProps) {
+export default function ChatWindow({ messages, chatEndRef, teamInRun, currentThoughts, collapsedThoughts, onToggleThought, expertStates }: ChatWindowProps) {
   const expertColorMap = new Map<string, string>();
   teamInRun.forEach((member, index) => {
     expertColorMap.set(member.name, expertTextColors[index % expertTextColors.length]);
@@ -86,9 +88,10 @@ export default function ChatWindow({ messages, chatEndRef, teamInRun, currentTho
             )
           }
 
-          const thoughts = (!isUser && currentThoughts[i]) || '';
+          const thoughts = (!isUser && currentThoughts[m.name || '']) || '';
           const isThoughtCollapsed = collapsedThoughts.has(i);
           const hasThoughts = thoughts.trim() !== '';
+          const expertStatus = expertStates[m.name || ''] || 'idle';
 
           return (
             <div key={i} className={cn('flex items-start gap-4', isUser && 'justify-end')}>
@@ -112,7 +115,7 @@ export default function ChatWindow({ messages, chatEndRef, teamInRun, currentTho
                 )}>
                   <p className={`font-pixel text-sm mb-2 ${isUser ? 'text-accent-primary' : expertColorMap.get(m.name || '')}`}>
                     {m.name || (isUser ? 'Ты' : 'Эксперт')}
-                    {m.isStreaming && <span className="animate-pulse">...</span>}
+                    {expertStatus === 'typing' && <span className="animate-pulse">...</span>}
                   </p>
                   <p className="text-text-main whitespace-pre-wrap text-base leading-relaxed">{m.content as string}</p>
                 </div>
