@@ -57,8 +57,9 @@ export const initialExpertFormData: ExpertFormData = {
   customContext: '',
   character: {
     constructiveness: 1, conformism: 1, conviction: 1, opennessToData: 1,
-    hasHumor: false, isContradictionHunter: false, temperature: 0.7, thinkingBudget: 100,
-  },
+    hasHumor: false, isContradictionHunter: false, temperature: 0.7,
+    thinkingBudget: 100, 
+},
 };
 
 // --- ЛЕЙБЛЫ ---
@@ -108,9 +109,10 @@ export const expertTemplates: Record<string, { name: string, data: ExpertTemplat
         'Strategy & Market': 20, 'Ethics & Society': 0, 'Law & Risks': 20, 'Generalist': 0,
       },
       character: {
-        constructiveness: 8, conformism: 3, conviction: 9, opennessToData: 9,
-        hasHumor: false, isContradictionHunter: true, temperature: 0.3,
-      },
+      constructiveness: 8, conformism: 3, conviction: 9, opennessToData: 9,
+      hasHumor: false, isContradictionHunter: true, temperature: 0.3,
+      thinkingBudget: 100, 
+  },
     }
   },
   creative_storm: {
@@ -123,9 +125,10 @@ export const expertTemplates: Record<string, { name: string, data: ExpertTemplat
         'Strategy & Market': 10, 'Ethics & Society': 0, 'Law & Risks': 0, 'Generalist': 0,
       },
       character: {
-        constructiveness: 7, conformism: 8, conviction: 4, opennessToData: 6,
-        hasHumor: true, isContradictionHunter: false, temperature: 1.5,
-      },
+      constructiveness: 7, conformism: 8, conviction: 4, opennessToData: 6,
+      hasHumor: true, isContradictionHunter: false, temperature: 1.5,
+      thinkingBudget: 100, 
+  },
     }
   },
   pragmatic_product_manager: {
@@ -138,9 +141,10 @@ export const expertTemplates: Record<string, { name: string, data: ExpertTemplat
         'Strategy & Market': 10, 'Ethics & Society': 0, 'Law & Risks': 0, 'Generalist': 0,
       },
       character: {
-        constructiveness: 9, conformism: 6, conviction: 7, opennessToData: 8,
-        hasHumor: false, isContradictionHunter: false, temperature: 0.7,
-      },
+      constructiveness: 9, conformism: 6, conviction: 7, opennessToData: 8,
+      hasHumor: false, isContradictionHunter: false, temperature: 0.7,
+      thinkingBudget: 100,
+  },
     }
   },
 };
