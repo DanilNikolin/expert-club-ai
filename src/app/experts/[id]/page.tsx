@@ -471,6 +471,7 @@ return (
                     chatError={chatError}
                     startCreationWizard={startCreationWizard}
                     isCreateMode={isCreateMode}
+                    expertName={formData.name}
                   />
                 </ConfigSectionCard>
               )}

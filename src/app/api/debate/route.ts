@@ -6,8 +6,6 @@
 import OpenAI from 'openai';
 import { Stream } from 'openai/streaming';
 import { type ChatCompletionChunk } from 'openai/resources/chat/completions';
-import { db } from '@/firebase.config.js';
-import { doc, updateDoc } from 'firebase/firestore';
 import slugify from 'slugify'; // Используем slugify для sanitizeName
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 
@@ -283,7 +281,7 @@ export async function POST(req: Request) {
         history: DebateMessage[];
     } = await req.json();
 
-    const { discussionId, runId, brief, debateGoal, selectedExperts, history } = body;
+    const { brief, debateGoal, selectedExperts, history } = body;
 
     const stream = new ReadableStream({
         async start(controller) {
@@ -547,11 +545,6 @@ export async function POST(req: Request) {
                         sendEvent({ type: 'expert_end', fullMessage: finalMessage });
                     }
                 } // <<< КОНЕЦ ЦИКЛА FOR
-
-                // ТЕПЕРЬ СОХРАНЯЕМ И ЗАКРЫВАЕМ СТРИМ, ПОСЛЕ ТОГО КАК ВСЕ ЭКСПЕРТЫ ОТВЕТИЛИ
-                await updateDoc(doc(db, 'discussions', discussionId, 'runs', runId), {
-                    transcript: currentHistory
-                });
 
                 controller.close();
 

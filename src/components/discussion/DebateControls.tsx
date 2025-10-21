@@ -14,6 +14,7 @@ type DebateControlsProps = {
   onContinue: () => void;
   onGetVerdict: () => void;
   activeRun: Run | null;
+  liveRunId: string | null;
 };
 
 export default function DebateControls({
@@ -25,7 +26,24 @@ export default function DebateControls({
   onContinue,
   onGetVerdict,
   activeRun,
+  liveRunId, // <-- ПРИНЯЛИ
 }: DebateControlsProps) {
+
+  // --- ГЛАВНЫЙ ЗАМОК "READ-ONLY" ---
+  // Если мы смотрим не на "живой" прогон, не показываем НИКАКИХ кнопок.
+  if (!activeRun || activeRun.id !== liveRunId) {
+    
+    // Но если мы смотрим на *старый* прогон И у него *нет* отчета,
+    // надо хотя бы сообщить, что он "Архивный"
+    if (activeRun && !activeRun.report) {
+         return (
+            <div className="mt-6 pt-6 border-t border-bg-surface text-center">
+              <h3 className="title-pixel text-text-secondary mb-3">АРХИВНЫЙ ПРОГОН (READ-ONLY)</h3>
+            </div>
+         );
+    }
+    return null; // Для завершенных с отчетом - ничего не показываем
+  }
 
   // --- Контролы на паузе ---
   if (stage === 'paused' && currentRound < rounds) {

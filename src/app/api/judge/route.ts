@@ -1,8 +1,6 @@
 // src/app/api/judge/route.ts
 import OpenAI from 'openai';
 import { NextResponse } from 'next/server';
-import { db } from '@/firebase.config.js';
-import { doc, updateDoc } from 'firebase/firestore'; // Убедись, что тут updateDoc
 import slugify from 'slugify';
 
 if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY не найден.');
@@ -81,20 +79,12 @@ export async function POST(request: Request) {
                     temperature: 0.7 
                 });
         
-                let report = '';
                 for await (const chunk of judgeStream) {
                     const content = chunk.choices[0]?.delta?.content || '';
-                    report += content;
+                    // report += content; // НАХУЙ
                     pushData({ type: 'chunk', content });
                 }
         
-                // ГЛАВНОЕ: ОБНОВЛЯЕМ, А НЕ СОЗДАЕМ
-                const runDocRef = doc(db, 'discussions', discussionId, 'runs', runId);
-                await updateDoc(runDocRef, {
-                    report: report,
-                    transcript: debateHistory 
-                });
-
                 pushData({ type: 'judge_end' });
                 controller.close();
 

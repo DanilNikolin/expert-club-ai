@@ -17,7 +17,7 @@ import ChatWindow from '@/components/discussion/ChatWindow';
 import DebateControls from '@/components/discussion/DebateControls';
 
 type SseEventData = {
-    type: 'expert_start' | 'chunk' | 'expert_end' | 'error' | 'thought_chunk'; // <-- ДОБАВИЛИ НОВЫЙ ТИП
+    type: 'expert_start' | 'chunk' | 'expert_end' | 'error' | 'thought_chunk';
     name?: string;
     content?: string;
     fullMessage?: DebateMessage;
@@ -41,6 +41,7 @@ export default function DiscussionPage() {
     const [rounds, setRounds] = useState(2);
     const [currentRound, setCurrentRound] = useState(0);
     const [messages, setMessages] = useState<DebateMessage[]>([]);
+    const [liveRunId, setLiveRunId] = useState<string | null>(null);
     const [userIntervention, setUserIntervention] = useState('');
     const [autoPause, setAutoPause] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
@@ -83,13 +84,15 @@ export default function DiscussionPage() {
         
         const runsSnap = await getDocs(query(collection(db, 'discussions', discussionId, 'runs'), orderBy('createdAt', 'desc')));
         const fetchedRuns = runsSnap.docs.map(x => ({ id: x.id, ...x.data() } as Run));
+        
+        // 1. Мы ВСЕГДА устанавливаем список "прогонов" для Архива
         setRuns(fetchedRuns);
+        
+        // 2. И мы ВСЕГДА принудительно сбрасываем состояние в 'setup' при загрузке страницы.
+        // Пользователь сам решит, начать новый "ран" или выбрать старый из списка.
+        setActiveRun(null);
+        setLiveRunId(null);
 
-        if (fetchedRuns.length) {
-            setActiveRun(fetchedRuns[0]);
-            setMessages(fetchedRuns[0].transcript);
-            setStage(fetchedRuns[0].report ? 'finished' : 'setup');
-        } else setStage('setup');
         setIsLoading(false);
     }, [discussionId, router]);
 
@@ -104,14 +107,33 @@ export default function DiscussionPage() {
     }, [user, authLoading, router, fetchData]);
 
     useEffect(() => {
-        if (activeRun) {
-            const transcriptWithReport = [...activeRun.transcript];
-            if (activeRun.report) {
-              transcriptWithReport.push({ role: 'assistant', name: 'Судья', content: activeRun.report });
-            }
-            setMessages(transcriptWithReport);
+        if (!activeRun) {
+            // Если смотреть не на что - чистим всё
+            setMessages([]);
+            setStage('setup');
+            return;
         }
-    }, [activeRun]);
+
+        // 1. Всегда показываем "Replay" того, что выбрали
+        const transcriptWithReport = [...activeRun.transcript];
+        if (activeRun.report) {
+          transcriptWithReport.push({ role: 'assistant', name: 'Судья', content: activeRun.report });
+        }
+        
+    
+
+        setMessages(transcriptWithReport);
+
+        // 2. Решаем, какой сейчас "режим"
+        if (activeRun.report) {
+            setStage('finished');
+        } else if (activeRun.id === liveRunId) {
+            setStage('paused');
+        } else {
+            setStage('finished');
+        }
+        
+    }, [activeRun, liveRunId]); 
 
     const handleUpdateGoal = async () => {
         if (!debateGoal) return;
@@ -308,7 +330,7 @@ export default function DiscussionPage() {
                     runId: activeRun.id,
                     discussionId,
                     brief,
-                    debateHistory: messages,
+                    debateHistory: messages, // <-- Отправляем историю ДО вердикта
                 }),
             });
 
@@ -344,6 +366,7 @@ export default function DiscussionPage() {
                             if (judgeMessageIndex === -1) {
                                 judgeMessageIndex = newMessages.length - 1;
                             }
+                            // Это .map() — правильный способ обновить state в React
                             return currentMessages.map((msg, index) => {
                             if (index === judgeMessageIndex) {
                                 return { ...msg, content: report };
@@ -355,22 +378,39 @@ export default function DiscussionPage() {
                 }
             }
             
+            // --- ВОТ ОН, ФИКС СОХРАНЕНИЯ ---
+            // Раз уж мы на клиенте и у нас есть права, сохраняем сами.
+            // activeRun.id 100% существует, раз мы дошли до Судьи.
+            const runDocRef = doc(db, 'discussions', discussionId, 'runs', activeRun!.id);
+            await updateDoc(runDocRef, {
+                report: report.trim(), // Сохраняем свежий отчет
+                transcript: messages   // Сохраняем ИСТОРИЮ, которая была ДО вызова судьи
+            });
+            // --- КОНЕЦ ФИКСА ---
+
             setMessages(currentMessages => {
                 const newMessages = [...currentMessages];
+                if (judgeMessageIndex === -1) { // На случай, если Судья не сказал ни слова
+                    judgeMessageIndex = newMessages.length - 1;
+                }
+                
                 if (newMessages[judgeMessageIndex]) {
                     newMessages[judgeMessageIndex].isStreaming = false;
-                    newMessages[judgeMessageIndex].content = report;
+                    newMessages[judgeMessageIndex].content = report.trim();
                 }
                 return newMessages;
             });
 
-            setActiveRun(prev => prev ? { ...prev, report } : null);
+            // Обновляем и локальный activeRun, чтобы не пришлось перезагружать
+            setActiveRun(prev => prev ? { ...prev, report: report.trim(), transcript: messages } : null);
             setStage('finished');
 
         } catch (error) {
             console.error("Judge Error:", error);
             alert(`Failed to get verdict: ${error}`);
-            setStage('paused');
+            setStage('paused'); // Откатываем на 'паузу' если Судья сломался
+            // Убираем стриминговое сообщение Судьи
+            setMessages(prev => prev.filter(m => m.name !== 'Судья' || !m.isStreaming));
         }
     };
 
@@ -401,6 +441,7 @@ export default function DiscussionPage() {
 
             setRuns(prev => [newRun, ...prev]);
             setActiveRun(newRun);
+            setLiveRunId(newRun.id);
             setMessages([]);
             setCurrentRound(0);
             setStage('debating');
@@ -469,6 +510,7 @@ export default function DiscussionPage() {
                     onContinue={onContinueDebate}
                     onGetVerdict={handleGetVerdict}
                     activeRun={activeRun}
+                    liveRunId={liveRunId}
                 />
             </main>
         </div>

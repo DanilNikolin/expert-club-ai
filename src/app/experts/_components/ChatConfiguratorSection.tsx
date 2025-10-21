@@ -16,7 +16,8 @@ type Props = {
   handleChatSubmit: (e: React.FormEvent) => void;
   chatError: string;
   startCreationWizard: (suggestions: ExpertSuggestion[], selectedNames: string[]) => void;
-  isCreateMode: boolean; // <-- ДОБАВЬ ЭТУ СТРОКУ
+  isCreateMode: boolean;
+  expertName: string;
 };
 
 const ChatMessage = ({ msg }: { msg: ConstructorChatMessage }) => {
@@ -43,7 +44,8 @@ export default function ChatConfiguratorSection({
   handleChatSubmit,
   chatError,
   startCreationWizard,
-  isCreateMode // <-- ДОБАВЬ ЭТУ СТРОКУ
+  isCreateMode,
+  expertName 
 }: Props) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -69,9 +71,23 @@ export default function ChatConfiguratorSection({
     <div className="flex h-full flex-col">
       <div className="flex-grow space-y-2 overflow-y-auto p-1 pr-3">
         {chatMessages.length === 0 && !isChatLoading && (
-          <p className="flex h-full items-center justify-center text-center font-sans text-sm text-text-secondary">
-            Начните диалог, чтобы создать или изменить эксперта...
-          </p>
+          <>
+            {isCreateMode ? (
+              <p className="flex h-full items-center justify-center text-center font-sans text-sm text-text-secondary">
+                Начните диалог, чтобы создать или изменить эксперта...
+              </p>
+            ) : (
+              // ВОТ ОН, НОВЫЙ БЛОК ДЛЯ РЕДАКТИРОВАНИЯ
+              <div className="flex h-full flex-col items-center justify-center text-center text-sm text-text-secondary p-4 rounded-lg bg-bg-main/50 border border-dashed border-bg-surface">
+                <Bot className="h-8 w-8 text-accent-primary mb-2" />
+                <p className="font-pixel text-base text-text-main mb-1 truncate max-w-full px-4">
+                  Редактор «{expertName || 'Твой Эксперт'}»
+                </p>
+                <p>Скажи мне, что поправить на <span className="text-accent-primary">естественном языке</span>.</p>
+                <p className="text-xs text-text-muted mt-2">(Например: &ldquo;сделай его злее&rdquo; или &ldquo;добавь экспертизы в финансах&rdquo;)</p>
+              </div>
+            )}
+          </>
         )}
         
         {chatMessages.map((msg, index) => (

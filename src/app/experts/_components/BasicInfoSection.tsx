@@ -63,9 +63,9 @@ export default function BasicInfoSection({ formData, handleChange, validationErr
             onChange={handleChange}
             className="select-primary"
           >
-            <optgroup label="Google (Июль 2025)">
+            {/* <optgroup label="Google (Июль 2025)">
               <option value="gemini-2.5-flash">Gemini 2.5 Flash (Баланс/Мощь)</option>
-            </optgroup>
+            </optgroup> */}
             <optgroup label="OpenAI (Стриминг)">
               <option value="gpt-4.1-mini">GPT-4.1 Mini (Стрим)</option>
             </optgroup>
