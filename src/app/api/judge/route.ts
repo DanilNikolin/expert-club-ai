@@ -74,11 +74,12 @@ export async function POST(request: Request) {
                 ];
                 
                 const judgeStream = await openai.chat.completions.create({
-                    model: 'gpt-4o-mini', 
-                    messages: messagesForJudge,
-                    stream: true,
-                    temperature: 0.5
-                });
+                    model: 'gpt-4.1-mini',
+                    messages: messagesForJudge,
+                    stream: true,
+                    max_tokens: 4096,
+                    temperature: 0.7 
+                });
         
                 let report = '';
                 for await (const chunk of judgeStream) {

@@ -79,12 +79,13 @@ Your task is to write the NEXT message in this dialogue, strictly adhering to th
     });
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4.1-mini',
+      model: 'gpt-5-mini',
       messages: [
         { role: 'system', content: prompt },
         ...formattedMessages
       ],
-      temperature: 0.9,
+      // temperature убрана
+      max_completion_tokens: 1024, // ИСПРАВЛЕНО
     });
 
     const responseContent = response.choices[0].message.content;

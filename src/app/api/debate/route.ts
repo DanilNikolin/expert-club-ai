@@ -446,12 +446,16 @@ export async function POST(req: Request) {
                             ...currentHistory.slice(-MAX_MSGS).map(msg => ({ role: msg.role, content: msg.content, name: msg.role === 'assistant' ? sanitizeName(msg.name!) : undefined })),
                         ];
                         
+                        const isGpt5 = expert.model.startsWith('gpt-5');
+
                         const responseStream = await apiClient.chat.completions.create({
-                            model: expert.model || 'gpt-4.1-mini',
+                            model: expert.model || 'gpt-5-mini',
                             messages: messagesForExpert,
                             stream: true,
-                            temperature: expert.character.temperature ?? 0.7,
-                            max_tokens: 2000,
+                            ...(isGpt5
+                                ? { max_completion_tokens: 4096 }
+                                : { temperature: expert.character.temperature ?? 0.7, max_tokens: 2000 } // Старый API для остальных
+                            ),
                         });
 
                         let buffer = '';

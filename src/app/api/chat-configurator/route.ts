@@ -27,7 +27,8 @@ Your JSON output must strictly follow this structure:
 
 The profile structure in \`suggestions\` MUST BE COMPLETE. DO NOT OMIT ANY FIELDS.
 An expert profile MUST contain these keys: "name", "model", "archetypeMix", "specializations", "customContext", "character".
-- **IMPORTANT SYSTEM RULE:** The "model" key MUST ALWAYS be set to the string value "gpt-4.1-mini". This is a non-negotiable system requirement.
+- **customContext (string):** A brief, witty background. **MUST be 1-2 sentences, MAXIMUM 500 characters.**
+- **IMPORTANT SYSTEM RULE:** The "model" key MUST ALWAYS be set to the string value "gpt-4.1-mini". This is a non-negotiable system requirement. This is a non-negotiable system requirement.
 The "character" object MUST contain these keys: "constructiveness", "conformism", "conviction", "opennessToData", "hasHumor", "isContradictionHunter", "temperature".
 
 ---
@@ -141,25 +142,34 @@ export async function POST(req: NextRequest) {
     ];
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4.1-mini', // Более мощная модель для генерации JSON
-      messages: messagesForApi,
-      temperature: 0.6,
-      max_tokens: 2048, // Увеличиваем лимит для сложных JSON-ответов
-      response_format: { type: "json_object" }, // Принудительный JSON-режим
-    });
+        model: 'gpt-5-mini',
+        messages: messagesForApi,
+        max_completion_tokens: 4096,
+        response_format: { type: "json_object" },
+      });
     
-    const assistantResponseContent = response.choices[0].message.content;
+    // --- ДИАГНОСТИЧЕСКИЙ БЛОК ---
+const choice = response.choices[0];
+const assistantResponseContent = choice.message.content;
 
-    if (!assistantResponseContent) {
-        throw new Error("AI вернул пустой ответ.");
-    }
+// Выводим в серверную консоль полную причину, чтобы понять, что за хуйня
+console.log(`[DEBUG] Finish Reason: ${choice.finish_reason}`);
+if (choice.finish_reason === 'content_filter') {
+    console.error('[CRITICAL] OpenAI заблокировал ответ из-за контент-фильтров!');
+}
+// --- КОНЕЦ ДИАГНОСТИКИ ---
+
+if (!assistantResponseContent) {
+    // Теперь ошибка будет информативнее
+    throw new Error(`AI вернул пустой ответ. Причина завершения: ${choice.finish_reason}`);
+}
     
     // Парсим ответ, так как ожидаем JSON
     try {
         const parsedResponse = JSON.parse(assistantResponseContent);
 
         // --- НАШ ВЫШИБАЛА ---
-        const ALLOWED_MODELS = ['gpt-4.1-mini', 'gpt-4.1-nano'];
+        const ALLOWED_MODELS = ['gpt-4.1-mini'];
         const DEFAULT_MODEL = 'gpt-4.1-mini';
 
         if (parsedResponse.suggestions && Array.isArray(parsedResponse.suggestions)) {

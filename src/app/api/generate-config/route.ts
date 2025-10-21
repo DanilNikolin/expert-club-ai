@@ -9,7 +9,7 @@ const openai = new OpenAI({
 const expertDataStructure = `
 {
   "name": "Имя Эксперта (string, до 100 симв.)",
-  "model": "gpt-4.1-mini",
+  "model": "gpt-5-mini",
   "archetypeMix": { "analyst": number, "synthesizer": number, "resonator": number }, // Сумма = 100
   "specializations": {
     "Product & Technologies": number,
@@ -53,7 +53,7 @@ ${expertDataStructure}
 
 - Сумма значений в 'archetypeMix' и 'specializations' должна быть ровно 100.
 - Придумай подходящее Имя и 'customContext', отражающие суть персонажа.
-- 'model' всегда 'gpt-4.1-mini'.
+- 'model' всегда 'gpt-5-mini'.
 - Все числовые значения должны быть в своих диапазонах.
 - Твой ответ — ТОЛЬКО валидный JSON-объект. Без лишних слов, без объяснений.
 `;
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
     `;
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4.1-mini',
+      model: 'gpt-5-mini',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }

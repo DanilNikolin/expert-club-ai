@@ -70,10 +70,11 @@ export default function ExpertCard({ expert, isExpanded, onToggle, onDelete }: E
       <div
         className={cn(
           'transition-all duration-500 ease-in-out overflow-hidden',
-          isExpanded ? 'max-h-[500px]' : 'max-h-0'
+          isExpanded ? 'max-h-[500px]' : 'max-h-0',
+          'flex flex-col'
         )}
       >
-        <div className="px-5 pb-5 space-y-4 border-t border-border-main pt-4">
+        <div className="flex-grow overflow-y-auto px-5 pt-4 pb-4 space-y-4 border-t border-border-main">
 
           {/* Специализации */}
           <div>
@@ -115,15 +116,15 @@ export default function ExpertCard({ expert, isExpanded, onToggle, onDelete }: E
           {expert.customContext && (
             <div className="space-y-1">
               <h4 className="font-pixel text-sm uppercase text-text-secondary">Кастомный Контекст</h4>
-              <p className="font-sans text-xs italic text-text-secondary border-l-2 border-accent-secondary pl-2">
+              <p className="font-sans text-xs italic text-text-secondary border-l-2 border-accent-secondary pl-2 whitespace-pre-wrap break-words">
                 &quot;{expert.customContext}&quot;
               </p>
             </div>
           )}
         </div>
 
-        {/* Футер с кнопками */}
-        <div className="flex gap-3 justify-end border-t border-border-main px-5 py-3 bg-bg-main/50 rounded-b-xl">
+        {/* 2. Это футер, он теперь прижат к низу */}
+        <div className="flex-shrink-0 flex gap-3 justify-end border-t border-border-main px-5 py-3 bg-bg-main/50 rounded-b-xl">
           <Link href={`/experts/${expert.id}`}>
             <button className="px-3 py-1 rounded font-pixel text-xs bg-bg-surface text-text-secondary hover:bg-bg-elevated hover:text-text-main transition">
               Редактировать

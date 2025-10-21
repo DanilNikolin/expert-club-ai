@@ -26,16 +26,20 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(auth, email, password);
       console.log('Успешный вход через email/пароль');
       router.push('/'); // ДОБАВИЛИ РЕДИРЕКТ
-    } catch (err) {
-      // Проверяем, что это объект ошибки, чтобы TypeScript был доволен
-      if (err instanceof Error) {
-        console.error('Ошибка...', err.message);
-        // Тут можно даже более детально ошибку показать, если захочешь
-        // Например, для signup: if (err.code === 'auth/email-already-in-use') ...
-        setError('Неверные данные или произошла ошибка.');
+    } catch (err: unknown) { // Ловим как unknown
+      // Продвинутая, блядь, обработка ошибок (как в signup)
+      if (typeof err === 'object' && err !== null && 'code' in err) {
+        const firebaseError = err as { code: string; message: string }; // Кастуем, чтоб TS не выебывался
+        console.warn('Ошибка входа (ожидаемая):', firebaseError.code); // Меняем на warn, чтоб Next не орал
+        
+        if (firebaseError.code === 'auth/invalid-credential' || firebaseError.code === 'auth/wrong-password' || firebaseError.code === 'auth/user-not-found') {
+          setError('Неверный email или пароль. Проверь данные или зарегистрируйся.');
+        } else {
+          setError('Произошла какая-то хуйня. Попробуй позже.');
+        }
       } else {
         // На случай если прилетела вообще какая-то дичь
-        console.error('Неизвестная ошибка:', err);
+        console.warn('Неизвестная ошибка входа:', err); // Тоже на warn
         setError('Произошла неизвестная ошибка.');
       }
     }
