@@ -418,34 +418,8 @@ return (
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 gap-x-12 gap-y-16 lg:grid-cols-12">
 
-          {/* --- ЛЕВАЯ КОЛОНКА (7 из 12) --- */}
-          <div className="lg:col-span-7 space-y-8">
-            <BasicInfoSection
-              formData={formData}
-              handleChange={handleChange}
-              validationErrors={validationErrors}
-            />
-            <ArchetypeSection
-              archetypeMix={formData.archetypeMix}
-              handleArchetypeMixChange={handleArchetypeMixChange}
-              resetArchetypeMix={resetArchetypeMix}
-            />
-            <SpecializationSection
-              specializations={formData.specializations}
-              customContext={formData.customContext}
-              validationErrors={validationErrors}
-              handleSpecializationMixChange={handleSpecializationMixChange}
-              handleChange={handleChange}
-              resetSpecializationMix={resetSpecializationMix}
-            />
-            <CharacterSection
-              character={formData.character}
-              handleCharacterSliderChange={handleCharacterSliderChange}
-              handleCharacterCheckboxChange={handleCharacterCheckboxChange}
-            />
-          </div>
-
           {/* --- ПРАВАЯ КОЛОНКА (5 из 12) --- */}
+          {/* МЫ ПЕРЕМЕСТИЛИ ЕЕ ВВЕРХ ДЛЯ ПРАВИЛЬНОГО ПОРЯДКА НА МОБИЛКАХ */}
           <aside className="lg:col-span-5 lg:sticky lg:top-28 h-fit">
             <div className="space-y-8">
               <ConstructorHeader
@@ -485,6 +459,36 @@ return (
               />
             </div>
           </aside>
+
+          {/* --- ЛЕВАЯ КОЛОНКА (7 из 12) --- */}
+          <div className="lg:col-span-7 space-y-8">
+            <BasicInfoSection
+              formData={formData}
+              handleChange={handleChange}
+              validationErrors={validationErrors}
+            />
+            <ArchetypeSection
+              archetypeMix={formData.archetypeMix}
+              handleArchetypeMixChange={handleArchetypeMixChange}
+              resetArchetypeMix={resetArchetypeMix}
+            />
+            <SpecializationSection
+              specializations={formData.specializations}
+              customContext={formData.customContext}
+              validationErrors={validationErrors}
+              handleSpecializationMixChange={handleSpecializationMixChange}
+              handleChange={handleChange}
+              resetSpecializationMix={resetSpecializationMix}
+            />
+            <CharacterSection
+              character={formData.character}
+              handleCharacterSliderChange={handleCharacterSliderChange}
+              handleCharacterCheckboxChange={handleCharacterCheckboxChange}
+            />
+          </div>
+
+          {/* --- ПРАВАЯ КОЛОНКА (5 из 12) --- */}
+          {/* ОНА ПЕРЕЕХАЛА ВВЕРХ */}
         </div>
       </form>
     </div>

@@ -40,3 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .aider*
+
+# --- Ignore all local script stuff ---
+/Script_/
+/Script_/**

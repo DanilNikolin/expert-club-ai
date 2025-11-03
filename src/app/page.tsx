@@ -52,13 +52,13 @@ export default function HomePage() {
         <div id="content" className="max-w-5xl mx-auto">
           
           <h1 className="flex flex-col items-center gap-y-3 text-4xl md:text-6xl font-pixel uppercase mb-8">
-            <span className="inline-block whitespace-nowrap rounded-md bg-bg-surface/50 px-4 py-2 text-accent-primary">
+            <span className="inline-block md:whitespace-nowrap rounded-md bg-bg-surface/50 px-4 py-2 text-accent-primary">
               Собери команду AI.
             </span>
-            <span className="inline-block whitespace-nowrap rounded-md bg-bg-surface/50 px-4 py-2 text-accent-primary">
+            <span className="inline-block md:whitespace-nowrap rounded-md bg-bg-surface/50 px-4 py-2 text-accent-primary">
               Дай им цель.
             </span>
-            <span className="inline-block whitespace-nowrap rounded-md bg-bg-surface/50 px-4 py-2 text-accent-secondary">
+            <span className="inline-block md:whitespace-nowrap rounded-md bg-bg-surface/50 px-4 py-2 text-accent-secondary">
               Скажи &apos;Фас!&apos;.
             </span>
           </h1>
