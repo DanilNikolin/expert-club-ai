@@ -23,13 +23,13 @@ export default function ConciergeHeader({ onStartBrief, isSubmitting, isChatEmpt
 
   return (
     <>
-      <div className="flex justify-between items-start mb-4 pb-4 border-b border-bg-surface">
+      <div className="flex flex-col md:flex-row justify-between items-start gap-2 md:gap-4 mb-2 md:mb-4 pb-2 md:pb-4 border-b border-bg-surface">
         <div>
           <div className="flex items-center gap-4">
             {/* КОММЕНТАРИЙ ДЛЯ ТЕБЯ, ДАНИЛ: 
               Вот тот самый заголовок. Сейчас 'text-2xl', можешь менять на 'text-3xl' и т.д., чтобы подобрать идеальный размер.
             */}
-            <h1 className="font-pixel text-3xl text-accent-primary uppercase">Консьерж</h1>
+            <h1 className="font-pixel text-2xl md:text-3xl text-accent-primary uppercase">Консьерж</h1>
             <span
               className={cn(
                 'font-mono text-xs uppercase px-2 py-1 rounded-sm',
@@ -41,22 +41,23 @@ export default function ConciergeHeader({ onStartBrief, isSubmitting, isChatEmpt
               {isChatEmpty ? 'Ожидание ввода' : 'Сбор данных'}
             </span>
           </div>
-          <p className="font-sans text-text-secondary mt-2 max-w-lg">
-            {isChatEmpty
-              ? 'Начните диалог, чтобы я помог вам сформулировать бриф для экспертов.'
-              : 'Отлично! Уточняйте детали или формируйте бриф в любой момент.'}
-          </p>
+          {isChatEmpty && (
+            <p className="font-sans text-text-secondary mt-1 md:mt-2 max-w-lg">
+              Начните диалог, чтобы я помог вам сформулировать бриф для экспертов.
+            </p>
+          )}
         </div>
         <Button
-          onClick={onStartBrief}
-          disabled={isChatEmpty || isLoading || isSubmitting}
-          isLoading={isSubmitting}
-          size="default"
-          className={cn(
-            'bg-accent-success hover:bg-accent-success/90 focus:ring-accent-success flex-shrink-0',
-            hasBecomeActive && 'animate-pulse-glow'
-          )}
-        >
+            onClick={onStartBrief}
+            disabled={isChatEmpty || isLoading || isSubmitting}
+            isLoading={isSubmitting}
+            size="default" // Оставляем для px-8 и text-base
+            className={cn(
+              'bg-accent-success hover:bg-accent-success/90 focus:ring-accent-success w-full md:w-auto flex-shrink-0',
+              'py-2 md:py-4', // <-- ВОТ ФИКС: Уменьшаем паддинг на мобилке, возвращаем на десктопе.
+              hasBecomeActive && 'animate-pulse-glow'
+            )}
+          >
           <FileText className="mr-2 h-4 w-4" />
           {isSubmitting ? 'Формируем...' : 'Сформировать Бриф'}
         </Button>

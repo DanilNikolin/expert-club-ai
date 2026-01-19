@@ -6,39 +6,39 @@ import OpenAI from 'openai';
 export type ArchetypeMix = { analyst: number; synthesizer: number; resonator: number };
 
 export type SpecializationMix = {
-    'Product & Technologies': number;
-    'Finance & Resources': number;
-    'Marketing & Audience': number;
-    'Strategy & Market': number;
-    'Ethics & Society': number;
-    'Law & Risks': number;
-    'Generalist': number;
+  'Product & Technologies': number;
+  'Finance & Resources': number;
+  'Marketing & Audience': number;
+  'Strategy & Market': number;
+  'Ethics & Society': number;
+  'Law & Risks': number;
+  'Generalist': number;
 };
 
 export type Character = {
-    constructiveness: number;
-    conformism: number;
-    conviction: number;
-    opennessToData: number;
-    hasHumor: boolean;
-    isContradictionHunter: boolean;
-    temperature: number;
+  constructiveness: number;
+  conformism: number;
+  conviction: number;
+  opennessToData: number;
+  hasHumor: boolean;
+  isContradictionHunter: boolean;
+  temperature: number;
 };
 
 // --- Полный тип эксперта, как он хранится в Firestore ---
 export type Expert = {
-    id: string;
-    name: string;
-    model: string; // Добавил поле модели
-    baseArchetype: 'Analyst' | 'Synthesizer' | 'Resonator'; // Это поле у тебя было, но не в типе
-    archetypeMix: ArchetypeMix;
-    specializations: SpecializationMix;
-    customContext: string;
-    character: Character;
-    userId: string;
-    createdAt: { seconds: number; nanoseconds: number };
-    updatedAt: { seconds: number; nanoseconds: number };
-    thinkingBudget?: number;
+  id: string;
+  name: string;
+  model: string; // Добавил поле модели
+  baseArchetype: 'Analyst' | 'Synthesizer' | 'Resonator'; // Это поле у тебя было, но не в типе
+  archetypeMix: ArchetypeMix;
+  specializations: SpecializationMix;
+  customContext: string;
+  character: Character;
+  userId: string;
+  createdAt: { seconds: number; nanoseconds: number };
+  updatedAt: { seconds: number; nanoseconds: number };
+  thinkingBudget?: number;
 };
 
 export type Discussion = {
@@ -71,14 +71,25 @@ export type ChatConfiguratorResponse = {
 // --- ТИПЫ ДЛЯ КОМНАТЫ ДЕБАТОВ ---
 
 export type DebateMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam & {
-    name?: string;
-    isStreaming?: boolean;
+  name?: string;
+  isStreaming?: boolean;
 };
 
 export type Run = {
-    id: string;
-    report?: string;
-    team: { id: string; name: string }[];
-    createdAt: { seconds: number; nanoseconds: number };
-    transcript: DebateMessage[];
+  id: string;
+  report?: string;
+  team: { id: string; name: string }[];
+  createdAt: { seconds: number; nanoseconds: number };
+  transcript: DebateMessage[];
+};
+
+// --- ТИП ДЛЯ БРИФА (БИБЛИОТЕКА СМЫСЛОВ) ---
+export type Brief = {
+  id: string;
+  userId: string;
+  content: string; // Сам текст брифа
+  goal: string;
+  goalJustification: string;
+  createdAt: { seconds: number; nanoseconds: number };
+  title?: string; // Опциональный заголовок (можно генерить)
 };

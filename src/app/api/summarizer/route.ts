@@ -1,9 +1,8 @@
 // D:\expert-club-ai\expert-club-ai\src/app/api/summarizer/route.ts
 
 import OpenAI from 'openai';
+
 import { NextResponse } from 'next/server';
-import { db } from '@/firebase.config.js';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const deepseek = new OpenAI({
     apiKey: process.env.DEEPSEEK_API_KEY,
@@ -79,16 +78,17 @@ Return ONLY the valid JSON object. No apologies, no explanations outside the JSO
             throw new Error('AI returned incomplete JSON (missing brief or goal)');
         }
 
-        const docRef = await addDoc(collection(db, 'discussions'), {
-            brief: brief,
-            goal: goal,
-            goalJustification: goal_justification || '',
-            createdAt: serverTimestamp(),
-            userId: userId,
-            status: 'brief_created'
-        });
 
-        return NextResponse.json({ discussionId: docRef.id });
+        if (!brief || !goal) {
+            throw new Error('AI returned incomplete JSON (missing brief or goal)');
+        }
+
+        // Возвращаем данные на клиент, где происходит сохранение в Firestore от имени авторизованного пользователя
+        return NextResponse.json({
+            brief,
+            goal,
+            goalJustification: goal_justification || ''
+        });
 
     } catch (error) {
         console.error('Error in summarizer API:', error);

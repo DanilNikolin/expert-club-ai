@@ -1,0 +1,30 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Правила для Экспертов ---
+    match /users/{userId}/customExperts/{expertId} {
+      allow read, write: if request.auth.uid == userId;
+    }
+
+    // --- Правила для Брифов (Библиотека Смыслов) ---
+    // НОВОЕ: Разрешаем писать и читать брифы только владельцу
+    match /users/{userId}/briefs/{briefId} {
+      allow read, write: if request.auth.uid == userId;
+    }
+
+    // --- Правила для Дискуссий ---
+    match /discussions/{discussionId} {
+      allow read: if resource.data.userId == request.auth.uid;
+      // Разрешаем создание, если юзер залогинен
+      allow create: if request.auth != null;
+      allow update, delete: if resource.data.userId == request.auth.uid;
+
+      // --- Правила для "Прогонов" ---
+      match /runs/{runId} {
+        allow read, write: if get(/databases/$(database)/documents/discussions/$(discussionId)).data.userId == request.auth.uid;
+      }
+    }
+  }
+}

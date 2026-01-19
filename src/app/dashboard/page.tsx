@@ -19,7 +19,8 @@ import { db } from '@/firebase.config.js';
 import { Button } from '@/components/ui/Button';
 import ExpertCard from '@/components/dashboard/ExpertCard';
 import DiscussionCard from '@/components/dashboard/DiscussionCard';
-import { UserPlus, MessagesSquare, Users, MessageCircle, Plus, X } from 'lucide-react';
+import BriefCard from '@/components/dashboard/BriefCard';
+import { UserPlus, MessagesSquare, Users, MessageCircle, Plus, X, BookOpen } from 'lucide-react';
 
 /** локальный helper (если есть общий — замени на import { cn } from '@/lib/utils') */
 const cn = (...classes: Array<string | false | null | undefined>) =>
@@ -74,17 +75,26 @@ export default function DashboardPage() {
 
   const [experts, setExperts] = useState<Expert[]>([]);
   const [discussions, setDiscussions] = useState<Discussion[]>([]);
+  const [briefs, setBriefs] = useState<any[]>([]); // TODO: Fix type to Brief[]
+
   const [isLoadingExperts, setIsLoadingExperts] = useState(true);
   const [isLoadingDiscussions, setIsLoadingDiscussions] = useState(true);
-  const [mode, setMode] = useState<'experts' | 'discussions'>('experts');
+  const [isLoadingBriefs, setIsLoadingBriefs] = useState(true);
+
+  const [mode, setMode] = useState<'experts' | 'discussions' | 'briefs'>('briefs'); // Default to briefs as requested context implies importance
+
   const [expandedExperts, setExpandedExperts] = useState<string[]>([]);
   const [expandedDiscussions, setExpandedDiscussions] = useState<string[]>([]);
+  const [expandedBriefs, setExpandedBriefs] = useState<string[]>([]);
+
   const [isFabOpen, setIsFabOpen] = useState(false);
 
+  // --- Fetch Data ---
   const fetchData = useCallback(async () => {
     if (!user) return;
     setIsLoadingExperts(true);
     setIsLoadingDiscussions(true);
+    setIsLoadingBriefs(true);
 
     const expertsQuery = query(
       collection(db, `users/${user.uid}/customExperts`),
@@ -95,38 +105,71 @@ export default function DashboardPage() {
       where('userId', '==', user.uid),
       orderBy('createdAt', 'desc')
     );
+    const briefsQuery = query(
+      collection(db, `users/${user.uid}/briefs`),
+      orderBy('createdAt', 'desc')
+    );
 
-    const [expertsSnap, discSnap] = await Promise.all([
-      getDocs(expertsQuery),
-      getDocs(discussionsQuery),
-    ]);
+    // Загружаем критичные данные (Эксперты и Дискуссии)
+    try {
+      const [expertsSnap, discSnap] = await Promise.all([
+        getDocs(expertsQuery),
+        getDocs(discussionsQuery),
+      ]);
 
-    setExperts(expertsSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as Omit<Expert, 'id'>) })));
-    setIsLoadingExperts(false);
+      setExperts(expertsSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as Omit<Expert, 'id'>) })));
+      setDiscussions(discSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as Omit<Discussion, 'id'>) })));
+    } catch (error) {
+      console.error("Failed to load core data:", error);
+    } finally {
+      setIsLoadingExperts(false);
+      setIsLoadingDiscussions(false);
+    }
 
-    setDiscussions(discSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as Omit<Discussion, 'id'>) })));
-    setIsLoadingDiscussions(false);
+    // Отдельно пытаемся загрузить брифы (новые данные), чтобы ошибка прав не ломала старое
+    try {
+      const briefsSnap = await getDocs(briefsQuery);
+      setBriefs(briefsSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) })));
+    } catch (error) {
+      console.warn("Failed to load briefs (likely permission issue):", error);
+      setBriefs([]); // Fallback to empty
+    } finally {
+      setIsLoadingBriefs(false);
+    }
+
   }, [user]);
 
+  // --- Toggles ---
   const handleToggleExpert = useCallback((expertId: string) => {
     setExpandedExperts(prev =>
       prev.includes(expertId) ? prev.filter(id => id !== expertId) : [...prev, expertId]
     );
   }, []);
 
-  const handleCollapseAll = useCallback(() => setExpandedExperts([]), []);
   const handleToggleDiscussion = useCallback((discussionId: string) => {
     setExpandedDiscussions(prev =>
       prev.includes(discussionId) ? prev.filter(id => id !== discussionId) : [...prev, discussionId]
     );
   }, []);
-  const handleCollapseAllDiscussions = useCallback(() => setExpandedDiscussions([]), []);
+
+  const handleToggleBrief = useCallback((briefId: string) => {
+    setExpandedBriefs(prev =>
+      prev.includes(briefId) ? prev.filter(id => id !== briefId) : [...prev, briefId]
+    );
+  }, []);
+
+  const handleCollapseAll = useCallback(() => {
+    setExpandedExperts([]);
+    setExpandedDiscussions([]);
+    setExpandedBriefs([]);
+  }, []);
 
   useEffect(() => {
     if (!loading && !user) router.push('/login');
     else if (user) fetchData();
   }, [user, loading, router, fetchData]);
 
+  // --- Actions ---
   const handleDeleteExpert = async (id: string) => {
     if (!window.confirm('Удалить эксперта?')) return;
     await deleteDoc(firebaseDoc(db, `users/${user?.uid}/customExperts`, id));
@@ -139,6 +182,34 @@ export default function DashboardPage() {
     setDiscussions(prev => prev.filter(d => d.id !== id));
   };
 
+  const handleDeleteBrief = async (id: string) => {
+    if (!window.confirm('Удалить бриф из библиотеки?')) return;
+    await deleteDoc(firebaseDoc(db, `users/${user?.uid}/briefs`, id));
+    setBriefs(prev => prev.filter(b => b.id !== id));
+  };
+
+  const handleStartDebateFromBrief = async (brief: any) => {
+    // Создаем новую дискуссию на основе существующего брифа
+    try {
+      // Мы используем import { addDoc, serverTimestamp } ... убедимся что они есть или импортим
+      const { addDoc, collection, serverTimestamp } = await import('firebase/firestore');
+      const docRef = await addDoc(collection(db, 'discussions'), {
+        brief: brief.content,
+        goal: brief.goal || 'BRAINSTORMING',
+        goalJustification: brief.goalJustification || '',
+        createdAt: serverTimestamp(),
+        userId: user?.uid,
+        status: 'brief_created',
+        sourceBriefId: brief.id
+      });
+
+      router.push(`/discussion/${docRef.id}`);
+    } catch (e) {
+      console.error("Error starting debate:", e);
+      alert("Не удалось создать дискуссию :(");
+    }
+  };
+
   const handleBriefUpdate = (discussionId: string, newBrief: string) => {
     setDiscussions(prev => prev.map(d => (d.id === discussionId ? { ...d, brief: newBrief } : d)));
   };
@@ -147,38 +218,71 @@ export default function DashboardPage() {
     return <div className="text-center mt-20 text-text-secondary">Загрузка данных...</div>;
   }
 
+  // Helper to get title text
+  const getTitle = () => {
+    switch (mode) {
+      case 'experts': return 'Ваши Эксперты';
+      case 'discussions': return 'Ваши Дискуссии';
+      case 'briefs': return 'Библиотека Смыслов';
+    }
+  }
+
   // Компактная шапка на мобиле, больше места карточкам
   return (
     <>
-      <div className="container mx-auto p-4 relative min-h-[100dvh] pb-28 md:pb-6">
+      <div className="container mx-auto p-4 relative min-h-[100dvh] pb-32 md:pb-6">
         <div className="text-center md:text-left">
           <h1 className="text-2xl md:text-4xl font-pixel text-accent-primary uppercase tracking-wide leading-tight">
             Командный Центр
           </h1>
           <p className="mt-1 md:mt-2 text-text-secondary uppercase font-pixel text-sm md:text-base tracking-wider">
-            {mode === 'experts' ? 'Ваши Эксперты' : 'Ваши Дискуссии'}
+            {getTitle()}
           </p>
         </div>
 
         <ActionPanel />
 
+        {/* --- TABS SWITCHER (Desktop) --- */}
+        <div className="hidden md:flex gap-4 mt-6 border-b border-border-main pb-1">
+          <button
+            onClick={() => setMode('briefs')}
+            className={cn(
+              "px-4 py-2 font-pixel text-sm uppercase transition-colors relative",
+              mode === 'briefs' ? "text-text-main" : "text-text-secondary hover:text-text-main"
+            )}
+          >
+            Брифы
+            {mode === 'briefs' && <div className="absolute bottom-[-5px] left-0 w-full h-[2px] bg-accent-primary" />}
+          </button>
+          <button
+            onClick={() => setMode('discussions')}
+            className={cn(
+              "px-4 py-2 font-pixel text-sm uppercase transition-colors relative",
+              mode === 'discussions' ? "text-text-main" : "text-text-secondary hover:text-text-main"
+            )}
+          >
+            Дискуссии
+            {mode === 'discussions' && <div className="absolute bottom-[-5px] left-0 w-full h-[2px] bg-accent-primary" />}
+          </button>
+          <button
+            onClick={() => setMode('experts')}
+            className={cn(
+              "px-4 py-2 font-pixel text-sm uppercase transition-colors relative",
+              mode === 'experts' ? "text-text-main" : "text-text-secondary hover:text-text-main"
+            )}
+          >
+            Эксперты
+            {mode === 'experts' && <div className="absolute bottom-[-5px] left-0 w-full h-[2px] bg-accent-primary" />}
+          </button>
+        </div>
+
         <div className="flex-1 flex flex-col gap-4 mt-3 md:mt-4">
           <div className="flex justify-between items-center">
-            
-
             {/* Свернуть все */}
-            {mode === 'experts' && expandedExperts.length > 0 && (
+            {(expandedExperts.length > 0 || expandedDiscussions.length > 0 || expandedBriefs.length > 0) && (
               <button
                 onClick={handleCollapseAll}
-                className="font-pixel text-[11px] md:text-xs uppercase text-text-secondary transition-colors hover:text-text-main animate-fade-in-fast"
-              >
-                [ Свернуть все ]
-              </button>
-            )}
-            {mode === 'discussions' && expandedDiscussions.length > 0 && (
-              <button
-                onClick={handleCollapseAllDiscussions}
-                className="font-pixel text-[11px] md:text-xs uppercase text-text-secondary transition-colors hover:text-text-main animate-fade-in-fast"
+                className="font-pixel text-[11px] md:text-xs uppercase text-text-secondary transition-colors hover:text-text-main animate-fade-in-fast ml-auto"
               >
                 [ Свернуть все ]
               </button>
@@ -191,7 +295,36 @@ export default function DashboardPage() {
             style={{ maxHeight: 'calc(100dvh - 260px)' }}
           >
             <div className="flex flex-wrap gap-6 justify-center">
-              {mode === 'experts' ? (
+
+              {/* === BRIEFS MODE === */}
+              {mode === 'briefs' && (
+                isLoadingBriefs ? (
+                  <p className="text-text-secondary text-center w-full">Загрузка библиотеки смыслов…</p>
+                ) : briefs.length === 0 ? (
+                  <EmptyState
+                    icon={BookOpen}
+                    title="Библиотека смыслов пуста"
+                    description="Пройдите интервью с Консьержем, чтобы создать свой первый бриф. Он сохранится здесь навсегда."
+                    buttonText="+ Создать новый бриф"
+                    buttonLink="/discussion/new"
+                  />
+                ) : (
+                  briefs.map(brief => (
+                    <div key={brief.id} id={`brief-card-${brief.id}`}>
+                      <BriefCard
+                        brief={brief}
+                        isExpanded={expandedBriefs.includes(brief.id)}
+                        onToggle={() => handleToggleBrief(brief.id)}
+                        onDelete={handleDeleteBrief}
+                        onStartDebate={handleStartDebateFromBrief}
+                      />
+                    </div>
+                  ))
+                )
+              )}
+
+              {/* === EXPERTS MODE === */}
+              {mode === 'experts' && (
                 isLoadingExperts ? (
                   <p className="text-text-secondary text-center w-full">Загрузка экспертов…</p>
                 ) : experts.length === 0 ? (
@@ -223,55 +356,66 @@ export default function DashboardPage() {
                     ));
                   })()
                 )
-              ) : isLoadingDiscussions ? (
-                <p className="text-text-secondary text-center w-full">Загрузка дискуссий…</p>
-              ) : discussions.length === 0 ? (
-                <EmptyState
-                  icon={MessageCircle}
-                  title="Пока нет ни одной дискуссии"
-                  description="Сформулируйте задачу, соберите команду из созданных экспертов и запустите первые дебаты."
-                  buttonText="+ Начать первую дискуссию"
-                  buttonLink="/discussion/new"
-                />
-              ) : (
-                discussions.map(di => (
-                  <div key={di.id} id={`discussions-card-${di.id}`}>
-                    <DiscussionCard
-                      discussion={di}
-                      onDelete={handleDeleteDiscussion}
-                      onBriefUpdated={handleBriefUpdate}
-                      isExpanded={expandedDiscussions.includes(di.id)}
-                      onToggle={() => handleToggleDiscussion(di.id)}
-                    />
-                  </div>
-                ))
+              )}
+
+              {/* === DISCUSSIONS MODE === */}
+              {mode === 'discussions' && (
+                isLoadingDiscussions ? (
+                  <p className="text-text-secondary text-center w-full">Загрузка дискуссий…</p>
+                ) : discussions.length === 0 ? (
+                  <EmptyState
+                    icon={MessageCircle}
+                    title="Пока нет ни одной дискуссии"
+                    description="Сформулируйте задачу, соберите команду из созданных экспертов и запустите первые дебаты."
+                    buttonText="+ Начать первую дискуссию"
+                    buttonLink="/discussion/new"
+                  />
+                ) : (
+                  discussions.map(di => (
+                    <div key={di.id} id={`discussions-card-${di.id}`}>
+                      <DiscussionCard
+                        discussion={di}
+                        onDelete={handleDeleteDiscussion}
+                        onBriefUpdated={handleBriefUpdate}
+                        isExpanded={expandedDiscussions.includes(di.id)}
+                        onToggle={() => handleToggleDiscussion(di.id)}
+                      />
+                    </div>
+                  ))
+                )
               )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* ---- НИЖНЯЯ ПАНЕЛЬ: один уровень для "К дискуссиям" и FAB ---- */}
+      {/* ---- НИЖНЯЯ ПАНЕЛЬ (Mobile) ---- */}
       <div className="md:hidden fixed left-0 right-0 bottom-4 z-50 px-4">
         <div className="flex items-center justify-between">
-          <div className="w-16" /> {/* левый спейсер для симметрии */}
+          {/* Mobile Mode Switcher - Циклический */}
           <button
             type="button"
-            onClick={() => setMode(mode === 'experts' ? 'discussions' : 'experts')}
-            className="flex items-center gap-2 px-5 py-3 bg-bg-surface rounded-xl border border-border-main shadow-lg font-pixel text-sm uppercase text-text-secondary hover:text-text-main transition"
+            onClick={() => {
+              if (mode === 'briefs') setMode('discussions');
+              else if (mode === 'discussions') setMode('experts');
+              else setMode('briefs');
+            }}
+            className="flex items-center gap-2 px-4 py-3 bg-bg-surface rounded-xl border border-border-main shadow-lg font-pixel text-xs uppercase text-text-secondary hover:text-text-main transition"
           >
             <span className="text-xl leading-none">⇅</span>
-            <span>{mode === 'experts' ? 'К Дискуссиям' : 'К Экспертам'}</span>
+            <span>
+              {mode === 'briefs' ? 'К Дискуссиям' :
+                mode === 'discussions' ? 'К Экспертам' : 'К Брифам'}
+            </span>
           </button>
 
           {/* FAB */}
           <div className="relative">
-            {/* Выпадающее меню — выравнивание в колонку, фиксированная ширина текста */}
             {isFabOpen && (
               <div className="absolute bottom-16 right-0 flex flex-col gap-2 animate-fade-in-fast">
                 <div className="flex items-center gap-3">
                   <span className="w-40 text-right bg-bg-surface text-text-main px-3 py-2 rounded-lg font-pixel text-xs shadow-lg border border-border-main">
-                    Новая Дискуссия
+                    Новый Бриф
                   </span>
                   <Link href="/discussion/new">
                     <button className="w-12 h-12 rounded-full p-0 shadow-lg border border-border-main bg-bg-surface text-text-main flex items-center justify-center">
@@ -292,7 +436,6 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* Главная кнопка FAB — контрастный плюс */}
             <button
               onClick={() => setIsFabOpen(!isFabOpen)}
               className={cn(
@@ -307,7 +450,6 @@ export default function DashboardPage() {
               }}
               aria-label="Быстрые действия"
             >
-              {/* делаем иконку контрастной относительно фона */}
               {isFabOpen ? (
                 <X className="h-8 w-8 text-bg-main" />
               ) : (
@@ -318,7 +460,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Стиль для быстрой анимации появления */}
       <style jsx global>{`
         @keyframes fadeInFastAnimation {
           from { opacity: 0; transform: translateY(10px); }
@@ -326,6 +467,19 @@ export default function DashboardPage() {
         }
         .animate-fade-in-fast {
           animation: fadeInFastAnimation 0.18s ease-out forwards;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #444; 
+            border-radius: 2px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #666; 
         }
       `}</style>
     </>

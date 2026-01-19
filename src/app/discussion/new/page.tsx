@@ -57,30 +57,62 @@ export default function NewDiscussionPage() {
     }
   };
 
+  /* --- NEW IMPORTS NEEDED (Auto-added by agent later if possible, but manual here for safety) --- */
+  // Предполагается, что 'db' и firestore функции импортированы.
+  // Если нет - добавь их в начало файла, агент. 
+
   const handleCreateBrief = async () => {
     setIsSubmittingBrief(true);
     try {
+      // 1. Генерируем Бриф через AI (API)
       const response = await fetch('/api/summarizer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages, userId: user?.uid }),
       });
-      if (!response.ok) throw new Error('Failed to create brief');
+      if (!response.ok) throw new Error('Failed to generate brief');
 
-      const data = await response.json();
-      router.push(`/discussion/${data.discussionId}`);
+      const { brief, goal, goalJustification } = await response.json();
+
+      if (!user) throw new Error("User not authenticated");
+
+      // Динамический импорт для чистоты (или используй верхний импорт)
+      const { addDoc, collection, serverTimestamp } = await import('firebase/firestore');
+      const { db } = await import('@/firebase.config.js');
+
+      // 2. Сохраняем в Библиотеку Смыслов (client-side auth!)
+      const briefDocRef = await addDoc(collection(db, `users/${user.uid}/briefs`), {
+        content: brief,
+        goal: goal,
+        goalJustification: goalJustification,
+        createdAt: serverTimestamp(),
+        userId: user.uid,
+      });
+
+      // 3. Создаем Активную Дискуссию
+      const discussDocRef = await addDoc(collection(db, 'discussions'), {
+        brief: brief,
+        goal: goal,
+        goalJustification: goalJustification,
+        createdAt: serverTimestamp(),
+        userId: user.uid,
+        status: 'brief_created',
+        sourceBriefId: briefDocRef.id
+      });
+
+      router.push(`/discussion/${discussDocRef.id}`);
 
     } catch (error) {
-      console.error("Failed to create brief:", error);
-      alert("Не удалось создать бриф. Попробуйте еще раз.");
+      console.error("Failed to create brief process:", error);
+      alert("Не удалось создать бриф. Проверьте консоль.");
     } finally {
       setIsSubmittingBrief(false);
     }
   };
 
   return (
-    <div className="container mx-auto mt-10 p-4">
-      <div className="flex flex-col h-[85vh] max-w-4xl mx-auto bg-bg-surface/50 border border-bg-surface rounded-lg shadow-inner p-6">
+    <div className="w-full p-0 md:p-4 md:mt-10 h-[calc(100vh-64px)] flex items-start md:items-center justify-center">
+      <div className="flex flex-col h-full md:h-[85vh] w-full max-w-4xl bg-bg-surface/50 md:border border-bg-surface rounded-none md:rounded-lg shadow-inner p-4 md:p-6">
         <ConciergeHeader
           onStartBrief={handleCreateBrief}
           isSubmitting={isSubmittingBrief}
