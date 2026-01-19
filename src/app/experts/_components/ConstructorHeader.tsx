@@ -13,12 +13,12 @@ type Props = {
 
 // Компонент для индикатора прогресса. Теперь он использует "чернильный" цвет.
 const ProgressBar = ({ value }: { value: number }) => (
-    <div className="h-2 w-full rounded-full bg-bg-main ring-1 ring-inset ring-border-main">
-        <div
-            className="h-full rounded-full bg-accent-secondary transition-all duration-300"
-            style={{ width: `${value}%` }}
-        />
-    </div>
+  <div className="h-2 w-full rounded-full bg-bg-main ring-1 ring-inset ring-border-main">
+    <div
+      className="h-full rounded-full bg-accent-secondary transition-all duration-300"
+      style={{ width: `${value}%` }}
+    />
+  </div>
 );
 
 export default function ConstructorHeader({ isCreateMode, isAutoSaving, lastSaved, completionProgress }: Props) {
@@ -31,10 +31,10 @@ export default function ConstructorHeader({ isCreateMode, isAutoSaving, lastSave
           className="mb-3 flex items-center gap-2 font-sans text-sm text-text-secondary transition-colors hover:text-text-main"
         >
           <ArrowLeft size={16} />
-          <span>Вернуться в Дашборд</span>
+          <span>Back to Dashboard</span>
         </Link>
         <h1 className="page-title-pixel text-accent-primary">
-          {isCreateMode ? 'Конструктор Эксперта' : 'Редактор Эксперта'}
+          {isCreateMode ? 'Expert Constructor' : 'Expert Editor'}
         </h1>
       </div>
 
@@ -50,10 +50,10 @@ export default function ConstructorHeader({ isCreateMode, isAutoSaving, lastSave
             )}
             <span>
               {isAutoSaving
-                ? 'Сохранение...'
+                ? 'Saving...'
                 : lastSaved
-                  ? `Сохранено в ${lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                  : 'Все изменения будут сохранены автоматически'
+                  ? `Saved at ${lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                  : 'All changes are saved automatically'
               }
             </span>
           </div>

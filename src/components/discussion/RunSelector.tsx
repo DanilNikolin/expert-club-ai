@@ -29,7 +29,7 @@ export default function RunSelector({ runs, activeRun, setActiveRun, onDeleteRun
       >
         <h3 className="flex items-center gap-2 font-pixel text-sm uppercase text-text-secondary group-hover:text-text-main transition-colors">
           <Archive size={16} />
-          Архив Прогонов
+          Run Archive
         </h3>
         <ChevronDown
           size={20}
@@ -60,14 +60,14 @@ export default function RunSelector({ runs, activeRun, setActiveRun, onDeleteRun
                   >
                     <div className="flex justify-between items-center">
                       <p className="font-mono text-xs text-text-secondary">
-                        Прогон №{runs.length - i}
+                        Run №{runs.length - i}
                       </p>
                       <p className="font-mono text-xs text-text-muted">
                         {new Date(run.createdAt.seconds * 1000).toLocaleString()}
                       </p>
                     </div>
                     <p className="font-sans text-sm text-text-main mt-1 truncate">
-                      {run.team?.map(t => t.name).join(', ') ?? 'Команда не определена'}
+                      {run.team?.map(t => t.name).join(', ') ?? 'Team undefined'}
                     </p>
                   </button>
                   <button
@@ -76,7 +76,7 @@ export default function RunSelector({ runs, activeRun, setActiveRun, onDeleteRun
                       onDeleteRun(run.id);
                     }}
                     className="absolute top-1/2 right-3 -translate-y-1/2 p-1.5 text-text-muted rounded-md opacity-0 group-hover:opacity-100 hover:text-accent-danger hover:bg-accent-danger/10 transition-all duration-150"
-                    title="Удалить этот прогон"
+                    title="Delete this run"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>

@@ -32,15 +32,15 @@ export default function DebateControls({
   // --- ГЛАВНЫЙ ЗАМОК "READ-ONLY" ---
   // Если мы смотрим не на "живой" прогон, не показываем НИКАКИХ кнопок.
   if (!activeRun || activeRun.id !== liveRunId) {
-    
+
     // Но если мы смотрим на *старый* прогон И у него *нет* отчета,
     // надо хотя бы сообщить, что он "Архивный"
     if (activeRun && !activeRun.report) {
-         return (
-            <div className="mt-6 pt-6 border-t border-bg-surface text-center">
-              <h3 className="title-pixel text-text-secondary mb-3">АРХИВНЫЙ ПРОГОН (READ-ONLY)</h3>
-            </div>
-         );
+      return (
+        <div className="mt-6 pt-6 border-t border-bg-surface text-center">
+          <h3 className="title-pixel text-text-secondary mb-3">ARCHIVED RUN (READ-ONLY)</h3>
+        </div>
+      );
     }
     return null; // Для завершенных с отчетом - ничего не показываем
   }
@@ -49,16 +49,16 @@ export default function DebateControls({
   if (stage === 'paused' && currentRound < rounds) {
     return (
       <div className="mt-6 pt-6 border-t border-bg-surface">
-        <h3 className="title-pixel text-accent-secondary text-center mb-3">Раунд {currentRound} завершен. Ваш ход.</h3>
+        <h3 className="title-pixel text-accent-secondary text-center mb-3">Round {currentRound} finished. Your turn.</h3>
         <textarea
           value={userIntervention}
           onChange={e => setUserIntervention(e.target.value)}
-          placeholder="Ваша реплика (необязательно)..."
+          placeholder="Your reply (optional)..."
           className="w-full p-3 bg-bg-main border border-bg-surface rounded-md text-text-main resize-none focus:ring-1 focus:ring-accent-secondary mb-3"
           rows={3}
         />
         <Button onClick={onContinue} size="sm" className="w-full">
-          Продолжить (Раунд {currentRound + 1})
+          Continue (Round {currentRound + 1})
         </Button>
       </div>
     );
@@ -68,7 +68,7 @@ export default function DebateControls({
   if ((stage === 'paused' || stage === 'finished' || stage === 'judging') && currentRound >= rounds && !activeRun?.report) {
     return (
       <div className="mt-6 pt-6 border-t border-bg-surface text-center">
-        <h3 className="title-pixel text-amber-400 mb-3">Все раунды завершены!</h3>
+        <h3 className="title-pixel text-amber-400 mb-3">All rounds finished!</h3>
         <Button
           onClick={onGetVerdict}
           disabled={stage === 'judging'}
@@ -76,8 +76,8 @@ export default function DebateControls({
           size="sm"
           className="bg-amber-500 hover:bg-amber-600 focus:ring-amber-500"
         >
-          <Scale className="mr-2 h-4 w-4"/>
-          {stage === 'judging' ? 'Судья выносит вердикт...' : 'Получить вердикт Судьи'}
+          <Scale className="mr-2 h-4 w-4" />
+          {stage === 'judging' ? 'Judge is deciding...' : 'Get Judge\'s Verdict'}
         </Button>
       </div>
     );
@@ -86,9 +86,9 @@ export default function DebateControls({
   // --- Финальный отчет ---
   if (stage === 'finished' && activeRun?.report) {
     return (
-        <div className="mt-6 pt-6 border-t border-bg-surface text-center">
-          <h3 className="title-pixel text-accent-success mb-3">Дебаты Завершены</h3>
-          <p className="text-sm text-text-secondary">Финальный вердикт находится в окне чата.</p>
+      <div className="mt-6 pt-6 border-t border-bg-surface text-center">
+        <h3 className="title-pixel text-accent-success mb-3">Debate Finished</h3>
+        <p className="text-sm text-text-secondary">Final verdict is in the chat window.</p>
       </div>
     );
   }

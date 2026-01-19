@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from './ui/Button';
 import { UserCircle, LogOut, Home } from 'lucide-react';
 
-// Выносим меню профиля в отдельный компонент для чистоты
+// Extracting profile menu to a separate component for cleanliness
 const ProfileMenu = ({ user, onLogout }: { user: User; onLogout: () => void; }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -37,7 +37,7 @@ const ProfileMenu = ({ user, onLogout }: { user: User; onLogout: () => void; }) 
       {isOpen && (
         <div className="absolute right-0 mt-2 w-64 origin-top-right rounded-lg border border-border-main bg-bg-surface shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none animate-fade-in-fast">
           <div className="p-4">
-            <p className="font-sans text-sm text-text-secondary truncate">Вошли как:</p>
+            <p className="font-sans text-sm text-text-secondary truncate">Logged in as:</p>
             <p className="font-sans font-medium text-text-main truncate">{user.email}</p>
           </div>
           <div className="border-t border-border-main py-1">
@@ -46,14 +46,14 @@ const ProfileMenu = ({ user, onLogout }: { user: User; onLogout: () => void; }) 
               className="flex w-full items-center gap-3 rounded-md px-4 py-3 font-pixel text-sm uppercase text-text-secondary transition-colors hover:bg-bg-elevated hover:text-text-main"
             >
               <Home size={16} />
-              <span>Главная страница</span>
+              <span>Home Page</span>
             </Link>
             <button
               onClick={onLogout}
               className="flex w-full items-center gap-3 rounded-md px-4 py-3 font-pixel text-sm uppercase text-accent-danger transition-colors hover:bg-accent-danger/10"
             >
               <LogOut size={16} />
-              <span>Выйти</span>
+              <span>Log Out</span>
             </button>
           </div>
         </div>
@@ -77,28 +77,28 @@ export default function Header() {
     <>
       <header className="bg-bg-main/80 border-b border-bg-surface sticky top-0 z-50 backdrop-blur-sm">
         <nav className="container mx-auto flex h-16 items-center justify-between px-4">
-          
-          {/* ЛОГОТИП */}
+
+          {/* LOGO */}
           <Link href={logoHref} className="title-pixel text-accent-primary hover:text-accent-primary/80 transition-colors">
-            Клуб Экспертов AI
+            AI Expert Club
           </Link>
-          
-          {/* ПРАВАЯ ЧАСТЬ: НАВИГАЦИЯ И ПРОФИЛЬ */}
+
+          {/* RIGHT SIDE: NAVIGATION AND PROFILE */}
           <div className="flex items-center space-x-4">
             {user ? (
-              // --- Если пользователь залогинен ---
+              // --- If user is logged in ---
               <ProfileMenu user={user} onLogout={handleLogout} />
             ) : (
-              // --- Если пользователь НЕ залогинен ---
+              // --- If user is NOT logged in ---
               <>
                 <Link href="/login">
                   <Button variant="secondary" size="sm">
-                    Войти
+                    Log In
                   </Button>
                 </Link>
                 <Link href="/signup">
                   <Button size="sm">
-                    Регистрация
+                    Sign Up
                   </Button>
                 </Link>
               </>
@@ -106,7 +106,7 @@ export default function Header() {
           </div>
         </nav>
       </header>
-       {/* Стиль для анимации выпадающего меню */}
+      {/* Style for drop-down menu animation */}
       <style jsx global>{`
         @keyframes fadeInFastAnimation {
           from { opacity: 0; transform: translateY(-10px) scale(0.95); }

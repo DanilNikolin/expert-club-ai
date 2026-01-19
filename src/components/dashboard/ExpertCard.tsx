@@ -59,7 +59,7 @@ export default function ExpertCard({ expert, isExpanded, onToggle, onDelete }: E
         <div className="mt-2 space-y-2">
           <MindsetStackedBar mix={expert.archetypeMix} />
           <div className="font-mono text-xs text-text-secondary flex justify-between flex-wrap gap-x-4">
-            {Object.entries(expert.archetypeMix).filter(([,v])=>v>0).map(([k,v])=>(
+            {Object.entries(expert.archetypeMix).filter(([, v]) => v > 0).map(([k, v]) => (
               <span key={k}>{archetypeLabels[k as keyof typeof archetypeLabels]}: {v}%</span>
             ))}
           </div>
@@ -76,46 +76,46 @@ export default function ExpertCard({ expert, isExpanded, onToggle, onDelete }: E
       >
         <div className="flex-grow overflow-y-auto px-5 pt-4 pb-4 space-y-4 border-t border-border-main">
 
-          {/* Специализации */}
+          {/* Specializations */}
           <div>
-            <h4 className="font-pixel text-sm uppercase text-text-secondary">Специализации</h4>
+            <h4 className="font-pixel text-sm uppercase text-text-secondary">Specializations</h4>
             <div className='font-mono text-sm text-text-main space-y-1 pt-1'>
               {allSpecializations.length > 0
                 ? allSpecializations.map(([spec, value]) => (
-                    <p key={spec} className="truncate">
-                      - {specializationLabels[spec as keyof typeof specializationLabels]}: <span className="text-accent-primary">{value}%</span>
-                    </p>
-                  ))
-                : <p className="text-text-secondary">- Не заданы</p>
+                  <p key={spec} className="truncate">
+                    - {specializationLabels[spec as keyof typeof specializationLabels]}: <span className="text-accent-primary">{value}%</span>
+                  </p>
+                ))
+                : <p className="text-text-secondary">- Not set</p>
               }
             </div>
           </div>
 
-          {/* Характер */}
+          {/* Character */}
           {expert.character && (
             <div>
-              <h4 className="font-pixel text-sm uppercase text-text-secondary">Характер</h4>
+              <h4 className="font-pixel text-sm uppercase text-text-secondary">Character</h4>
               <div className="grid grid-cols-2 gap-x-4 gap-y-2 font-sans text-xs text-text-secondary pt-1">
-                <div><p>Конструктивность</p><StatBar value={character.constructiveness ?? 5} /></div>
-                <div><p>Конформизм</p><StatBar value={character.conformism ?? 5} /></div>
-                <div><p>Убежденность</p><StatBar value={character.conviction ?? 5} /></div>
-                <div><p>Открытость</p><StatBar value={character.opennessToData ?? 5} /></div>
+                <div><p>Constructiveness</p><StatBar value={character.constructiveness ?? 5} /></div>
+                <div><p>Conformism</p><StatBar value={character.conformism ?? 5} /></div>
+                <div><p>Conviction</p><StatBar value={character.conviction ?? 5} /></div>
+                <div><p>Openness</p><StatBar value={character.opennessToData ?? 5} /></div>
               </div>
             </div>
           )}
 
-          {/* Перки */}
+          {/* Perks */}
           {(character.hasHumor || character.isContradictionHunter) && (
             <div className='flex flex-wrap gap-2'>
-              {character.hasHumor && <span className='text-xs font-bold uppercase bg-accent-success/20 text-accent-success px-2 py-1 rounded'>ЮМОР</span>}
-              {character.isContradictionHunter && <span className='text-xs font-bold uppercase bg-accent-secondary/20 text-accent-secondary px-2 py-1 rounded'>ОХОТНИК ЗА НЕСТЫКОВКАМИ</span>}
+              {character.hasHumor && <span className='text-xs font-bold uppercase bg-accent-success/20 text-accent-success px-2 py-1 rounded'>HUMOR</span>}
+              {character.isContradictionHunter && <span className='text-xs font-bold uppercase bg-accent-secondary/20 text-accent-secondary px-2 py-1 rounded'>CONTRADICTION HUNTER</span>}
             </div>
           )}
 
-          {/* Кастомный Контекст */}
+          {/* Custom Context */}
           {expert.customContext && (
             <div className="space-y-1">
-              <h4 className="font-pixel text-sm uppercase text-text-secondary">Кастомный Контекст</h4>
+              <h4 className="font-pixel text-sm uppercase text-text-secondary">Custom Context</h4>
               <p className="font-sans text-xs italic text-text-secondary border-l-2 border-accent-secondary pl-2 whitespace-pre-wrap break-words">
                 &quot;{expert.customContext}&quot;
               </p>
@@ -127,14 +127,14 @@ export default function ExpertCard({ expert, isExpanded, onToggle, onDelete }: E
         <div className="flex-shrink-0 flex gap-3 justify-end border-t border-border-main px-5 py-3 bg-bg-main/50 rounded-b-xl">
           <Link href={`/experts/${expert.id}`}>
             <button className="px-3 py-1 rounded font-pixel text-xs bg-bg-surface text-text-secondary hover:bg-bg-elevated hover:text-text-main transition">
-              Редактировать
+              Edit
             </button>
           </Link>
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(expert.id); }}
             className="px-3 py-1 rounded font-pixel text-xs bg-accent-danger/20 text-accent-danger hover:bg-accent-danger/30 transition"
           >
-            Удалить
+            Delete
           </button>
         </div>
       </div>

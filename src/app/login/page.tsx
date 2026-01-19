@@ -1,21 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-// НОВЫЕ ИМПОРТЫ ИЗ FIREBASE:
-import { 
-  signInWithEmailAndPassword, 
-  signInWithPopup, 
-  GoogleAuthProvider 
+// NEW IMPORTS FROM FIREBASE:
+import {
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider
 } from 'firebase/auth';
 import { auth } from '@/firebase.config.js';
-// НОВЫЙ ИМПОРТ РОУТЕРА:
+// NEW ROUTER IMPORT:
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  // ИНИЦИАЛИЗИРУЕМ РОУТЕР
+  // INITIALIZE ROUTER
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -24,39 +24,39 @@ export default function LoginPage() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      console.log('Успешный вход через email/пароль');
-      router.push('/'); // ДОБАВИЛИ РЕДИРЕКТ
-    } catch (err: unknown) { // Ловим как unknown
-      // Продвинутая, блядь, обработка ошибок (как в signup)
+      console.log('Successful login via email/password');
+      router.push('/'); // ADDED REDIRECT
+    } catch (err: unknown) { // Catch as unknown
+      // Advanced error handling (like in signup)
       if (typeof err === 'object' && err !== null && 'code' in err) {
-        const firebaseError = err as { code: string; message: string }; // Кастуем, чтоб TS не выебывался
-        console.warn('Ошибка входа (ожидаемая):', firebaseError.code); // Меняем на warn, чтоб Next не орал
-        
+        const firebaseError = err as { code: string; message: string }; // Cast to handle TS
+        console.warn('Login error (expected):', firebaseError.code); // Change to warn so Next doesn't complain
+
         if (firebaseError.code === 'auth/invalid-credential' || firebaseError.code === 'auth/wrong-password' || firebaseError.code === 'auth/user-not-found') {
-          setError('Неверный email или пароль. Проверь данные или зарегистрируйся.');
+          setError('Invalid email or password. Check your details or sign up.');
         } else {
-          setError('Произошла какая-то хуйня. Попробуй позже.');
+          setError('Something went wrong. Try again later.');
         }
       } else {
-        // На случай если прилетела вообще какая-то дичь
-        console.warn('Неизвестная ошибка входа:', err); // Тоже на warn
-        setError('Произошла неизвестная ошибка.');
+        // In case something weird happened
+        console.warn('Unknown login error:', err); // Also warn
+        setError('An unknown error occurred.');
       }
     }
   };
 
-  // НОВАЯ ФУНКЦИЯ ДЛЯ ВХОДА ЧЕРЕЗ GOOGLE
+  // NEW FUNCTION FOR GOOGLE LOGIN
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
     setError('');
     try {
       await signInWithPopup(auth, provider);
-      console.log('Успешный вход через Google');
+      console.log('Successful login via Google');
       router.push('/');
     } catch (err) {
       if (err instanceof Error) {
-        console.error('Ошибка входа через Google:', err.message);
-        setError('Не удалось войти с помощью Google.');
+        console.error('Login error via Google:', err.message);
+        setError('Failed to log in with Google.');
       }
     }
   };
@@ -65,30 +65,30 @@ export default function LoginPage() {
     <div className="flex justify-center items-center mt-20">
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
         <h1 className="text-2xl font-bold text-center text-gray-900">
-          Вход в Клуб
+          Login to Club
         </h1>
         <form onSubmit={handleLogin} className="space-y-6">
-          {/* Форма для email/пароля осталась без изменений */}
+          {/* Email/password form remains unchanged */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-            <input id="email" name="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="block w-full px-3 py-2 mt-1 text-gray-900 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
+            <input id="email" name="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="block w-full px-3 py-2 mt-1 text-gray-900 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
           </div>
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">Пароль</label>
-            <input id="password" name="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="block w-full px-3 py-2 mt-1 text-gray-900 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"/>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+            <input id="password" name="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="block w-full px-3 py-2 mt-1 text-gray-900 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div>
             <button type="submit" className="w-full px-4 py-2 font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-              Войти
+              Log In
             </button>
           </div>
         </form>
 
-        {/* НОВЫЙ БЛОК С РАЗДЕЛИТЕЛЕМ И КНОПКОЙ GOOGLE */}
+        {/* NEW BLOCK WITH DIVIDER AND GOOGLE BUTTON */}
         <div className="relative flex items-center py-2">
           <div className="flex-grow border-t border-gray-300"></div>
-          <span className="flex-shrink mx-4 text-sm text-gray-500">Или</span>
+          <span className="flex-shrink mx-4 text-sm text-gray-500">Or</span>
           <div className="flex-grow border-t border-gray-300"></div>
         </div>
 
@@ -103,10 +103,10 @@ export default function LoginPage() {
             <path fill="#EA4335" d="M24 48c6.1 0 11.4-2 15.1-5.4l-7.9-6.1c-2.1 1.4-4.8 2.3-7.2 2.3-5.8 0-10.8-3.7-12.7-8.7L3 36.4C7.3 44.4 14.9 48 24 48z"></path>
             <path fill="none" d="M0 0h48v48H0z"></path>
           </svg>
-          Войти с помощью Google
+          Log in with Google
         </button>
       </div>
     </div>
   );
-  
+
 }

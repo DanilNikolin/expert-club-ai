@@ -21,19 +21,19 @@ type Props = {
 };
 
 const ChatMessage = ({ msg }: { msg: ConstructorChatMessage }) => {
-    const isUser = msg.role === 'user';
-    return (
-        <div className={cn('flex items-start gap-3', isUser && 'justify-end')}>
-            {!isUser && <Bot className="h-5 w-5 flex-shrink-0 text-accent-primary mt-1" />}
-            <div className={cn(
-                'max-w-xs rounded-lg p-3 font-sans text-sm md:max-w-sm',
-                isUser ? 'rounded-br-none bg-bg-main ring-1 ring-bg-surface' : 'rounded-bl-none bg-bg-surface'
-            )}>
-                <p className="whitespace-pre-wrap">{msg.content}</p>
-            </div>
-            {isUser && <User className="h-5 w-5 flex-shrink-0 text-text-secondary mt-1" />}
-        </div>
-    );
+  const isUser = msg.role === 'user';
+  return (
+    <div className={cn('flex items-start gap-3', isUser && 'justify-end')}>
+      {!isUser && <Bot className="h-5 w-5 flex-shrink-0 text-accent-primary mt-1" />}
+      <div className={cn(
+        'max-w-xs rounded-lg p-3 font-sans text-sm md:max-w-sm',
+        isUser ? 'rounded-br-none bg-bg-main ring-1 ring-bg-surface' : 'rounded-bl-none bg-bg-surface'
+      )}>
+        <p className="whitespace-pre-wrap">{msg.content}</p>
+      </div>
+      {isUser && <User className="h-5 w-5 flex-shrink-0 text-text-secondary mt-1" />}
+    </div>
+  );
 };
 
 export default function ChatConfiguratorSection({
@@ -45,7 +45,7 @@ export default function ChatConfiguratorSection({
   chatError,
   startCreationWizard,
   isCreateMode,
-  expertName 
+  expertName
 }: Props) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -59,12 +59,12 @@ export default function ChatConfiguratorSection({
       handleChatSubmit(e as unknown as React.FormEvent);
     }
   };
-  
+
   const handleConfirmSuggestions = (selectedNames: string[]) => {
-      const lastMessage = chatMessages[chatMessages.length - 1];
-      if (lastMessage && lastMessage.suggestions) {
-          startCreationWizard(lastMessage.suggestions, selectedNames);
-      }
+    const lastMessage = chatMessages[chatMessages.length - 1];
+    if (lastMessage && lastMessage.suggestions) {
+      startCreationWizard(lastMessage.suggestions, selectedNames);
+    }
   };
 
   return (
@@ -74,78 +74,78 @@ export default function ChatConfiguratorSection({
           <>
             {isCreateMode ? (
               <p className="flex h-full items-center justify-center text-center font-sans text-sm text-text-secondary">
-                Начните диалог, чтобы создать или изменить эксперта...
+                Start a dialog to create or edit an expert...
               </p>
             ) : (
               // ВОТ ОН, НОВЫЙ БЛОК ДЛЯ РЕДАКТИРОВАНИЯ
               <div className="flex h-full flex-col items-center justify-center text-center text-sm text-text-secondary p-4 rounded-lg bg-bg-main/50 border border-dashed border-bg-surface">
                 <Bot className="h-8 w-8 text-accent-primary mb-2" />
                 <p className="font-pixel text-base text-text-main mb-1 truncate max-w-full px-4">
-                  Редактор «{expertName || 'Твой Эксперт'}»
+                  Editor «{expertName || 'Your Expert'}»
                 </p>
-                <p>Скажи мне, что поправить на <span className="text-accent-primary">естественном языке</span>.</p>
-                <p className="text-xs text-text-muted mt-2">(Например: &ldquo;сделай его злее&rdquo; или &ldquo;добавь экспертизы в финансах&rdquo;)</p>
+                <p>Tell me what to fix in <span className="text-accent-primary">natural language</span>.</p>
+                <p className="text-xs text-text-muted mt-2">(e.g. &ldquo;make him meaner&rdquo; or &ldquo;add finance expertise&rdquo;)</p>
               </div>
             )}
           </>
         )}
-        
+
         {chatMessages.map((msg, index) => (
-            <div key={index}>
-                {/* Показываем текстовую часть сообщения, только если она есть */}
-                {msg.content && <ChatMessage msg={msg} />}
-                {/* Показываем интерактивный блок ТОЛЬКО в режиме создания */}
-                {msg.suggestions && msg.suggestions.length > 0 && isCreateMode && (
-                    <SuggestedTeam 
-                        suggestions={msg.suggestions} 
-                        onConfirm={handleConfirmSuggestions}
-                    />
-                )}
-            </div>
+          <div key={index}>
+            {/* Показываем текстовую часть сообщения, только если она есть */}
+            {msg.content && <ChatMessage msg={msg} />}
+            {/* Показываем интерактивный блок ТОЛЬКО в режиме создания */}
+            {msg.suggestions && msg.suggestions.length > 0 && isCreateMode && (
+              <SuggestedTeam
+                suggestions={msg.suggestions}
+                onConfirm={handleConfirmSuggestions}
+              />
+            )}
+          </div>
         ))}
 
         {isChatLoading && (
-            <div className="flex items-start gap-3">
-                <Bot className="h-5 w-5 flex-shrink-0 text-accent-primary mt-1 animate-pulse" />
-                <div className="rounded-lg rounded-bl-none bg-bg-surface p-3 font-sans text-sm text-text-secondary italic">
-                    Ассистент думает...
-                </div>
+          <div className="flex items-start gap-3">
+            <Bot className="h-5 w-5 flex-shrink-0 text-accent-primary mt-1 animate-pulse" />
+            <div className="rounded-lg rounded-bl-none bg-bg-surface p-3 font-sans text-sm text-text-secondary italic">
+              Assistant is thinking...
             </div>
+          </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
       <div className="mt-4 flex-shrink-0 border-t border-bg-surface pt-4">
         {chatError && (
-            <div className="mb-2 flex items-center gap-2 text-sm text-accent-danger">
-                <AlertTriangle size={16} /> <span>{chatError}</span>
-            </div>
+          <div className="mb-2 flex items-center gap-2 text-sm text-accent-danger">
+            <AlertTriangle size={16} /> <span>{chatError}</span>
+          </div>
         )}
         <div className="flex gap-2">
-            <textarea
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Начните диалог..."
-                disabled={isChatLoading}
-                className={cn(
-                    'w-full flex-grow rounded-md p-3 font-sans text-text-main placeholder:text-text-secondary/50',
-                    'bg-black/20 ring-1 ring-inset ring-bg-surface transition-all duration-150',
-                    'focus:outline-none focus:ring-2 focus:ring-accent-primary',
-                    'disabled:opacity-50',
-                    'resize-none min-h-[44px]' // Увеличили высоту и паддинги
-                )}
-            />
-            <Button
-                type="button"
-                onClick={handleChatSubmit}
-                disabled={isChatLoading || !chatInput.trim()}
-                size="sm"
-                className="px-3"
-            >
-              <SendHorizonal size={16} />
-            </Button>
-          </div>
+          <textarea
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Start dialog..."
+            disabled={isChatLoading}
+            className={cn(
+              'w-full flex-grow rounded-md p-3 font-sans text-text-main placeholder:text-text-secondary/50',
+              'bg-black/20 ring-1 ring-inset ring-bg-surface transition-all duration-150',
+              'focus:outline-none focus:ring-2 focus:ring-accent-primary',
+              'disabled:opacity-50',
+              'resize-none min-h-[44px]' // Увеличили высоту и паддинги
+            )}
+          />
+          <Button
+            type="button"
+            onClick={handleChatSubmit}
+            disabled={isChatLoading || !chatInput.trim()}
+            size="sm"
+            className="px-3"
+          >
+            <SendHorizonal size={16} />
+          </Button>
+        </div>
       </div>
     </div>
   );

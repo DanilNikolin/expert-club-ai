@@ -96,34 +96,34 @@ export default function CharacterSection({
 }: Props) {
   return (
     <ConfigSectionCard
-      title="Уровень 3: Характер"
-      description="Настройте поведенческие черты и 'перки', которые влияют на стиль дискуссии эксперта."
+      title="Level 3: Character"
+      description="Configure behavioral traits and 'perks' that affect expert's debate style."
       isCollapsible={true}
       startOpen={false}
     >
       <div className="space-y-8">
-        <TraitSlider name="constructiveness" label="Конструктивность" value={character.constructiveness} onChange={handleCharacterSliderChange} tooltipContent="Низкие значения: эксперт стремится критиковать и разрушать идеи. Высокие: помогает развивать и улучшать предложения." />
-        <TraitSlider name="conformism" label="Конформизм" value={character.conformism} onChange={handleCharacterSliderChange} tooltipContent="Низкие значения: нонконформизм, эксперт идёт против общепринятых норм. Высокие: следует правилам и мейнстримным мнениям." />
-        <TraitSlider name="conviction" label="Убежденность" value={character.conviction} onChange={handleCharacterSliderChange} tooltipContent="Определяет, насколько сильно эксперт будет отстаивать свою первоначальную позицию, даже если ему предоставляют новые аргументы." />
-        <TraitSlider name="opennessToData" label="Открытость к данным" value={character.opennessToData} onChange={handleCharacterSliderChange} tooltipContent="Насколько эксперт готов менять свою позицию или мнение на основе новых фактов и аргументов, представленных в дискуссии." />
+        <TraitSlider name="constructiveness" label="Constructiveness" value={character.constructiveness} onChange={handleCharacterSliderChange} tooltipContent="Low: expert tends to criticize and destroy ideas. High: helps develop and improve proposals." />
+        <TraitSlider name="conformism" label="Conformism" value={character.conformism} onChange={handleCharacterSliderChange} tooltipContent="Low: non-conformism, expert goes against accepted norms. High: follows rules and mainstream opinions." />
+        <TraitSlider name="conviction" label="Conviction" value={character.conviction} onChange={handleCharacterSliderChange} tooltipContent="Determines how strongly the expert will defend their initial position, even if presented with new arguments." />
+        <TraitSlider name="opennessToData" label="Openness to Data" value={character.opennessToData} onChange={handleCharacterSliderChange} tooltipContent="How ready the expert is to change their position or opinion based on new facts and arguments presented in the debate." />
       </div>
 
       <div className="mt-8 border-t border-border-main pt-8">
         <TraitSlider
           name="temperature"
-          label="Креативность"
+          label="Creativity"
           value={character.temperature}
           onChange={handleCharacterSliderChange}
           min={0.1}
           max={2.0}
           step={0.1}
-          tooltipContent="Низкие (0.1–0.4): максимум логики. Средние (0.5–0.8): баланс и здравый смысл. Высокие (0.9+): больше креативности, но растёт риск 'галлюцинаций'."
+          tooltipContent="Low (0.1–0.4): maximum logic. Medium (0.5–0.8): balance and common sense. High (0.9+): more creativity, but increased risk of 'hallucinations'."
         />
       </div>
 
       <div className="mt-8 border-t border-border-main pt-8 space-y-4">
-        <PerkToggle name="hasHumor" label="Юмор" checked={character.hasHumor} onChange={handleCharacterCheckboxChange} tooltipContent="Разрешает эксперту использовать сарказм, иронию и шутки в своих репликах." />
-        <PerkToggle name="isContradictionHunter" label="Охотник за нестыковками" checked={character.isContradictionHunter} onChange={handleCharacterCheckboxChange} tooltipContent="Эксперт будет активно искать противоречия и логические дыры в аргументах других участников." />
+        <PerkToggle name="hasHumor" label="Humor" checked={character.hasHumor} onChange={handleCharacterCheckboxChange} tooltipContent="Allows expert to use sarcasm, irony and jokes in their replies." />
+        <PerkToggle name="isContradictionHunter" label="Contradiction Hunter" checked={character.isContradictionHunter} onChange={handleCharacterCheckboxChange} tooltipContent="Expert will actively look for contradictions and logic holes in other participants' arguments." />
       </div>
     </ConfigSectionCard>
   );

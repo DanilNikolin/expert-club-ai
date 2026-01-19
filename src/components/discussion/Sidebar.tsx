@@ -97,7 +97,7 @@ const ExpertSelector = ({ availableExperts, selectedExperts, setSelectedExperts,
     <div className="space-y-2">
       {!availableExperts.length ? (
         <div className="p-3 text-center bg-bg-main rounded-md">
-          <p className="text-sm text-text-secondary">Сначала <Link href="/experts/create" className="text-accent-primary hover:underline">создайте эксперта</Link>.</p>
+          <p className="text-sm text-text-secondary">First <Link href="/experts/create" className="text-accent-primary hover:underline">create an expert</Link>.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto pr-2">
@@ -141,7 +141,7 @@ export default function Sidebar({
   const toggleSection = (section: keyof typeof openSections) => {
     setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
-  
+
   const handleSaveBrief = async () => {
     try {
       await fetch(`/api/discussion/${discussionId}`, {
@@ -152,7 +152,7 @@ export default function Sidebar({
       setIsEditingBrief(false);
     } catch (error) {
       console.error("Failed to update brief:", error);
-      alert("Ошибка сохранения брифа!");
+      alert("Error saving brief!");
     }
   };
 
@@ -163,54 +163,54 @@ export default function Sidebar({
   return (
     <div className="flex flex-col h-full">
       <div className="flex-shrink-0">
-       
-          <Link href="/dashboard" className="mb-6 flex items-center gap-2 font-sans text-sm text-text-secondary transition-colors hover:text-accent-primary">
-            <ArrowLeft size={16} />
-            <span>В Дашборд</span>
-          </Link>
-                </div>
+
+        <Link href="/dashboard" className="mb-6 flex items-center gap-2 font-sans text-sm text-text-secondary transition-colors hover:text-accent-primary">
+          <ArrowLeft size={16} />
+          <span>To Dashboard</span>
+        </Link>
+      </div>
 
       <div className="flex-grow space-y-4 overflow-y-auto pr-2">
-        <SidebarSection title="Тема и Цель" isOpen={openSections.mission} onToggle={() => toggleSection('mission')} isComplete={isMissionComplete}>
+        <SidebarSection title="Theme and Goal" isOpen={openSections.mission} onToggle={() => toggleSection('mission')} isComplete={isMissionComplete}>
           <div className="space-y-4">
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="text-sm font-medium text-text-secondary">Ваш Бриф</label>
+                <label className="text-sm font-medium text-text-secondary">Your Brief</label>
                 {!isEditingBrief && (
-                  <Button onClick={() => setIsEditingBrief(true)} variant="secondary" size="sm" className="px-2 py-1 h-auto" title="Редактировать бриф">
+                  <Button onClick={() => setIsEditingBrief(true)} variant="secondary" size="sm" className="px-2 py-1 h-auto" title="Edit brief">
                     <Pencil className="h-4 w-4" />
                   </Button>
                 )}
               </div>
               {isEditingBrief ? (
-                 <div className="space-y-2">
-                   <textarea value={editedBrief} onChange={(e) => setEditedBrief(e.target.value)} className="w-full p-2 h-48 bg-bg-main border border-border-main rounded-md text-text-main resize-y focus:ring-1 focus:ring-accent-primary" />
-                   <div className="flex gap-2">
-                     <Button onClick={handleSaveBrief} size="sm" variant="primary" className="w-full border-accent-success text-accent-success hover:bg-accent-success hover:text-text-on-accent">Сохранить</Button>
-                     <Button onClick={() => { setIsEditingBrief(false); setEditedBrief(brief); }} size="sm" variant="secondary" className="w-full">Отмена</Button>
-                   </div>
-                 </div>
+                <div className="space-y-2">
+                  <textarea value={editedBrief} onChange={(e) => setEditedBrief(e.target.value)} className="w-full p-2 h-48 bg-bg-main border border-border-main rounded-md text-text-main resize-y focus:ring-1 focus:ring-accent-primary" />
+                  <div className="flex gap-2">
+                    <Button onClick={handleSaveBrief} size="sm" variant="primary" className="w-full border-accent-success text-accent-success hover:bg-accent-success hover:text-text-on-accent">Save</Button>
+                    <Button onClick={() => { setIsEditingBrief(false); setEditedBrief(brief); }} size="sm" variant="secondary" className="w-full">Cancel</Button>
+                  </div>
+                </div>
               ) : (
                 <p className="font-sans text-base text-text-secondary max-h-48 overflow-y-auto whitespace-pre-wrap pr-2">{brief}</p>
               )}
             </div>
             <div className="mt-4 pt-4 border-t border-border-main">
-              <label htmlFor="debateGoal" className="block text-sm font-medium text-text-secondary">Цель Дебатов</label>
-              <p className="text-xs text-text-muted mb-2">Вы можете написать любую Вашу цель</p>
-              <textarea id="debateGoal" value={debateGoal} onChange={(e) => setDebateGoal(e.target.value)} onBlur={handleUpdateGoal} placeholder="Опишите главную цель..."
+              <label htmlFor="debateGoal" className="block text-sm font-medium text-text-secondary">Debate Goal</label>
+              <p className="text-xs text-text-muted mb-2">You can write any goal</p>
+              <textarea id="debateGoal" value={debateGoal} onChange={(e) => setDebateGoal(e.target.value)} onBlur={handleUpdateGoal} placeholder="Describe main goal..."
                 className="w-full p-2 bg-bg-main border border-border-main rounded-md text-text-main resize-none focus:ring-1 focus:ring-accent-primary"
                 rows={2} disabled={isDebateInProgress} />
-              {isSavingGoal && <p className="text-xs text-text-secondary animate-pulse mt-1">Сохраняем...</p>}
+              {isSavingGoal && <p className="text-xs text-text-secondary animate-pulse mt-1">Saving...</p>}
             </div>
           </div>
         </SidebarSection>
 
-        <SidebarSection title="Экспертная Группа" isOpen={openSections.team} onToggle={() => toggleSection('team')} isComplete={isTeamComplete}>
+        <SidebarSection title="Expert Team" isOpen={openSections.team} onToggle={() => toggleSection('team')} isComplete={isTeamComplete}>
           <ExpertSelector availableExperts={availableExperts} selectedExperts={selectedExperts} setSelectedExperts={setSelectedExperts} disabled={isDebateInProgress} />
-          
+
           {isTeamComplete && !isDebateInProgress && (
             <div className="mt-4 border-t border-border-main pt-4">
-              <h4 className="font-pixel text-sm uppercase text-text-secondary mb-2">Итоговая команда:</h4>
+              <h4 className="font-pixel text-sm uppercase text-text-secondary mb-2">Final team:</h4>
               <div className="flex flex-wrap gap-2">
                 {selectedExperts.map(expert => (
                   <div key={expert.id} className="flex items-center gap-2 rounded-full bg-accent-secondary/20 pl-3 pr-2 py-1 text-sm text-accent-secondary font-medium">
@@ -226,29 +226,29 @@ export default function Sidebar({
 
           {stage === 'setup' && (
             <div className="mt-4 border-t border-border-main pt-4">
-              <span className="block text-center text-xs text-text-secondary/80 mb-2">или</span>
+              <span className="block text-center text-xs text-text-secondary/80 mb-2">or</span>
               <Button onClick={() => router.push(`/experts/create?brief=${encodeURIComponent(brief)}`)} variant="secondary" size="sm" className="w-full">
-                Создать команду под этот бриф
+                Create team for this brief
               </Button>
             </div>
           )}
         </SidebarSection>
 
-        <SidebarSection title="Регламент Дебатов" isOpen={openSections.rules} onToggle={() => toggleSection('rules')} isComplete={true}>
+        <SidebarSection title="Debate Rules" isOpen={openSections.rules} onToggle={() => toggleSection('rules')} isComplete={true}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="rounds" className="block text-sm font-medium text-text-secondary mb-2">Количество раундов</label>
+              <label htmlFor="rounds" className="block text-sm font-medium text-text-secondary mb-2">Number of rounds</label>
               <select id="rounds" value={rounds} onChange={e => setRounds(Number(e.target.value))} className="select-primary" disabled={isDebateInProgress}>
-                <option value={1}>1 Раунд</option>
-                <option value={2}>2 Раунда</option>
-                <option value={3}>3 Раунда</option>
-                <option value={6}>6 Раундов</option>
+                <option value={1}>1 Round</option>
+                <option value={2}>2 Rounds</option>
+                <option value={3}>3 Rounds</option>
+                <option value={6}>6 Rounds</option>
               </select>
             </div>
             <div className="flex items-center space-x-2">
               <input type="checkbox" id="autopause" checked={autoPause} onChange={e => setAutoPause(e.target.checked)} disabled={isDebateInProgress}
                 className="h-4 w-4 rounded bg-bg-main border-bg-surface text-accent-primary focus:ring-accent-primary" />
-              <label htmlFor="autopause" className="text-sm font-medium text-text-main">Автопауза после раунда</label>
+              <label htmlFor="autopause" className="text-sm font-medium text-text-main">Autopause after round</label>
             </div>
           </div>
         </SidebarSection>
@@ -262,7 +262,7 @@ export default function Sidebar({
           className="w-full py-3 text-lg"
           variant="action"
         >
-          {isDebateInProgress ? 'Дебаты Идут...' : 'Начать Дебаты'}
+          {isDebateInProgress ? 'Debate in progress...' : 'Start Debate'}
         </Button>
       </div>
     </div>

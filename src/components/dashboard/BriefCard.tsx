@@ -40,7 +40,7 @@ export default function BriefCard({ brief, onDelete, onStartDebate, isExpanded, 
                     <button
                         onClick={(e) => { e.stopPropagation(); onDelete(brief.id); }}
                         className="text-text-secondary hover:text-accent-danger transition-colors opacity-0 group-hover:opacity-100"
-                        title="Удалить бриф"
+                        title="Delete brief"
                     >
                         <Trash2 size={16} />
                     </button>
@@ -56,10 +56,10 @@ export default function BriefCard({ brief, onDelete, onStartDebate, isExpanded, 
                     <p className="text-xs text-text-secondary font-mono">
                         {brief.createdAt?.seconds
                             ? new Date(brief.createdAt.seconds * 1000).toLocaleDateString()
-                            : 'Недавно'}
+                            : 'Just now'}
                     </p>
                     <span className='font-pixel text-xs uppercase text-text-secondary group-hover:text-accent-primary transition-colors'>
-                        {isExpanded ? '[ Свернуть ]' : '[ Подробнее ]'}
+                        {isExpanded ? '[ Collapse ]' : '[ Details ]'}
                     </span>
                 </div>
             </div>
@@ -76,10 +76,10 @@ export default function BriefCard({ brief, onDelete, onStartDebate, isExpanded, 
                     {/* Full Brief Text */}
                     <div className="relative">
                         <div className="flex justify-between items-center mb-2">
-                            <h4 className="font-pixel text-[11px] uppercase text-text-secondary">Содержание брифа</h4>
+                            <h4 className="font-pixel text-[11px] uppercase text-text-secondary">Brief Content</h4>
                             <button onClick={handleCopy} className="flex items-center gap-1.5 font-pixel text-[10px] text-accent-primary hover:text-accent-primary/80 transition">
                                 {isCopied ? <Check size={12} className="text-accent-success" /> : <Copy size={12} />}
-                                {isCopied ? 'Скопировано' : 'Копировать'}
+                                {isCopied ? 'Copied' : 'Copy'}
                             </button>
                         </div>
                         <div className="max-h-60 overflow-y-auto pr-2 custom-scrollbar">
@@ -92,7 +92,7 @@ export default function BriefCard({ brief, onDelete, onStartDebate, isExpanded, 
                     {/* Justification */}
                     {brief.goalJustification && (
                         <div className="p-3 bg-bg-elevated rounded-lg border border-border-main/50">
-                            <h4 className="font-pixel text-[10px] uppercase text-text-secondary mb-1">Почему выбрана эта цель?</h4>
+                            <h4 className="font-pixel text-[10px] uppercase text-text-secondary mb-1">Why this goal?</h4>
                             <p className="text-xs text-text-secondary italic">"{brief.goalJustification}"</p>
                         </div>
                     )}
@@ -105,7 +105,7 @@ export default function BriefCard({ brief, onDelete, onStartDebate, isExpanded, 
                         className='w-full text-base py-4 shadow-lg'
                     >
                         <Play className="w-5 h-5 mr-2 fill-current" />
-                        Запустить Дебаты
+                        Start Debate
                     </Button>
                 </div>
             </div>

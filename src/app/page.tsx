@@ -27,7 +27,7 @@ export default function HomePage() {
         aria-live="polite"
         aria-busy="true"
       >
-        <span className="animate-pulse">Загрузка…</span>
+        <span className="animate-pulse">Loading...</span>
       </div>
     );
   }
@@ -37,7 +37,7 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-bg-main text-text-main relative isolate">
       <a href="#content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 bg-bg-surface text-text-main px-3 py-2 rounded">
-        К содержанию
+        Skip to content
       </a>
 
       <div
@@ -50,21 +50,21 @@ export default function HomePage() {
       {/* Hero */}
       <Section className="pt-20 pb-14 text-center">
         <div id="content" className="max-w-5xl mx-auto">
-          
+
           <h1 className="flex flex-col items-center gap-y-3 text-4xl md:text-6xl font-pixel uppercase mb-8">
             <span className="inline-block md:whitespace-nowrap rounded-md bg-bg-surface/50 px-4 py-2 text-accent-primary">
-              Собери команду AI.
+              Build your AI Team.
             </span>
             <span className="inline-block md:whitespace-nowrap rounded-md bg-bg-surface/50 px-4 py-2 text-accent-primary">
-              Дай им цель.
+              Give them a goal.
             </span>
             <span className="inline-block md:whitespace-nowrap rounded-md bg-bg-surface/50 px-4 py-2 text-accent-secondary">
-              Скажи &apos;Фас!&apos;.
+              Say &apos;Go!&apos;.
             </span>
           </h1>
 
           <p className="text-xl md:text-2xl text-text-secondary mb-10 max-w-3xl mx-auto">
-            Это твоя песочница. Создай AI-гения, критика, идиота — кого угодно. Они будут спорить друг с другом о твоей задаче, а ты — режиссировать процесс.
+            This is your sandbox. Create an AI genius, a critic, an idiot — anyone. They will debate your task, and you will direct the process.
           </p>
 
           <CtaRow isAuthed={isAuthed} />
@@ -78,97 +78,97 @@ export default function HomePage() {
 
       {/* How it works */}
       <Section aria-labelledby="how" className="relative">
-        <SectionHeader>Как это работает</SectionHeader>
+        <SectionHeader>How if works</SectionHeader>
 
         <div className="flex flex-col gap-6 md:hidden">
-  <StepCard
-    step={1}
-    icon={Users}
-    color="primary"
-    title="Создай экспертов"
-    description="Собери команду с нуля в мощном конструкторе или выбери готовых."
-  />
-  <StepCard
-    step={2}
-    icon={MessageSquare}
-    color="secondary"
-    title="Сформулируй задачу"
-    description="Опиши свою идею. Наш AI-Консьерж поможет превратить ее в четкий бриф для команды."
-  />
-  <StepCard
-    step={3}
-    icon={Zap}
-    color="success"
-    title="Запусти дебаты"
-    description="Наблюдай, как твои AI-эксперты спорят, соглашаются и ищут истину, следуя заданным характерам."
-  />
-  <StepCard
-    step={4}
-    icon={Target}
-    color="danger"
-    title="Получи выводы"
-    description="В конце — вся суть на одном экране. Никакой воды. Только главные аргументы, риски и пошаговый план."
-  />
-</div>
+          <StepCard
+            step={1}
+            icon={Users}
+            color="primary"
+            title="Create Experts"
+            description="Assemble a team from scratch in a powerful constructor or choose ready-made ones."
+          />
+          <StepCard
+            step={2}
+            icon={MessageSquare}
+            color="secondary"
+            title="Formulate Task"
+            description="Describe your idea. Our AI Concierge will help turn it into a clear brief for the team."
+          />
+          <StepCard
+            step={3}
+            icon={Zap}
+            color="success"
+            title="Start Debate"
+            description="Watch your AI experts argue, agree, and seek the truth, following their assigned characters."
+          />
+          <StepCard
+            step={4}
+            icon={Target}
+            color="danger"
+            title="Get Conclusions"
+            description="In the end — the essence on one screen. No fluff. Only key arguments, risks, and a step-by-step plan."
+          />
+        </div>
 
-{/* --- ВЕРСИЯ ДЛЯ ДЕСКТОПА (наша новая жесткая сетка) --- */}
-      <div className="hidden md:grid md:grid-cols-[4fr_1fr_4fr_1fr_4fr_1fr_4fr] md:items-stretch md:gap-x-4">
-        <StepCard
-          step={1}
-          icon={Users}
-          color="primary"
-          title="Создай экспертов"
-          description="Собери команду с нуля в мощном конструкторе или выбери готовых."
-        />
-        <TimelineConnector />
-        <StepCard
-          step={2}
-          icon={MessageSquare}
-          color="secondary"
-          title="Сформулируй задачу"
-          description="Опиши свою идею. Наш AI-Консьерж поможет превратить ее в четкий бриф для команды."
-        />
-        <TimelineConnector />
-        <StepCard
-          step={3}
-          icon={Zap}
-          color="success"
-          title="Запусти дебаты"
-          description="Наблюдай, как твои AI-эксперты спорят, соглашаются и ищут истину, следуя заданным характерам."
-        />
-        <TimelineConnector />
-        <StepCard
-          step={4}
-          icon={Target}
-          color="danger"
-          title="Получи выводы"
-          description="В конце — вся суть на одном экране. Никакой воды. Только главные аргументы, риски и пошаговый план."
-        />
-      </div>
+        {/* --- DESKTOP VERSION (our new rigid grid) --- */}
+        <div className="hidden md:grid md:grid-cols-[4fr_1fr_4fr_1fr_4fr_1fr_4fr] md:items-stretch md:gap-x-4">
+          <StepCard
+            step={1}
+            icon={Users}
+            color="primary"
+            title="Create Experts"
+            description="Assemble a team from scratch in a powerful constructor or choose ready-made ones."
+          />
+          <TimelineConnector />
+          <StepCard
+            step={2}
+            icon={MessageSquare}
+            color="secondary"
+            title="Formulate Task"
+            description="Describe your idea. Our AI Concierge will help turn it into a clear brief for the team."
+          />
+          <TimelineConnector />
+          <StepCard
+            step={3}
+            icon={Zap}
+            color="success"
+            title="Start Debate"
+            description="Watch your AI experts argue, agree, and seek the truth, following their assigned characters."
+          />
+          <TimelineConnector />
+          <StepCard
+            step={4}
+            icon={Target}
+            color="danger"
+            title="Get Conclusions"
+            description="In the end — the essence on one screen. No fluff. Only key arguments, risks, and a step-by-step plan."
+          />
+        </div>
       </Section>
 
       {/* Why it works */}
       <Section aria-labelledby="why">
-        <SectionHeader>Почему это работает</SectionHeader>
+        <SectionHeader>Why it works</SectionHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           <FeatureCard
             icon={Users}
             color="primary"
-            title="Сила в споре"
-            text="Роли с противоположными установками. Вместо одного ответа — спектр решений с критикой и защитой."
+            title="Power in Debate"
+            text="Roles with opposing mindsets. Instead of one answer — a spectrum of solutions with criticism and defense."
           />
           <FeatureCard
             icon={MessageSquare}
             color="secondary"
-            title="Реальный диалог"
-            text="Модели спорят между собой, уточняют тезисы, эскалируют аргументы. Факты, логика и стратегия."
+            title="Real Dialogue"
+            text="Models argue with each other, clarify theses, escalate arguments. Facts, logic, and strategy."
           />
           <FeatureCard
             icon={Target}
             color="success"
-            title="Ты — режиссер"
-            text="Состав, правила, раунды — под задачу. Вмешивайся в нужный момент и направляй спор к цели."
+            title="You are the Director"
+            text="Composition, rules, rounds — according to the task. Intervene at the right moment and guide the dispute to the goal."
           />
         </div>
       </Section>
@@ -178,24 +178,24 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto text-center">
           <CardBase color="primary" className="p-10 md:p-12 bg-bg-surface border-2 border-accent-primary/40">
             <h2 className="text-3xl md:text-4xl font-pixel text-accent-primary uppercase mb-4">
-              Готов проверить гипотезу?
+              Ready to test the hypothesis?
             </h2>
             <p className="text-xl text-text-secondary mb-8">
-              Запусти спор — получи ясный план и список рисков. Коротко, по делу, пригодно к действию.
+              Run a debate — get a clear plan and a list of risks. Short, to the point, actionable.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {isAuthed ? (
                 <Link href="/discussion/new" className="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/60 rounded-lg">
                   <Button size="default" className="w-full px-10 py-4 text-lg">
-                    Создать дискуссию
+                    Create Discussion
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>
               ) : (
                 <Link href="/signup" className="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/60 rounded-lg">
                   <Button size="default" className="w-full px-10 py-4 text-lg">
-                    Начать бесплатно
+                    Start for Free
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>
@@ -203,7 +203,7 @@ export default function HomePage() {
             </div>
 
             <p className="text-sm text-text-secondary mt-4">
-              Бесплатно все (режим разработки)
+              Free forever (dev mode)
             </p>
           </CardBase>
         </div>

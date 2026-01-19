@@ -19,7 +19,7 @@ export default function ChatInputForm({ currentMessage, setCurrentMessage, handl
           type="text"
           value={currentMessage}
           onChange={(e) => setCurrentMessage(e.target.value)}
-          placeholder="Начните с описания вашей идеи..."
+          placeholder="Start by describing your idea..."
           disabled={isLoading}
           className={cn(
             'w-full flex-grow rounded-md p-3 font-sans text-lg text-text-main placeholder:text-text-secondary/50',

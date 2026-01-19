@@ -47,7 +47,7 @@ export default function DiscussionCard({ discussion, onDelete, onBriefUpdated, i
       setIsEditing(false);
     } catch (error) {
       console.error("Failed to update brief:", error);
-      alert("Ошибка сохранения брифа!");
+      alert("Error saving brief!");
     }
   };
 
@@ -66,12 +66,12 @@ export default function DiscussionCard({ discussion, onDelete, onBriefUpdated, i
           </p>
         </div>
         <div className="flex justify-between items-center mt-2 pt-2 border-t border-bg-main">
-            <p className="text-xs text-text-secondary font-mono">
-                {new Date(discussion.createdAt.seconds * 1000).toLocaleDateString()}
-            </p>
-            <span className='font-pixel text-xs uppercase text-text-secondary'>
-                {isExpanded ? '[ Свернуть ]' : '[ Подробнее ]'}
-            </span>
+          <p className="text-xs text-text-secondary font-mono">
+            {new Date(discussion.createdAt.seconds * 1000).toLocaleDateString()}
+          </p>
+          <span className='font-pixel text-xs uppercase text-text-secondary'>
+            {isExpanded ? '[ Collapse ]' : '[ Details ]'}
+          </span>
         </div>
       </div>
 
@@ -92,18 +92,18 @@ export default function DiscussionCard({ discussion, onDelete, onBriefUpdated, i
                 className="w-full p-3 h-48 bg-bg-main border border-border-main rounded-md text-text-main resize-y focus:ring-1 focus:ring-accent-secondary"
               />
               <div className="flex gap-2">
-                <Button onClick={handleSaveBrief} size="sm" variant="primary" className="w-full border-accent-success text-accent-success hover:bg-accent-success hover:text-text-on-accent">Сохранить</Button>
-                <Button onClick={(e) => { e.stopPropagation(); setIsEditing(false); setEditedBrief(discussion.brief); }} size="sm" variant="secondary" className="w-full">Отмена</Button>
+                <Button onClick={handleSaveBrief} size="sm" variant="primary" className="w-full border-accent-success text-accent-success hover:bg-accent-success hover:text-text-on-accent">Save</Button>
+                <Button onClick={(e) => { e.stopPropagation(); setIsEditing(false); setEditedBrief(discussion.brief); }} size="sm" variant="secondary" className="w-full">Cancel</Button>
               </div>
             </div>
           ) : (
             <div>
               <div className="flex justify-between items-center mb-3">
-                  <h4 className="font-pixel text-base uppercase text-text-secondary">Полный бриф</h4>
-                  <button onClick={handleCopy} className="flex items-center gap-1.5 font-pixel text-xs text-accent-primary hover:text-accent-primary/80 transition">
-                      {isCopied ? <Check size={14} className="text-accent-success"/> : <Copy size={14} />}
-                      {isCopied ? 'Скопировано!' : 'Копировать'}
-                  </button>
+                <h4 className="font-pixel text-base uppercase text-text-secondary">Full brief</h4>
+                <button onClick={handleCopy} className="flex items-center gap-1.5 font-pixel text-xs text-accent-primary hover:text-accent-primary/80 transition">
+                  {isCopied ? <Check size={14} className="text-accent-success" /> : <Copy size={14} />}
+                  {isCopied ? 'Copied!' : 'Copy'}
+                </button>
               </div>
               <div className="max-h-48 overflow-y-auto pr-2 bg-bg-main/50 p-4 rounded-lg border border-bg-surface">
                 <p className="font-sans text-[15px] text-text-secondary whitespace-pre-wrap leading-relaxed">{discussion.brief}</p>
@@ -114,19 +114,19 @@ export default function DiscussionCard({ discussion, onDelete, onBriefUpdated, i
 
         {/* Футер с кнопками */}
         <div className="flex flex-col gap-4 border-t border-border-main px-5 py-4 bg-bg-main/50 rounded-b-xl">
-           <div className="flex justify-end gap-3">
-             <Button onClick={(e) => { e.stopPropagation(); setIsEditing(!isEditing); }} variant="secondary" size="sm" className="px-4">
-                {isEditing ? 'Отмена' : 'Редактировать'}
-             </Button>
-             <Button onClick={(e) => { e.stopPropagation(); onDelete(discussion.id); }} variant="destructive" size="sm" className="px-4">
-               Удалить
-             </Button>
-           </div>
-           <Link href={`/discussion/${discussion.id}`} className='w-full' onClick={e => e.stopPropagation()}>
-             <Button variant="action" size="default" className='w-full text-base py-3'>
-                В Комнату
-             </Button>
-           </Link>
+          <div className="flex justify-end gap-3">
+            <Button onClick={(e) => { e.stopPropagation(); setIsEditing(!isEditing); }} variant="secondary" size="sm" className="px-4">
+              {isEditing ? 'Cancel' : 'Edit'}
+            </Button>
+            <Button onClick={(e) => { e.stopPropagation(); onDelete(discussion.id); }} variant="destructive" size="sm" className="px-4">
+              Delete
+            </Button>
+          </div>
+          <Link href={`/discussion/${discussion.id}`} className='w-full' onClick={e => e.stopPropagation()}>
+            <Button variant="action" size="default" className='w-full text-base py-3'>
+              Enter Room
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

@@ -33,13 +33,13 @@ const ActionPanel = () => (
     <Link href="/experts/create">
       <Button variant="primary" size="default" className="w-full h-full py-5 text-base">
         <UserPlus className="mr-3 h-5 w-5" />
-        Создать Эксперта
+        Create Expert
       </Button>
     </Link>
     <Link href="/discussion/new">
       <Button variant="action" size="default" className="w-full h-full py-5 text-base">
         <MessagesSquare className="mr-3 h-5 w-5" />
-        Новая Дискуссия
+        New Discussion
       </Button>
     </Link>
   </div>
@@ -171,19 +171,19 @@ export default function DashboardPage() {
 
   // --- Actions ---
   const handleDeleteExpert = async (id: string) => {
-    if (!window.confirm('Удалить эксперта?')) return;
+    if (!window.confirm('Delete expert?')) return;
     await deleteDoc(firebaseDoc(db, `users/${user?.uid}/customExperts`, id));
     setExperts(prev => prev.filter(e => e.id !== id));
   };
 
   const handleDeleteDiscussion = async (id: string) => {
-    if (!window.confirm('Удалить дискуссию?')) return;
+    if (!window.confirm('Delete discussion?')) return;
     await deleteDoc(firebaseDoc(db, 'discussions', id));
     setDiscussions(prev => prev.filter(d => d.id !== id));
   };
 
   const handleDeleteBrief = async (id: string) => {
-    if (!window.confirm('Удалить бриф из библиотеки?')) return;
+    if (!window.confirm('Delete brief from library?')) return;
     await deleteDoc(firebaseDoc(db, `users/${user?.uid}/briefs`, id));
     setBriefs(prev => prev.filter(b => b.id !== id));
   };
@@ -206,7 +206,7 @@ export default function DashboardPage() {
       router.push(`/discussion/${docRef.id}`);
     } catch (e) {
       console.error("Error starting debate:", e);
-      alert("Не удалось создать дискуссию :(");
+      alert("Failed to create discussion :(");
     }
   };
 
@@ -215,15 +215,15 @@ export default function DashboardPage() {
   };
 
   if (loading || !user) {
-    return <div className="text-center mt-20 text-text-secondary">Загрузка данных...</div>;
+    return <div className="text-center mt-20 text-text-secondary">Loading data...</div>;
   }
 
   // Helper to get title text
   const getTitle = () => {
     switch (mode) {
-      case 'experts': return 'Ваши Эксперты';
-      case 'discussions': return 'Ваши Дискуссии';
-      case 'briefs': return 'Библиотека Смыслов';
+      case 'experts': return 'Your Experts';
+      case 'discussions': return 'Your Discussions';
+      case 'briefs': return 'Briefs Library';
     }
   }
 
@@ -233,7 +233,7 @@ export default function DashboardPage() {
       <div className="container mx-auto p-4 relative min-h-[100dvh] pb-32 md:pb-6">
         <div className="text-center md:text-left">
           <h1 className="text-2xl md:text-4xl font-pixel text-accent-primary uppercase tracking-wide leading-tight">
-            Командный Центр
+            Command Center
           </h1>
           <p className="mt-1 md:mt-2 text-text-secondary uppercase font-pixel text-sm md:text-base tracking-wider">
             {getTitle()}
@@ -251,7 +251,7 @@ export default function DashboardPage() {
               mode === 'briefs' ? "text-text-main" : "text-text-secondary hover:text-text-main"
             )}
           >
-            Брифы
+            Briefs
             {mode === 'briefs' && <div className="absolute bottom-[-5px] left-0 w-full h-[2px] bg-accent-primary" />}
           </button>
           <button
@@ -261,7 +261,7 @@ export default function DashboardPage() {
               mode === 'discussions' ? "text-text-main" : "text-text-secondary hover:text-text-main"
             )}
           >
-            Дискуссии
+            Discussions
             {mode === 'discussions' && <div className="absolute bottom-[-5px] left-0 w-full h-[2px] bg-accent-primary" />}
           </button>
           <button
@@ -271,7 +271,7 @@ export default function DashboardPage() {
               mode === 'experts' ? "text-text-main" : "text-text-secondary hover:text-text-main"
             )}
           >
-            Эксперты
+            Experts
             {mode === 'experts' && <div className="absolute bottom-[-5px] left-0 w-full h-[2px] bg-accent-primary" />}
           </button>
         </div>
@@ -284,7 +284,7 @@ export default function DashboardPage() {
                 onClick={handleCollapseAll}
                 className="font-pixel text-[11px] md:text-xs uppercase text-text-secondary transition-colors hover:text-text-main animate-fade-in-fast ml-auto"
               >
-                [ Свернуть все ]
+                [ Collapse all ]
               </button>
             )}
           </div>
@@ -299,13 +299,13 @@ export default function DashboardPage() {
               {/* === BRIEFS MODE === */}
               {mode === 'briefs' && (
                 isLoadingBriefs ? (
-                  <p className="text-text-secondary text-center w-full">Загрузка библиотеки смыслов…</p>
+                  <p className="text-text-secondary text-center w-full">Loading briefs...</p>
                 ) : briefs.length === 0 ? (
                   <EmptyState
                     icon={BookOpen}
-                    title="Библиотека смыслов пуста"
-                    description="Пройдите интервью с Консьержем, чтобы создать свой первый бриф. Он сохранится здесь навсегда."
-                    buttonText="+ Создать новый бриф"
+                    title="Briefs Library is empty"
+                    description="Complete an interview with the Concierge to create your first brief. It will be saved here forever."
+                    buttonText="+ Create new brief"
                     buttonLink="/discussion/new"
                   />
                 ) : (
@@ -326,13 +326,13 @@ export default function DashboardPage() {
               {/* === EXPERTS MODE === */}
               {mode === 'experts' && (
                 isLoadingExperts ? (
-                  <p className="text-text-secondary text-center w-full">Загрузка экспертов…</p>
+                  <p className="text-text-secondary text-center w-full">Loading experts...</p>
                 ) : experts.length === 0 ? (
                   <EmptyState
                     icon={Users}
-                    title="У вас пока нет экспертов"
-                    description="Создайте своего первого AI-эксперта, чтобы сформировать команду для будущих дебатов."
-                    buttonText="+ Создать первого эксперта"
+                    title="You have no experts yet"
+                    description="Create your first AI expert to form a team for future debates."
+                    buttonText="+ Create first expert"
                     buttonLink="/experts/create"
                   />
                 ) : (
@@ -361,13 +361,13 @@ export default function DashboardPage() {
               {/* === DISCUSSIONS MODE === */}
               {mode === 'discussions' && (
                 isLoadingDiscussions ? (
-                  <p className="text-text-secondary text-center w-full">Загрузка дискуссий…</p>
+                  <p className="text-text-secondary text-center w-full">Loading discussions...</p>
                 ) : discussions.length === 0 ? (
                   <EmptyState
                     icon={MessageCircle}
-                    title="Пока нет ни одной дискуссии"
-                    description="Сформулируйте задачу, соберите команду из созданных экспертов и запустите первые дебаты."
-                    buttonText="+ Начать первую дискуссию"
+                    title="No discussions yet"
+                    description="Formulate a task, assemble a team of created experts, and start the first debate."
+                    buttonText="+ Start first discussion"
                     buttonLink="/discussion/new"
                   />
                 ) : (
@@ -415,7 +415,7 @@ export default function DashboardPage() {
               <div className="absolute bottom-16 right-0 flex flex-col gap-2 animate-fade-in-fast">
                 <div className="flex items-center gap-3">
                   <span className="w-40 text-right bg-bg-surface text-text-main px-3 py-2 rounded-lg font-pixel text-xs shadow-lg border border-border-main">
-                    Новый Бриф
+                    New Brief
                   </span>
                   <Link href="/discussion/new">
                     <button className="w-12 h-12 rounded-full p-0 shadow-lg border border-border-main bg-bg-surface text-text-main flex items-center justify-center">
@@ -425,7 +425,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="w-40 text-right bg-bg-surface text-text-main px-3 py-2 rounded-lg font-pixel text-xs shadow-lg border border-border-main">
-                    Создать Эксперта
+                    Create Expert
                   </span>
                   <Link href="/experts/create">
                     <button className="w-12 h-12 rounded-full p-0 shadow-lg border border-border-main bg-bg-surface text-text-main flex items-center justify-center">

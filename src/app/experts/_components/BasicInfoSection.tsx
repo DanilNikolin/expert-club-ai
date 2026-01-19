@@ -16,8 +16,8 @@ type Props = {
 export default function BasicInfoSection({ formData, handleChange, validationErrors }: Props) {
   return (
     <ConfigSectionCard
-      title="Уровень 0: Идентификация"
-      description="Имя эксперта и базовая модель AI, на которой он будет работать."
+      title="Level 0: Identification"
+      description="Expert name and base AI model."
       isCollapsible={true}
       startOpen={true} // Пусть этот блок будет открыт по умолчанию
     >
@@ -25,8 +25,8 @@ export default function BasicInfoSection({ formData, handleChange, validationErr
         {/* Поле для имени эксперта */}
         <div>
           <label htmlFor="name" className="flex items-center font-pixel text-base uppercase text-text-main mb-2">
-            Имя Эксперта *
-            <Tooltip content="Максимум 100 символов. Выберите имя, отражающее суть эксперта, например: «Скептик-Финансист» или «Креативный Шторм»." />
+            Expert Name *
+            <Tooltip content="Max 100 characters. Choose a name that reflects essence, e.g. 'Skeptic-Financier' or 'Creative Storm'." />
           </label>
           <input
             type="text"
@@ -34,7 +34,7 @@ export default function BasicInfoSection({ formData, handleChange, validationErr
             name="name"
             value={formData.name}
             onChange={handleChange}
-            placeholder="Например: Скептик-Финансист"
+            placeholder="e.g. Skeptic-Financier"
             className={cn(
               'w-full rounded-md p-3 font-sans text-text-main placeholder:text-text-muted',
               'bg-bg-main ring-1 ring-inset ring-border-main transition-all duration-150',
@@ -53,8 +53,8 @@ export default function BasicInfoSection({ formData, handleChange, validationErr
         {/* Селектор для выбора модели */}
         <div>
           <label htmlFor="model" className="flex items-center font-pixel text-base uppercase text-text-main mb-2">
-            Базовая Модель AI
-            <Tooltip content="Выбор базовой модели влияет на 'интеллект', скорость и стоимость генерации ответов эксперта." />
+            Base AI Model
+            <Tooltip content="Base model choice affects 'intelligence', speed and cost of generation." />
           </label>
           <select
             id="model"
@@ -66,11 +66,11 @@ export default function BasicInfoSection({ formData, handleChange, validationErr
             {/* <optgroup label="Google (Июль 2025)">
               <option value="gemini-2.5-flash">Gemini 2.5 Flash (Баланс/Мощь)</option>
             </optgroup> */}
-            <optgroup label="OpenAI (Стриминг)">
-              <option value="gpt-4.1-mini">GPT-4.1 Mini (Стрим)</option>
+            <optgroup label="OpenAI (Streaming)">
+              <option value="gpt-4.1-mini">GPT-4.1 Mini (Stream)</option>
             </optgroup>
-            <optgroup label="Другие">
-              <option value="deepseek-chat">DeepSeek Chat (Глубина)</option>
+            <optgroup label="Other">
+              <option value="deepseek-chat">DeepSeek Chat (Depth)</option>
             </optgroup>
           </select>
         </div>

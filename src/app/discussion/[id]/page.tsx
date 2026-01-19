@@ -46,7 +46,7 @@ export default function DiscussionPage() {
     const [autoPause, setAutoPause] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
     const chatEndRef = useRef<HTMLDivElement>(null);
-    
+
     // 🔥 НОВЫЙ СТЕЙТ ДЛЯ ХРАНЕНИЯ МЫСЛЕЙ В РЕАЛЬНОМ ВРЕМЕНИ
     const [currentThoughts, setCurrentThoughts] = useState<Record<number, string>>({});
     const [collapsedThoughts, setCollapsedThoughts] = useState<Set<number>>(new Set());
@@ -81,13 +81,13 @@ export default function DiscussionPage() {
 
         const exSnap = await getDocs(query(collection(db, `users/${currentUser.uid}/customExperts`), orderBy('createdAt', 'desc')));
         setAvailableCustomExperts(exSnap.docs.map(x => ({ id: x.id, ...x.data() } as Expert)));
-        
+
         const runsSnap = await getDocs(query(collection(db, 'discussions', discussionId, 'runs'), orderBy('createdAt', 'desc')));
         const fetchedRuns = runsSnap.docs.map(x => ({ id: x.id, ...x.data() } as Run));
-        
+
         // 1. Мы ВСЕГДА устанавливаем список "прогонов" для Архива
         setRuns(fetchedRuns);
-        
+
         // 2. И мы ВСЕГДА принудительно сбрасываем состояние в 'setup' при загрузке страницы.
         // Пользователь сам решит, начать новый "ран" или выбрать старый из списка.
         setActiveRun(null);
@@ -117,10 +117,10 @@ export default function DiscussionPage() {
         // 1. Всегда показываем "Replay" того, что выбрали
         const transcriptWithReport = [...activeRun.transcript];
         if (activeRun.report) {
-          transcriptWithReport.push({ role: 'assistant', name: 'Судья', content: activeRun.report });
+            transcriptWithReport.push({ role: 'assistant', name: 'Judge', content: activeRun.report });
         }
-        
-    
+
+
 
         setMessages(transcriptWithReport);
 
@@ -132,8 +132,8 @@ export default function DiscussionPage() {
         } else {
             setStage('finished');
         }
-        
-    }, [activeRun, liveRunId]); 
+
+    }, [activeRun, liveRunId]);
 
     const handleUpdateGoal = async () => {
         if (!debateGoal) return;
@@ -142,7 +142,7 @@ export default function DiscussionPage() {
             await updateDoc(doc(db, 'discussions', discussionId), { goal: debateGoal });
         } catch (error) {
             console.error("Failed to update goal:", error);
-            alert("Ошибка сохранения цели");
+            alert("Error saving goal");
         } finally {
             setIsSavingGoal(false);
         }
@@ -153,7 +153,7 @@ export default function DiscussionPage() {
     };
 
     const handleDeleteRun = async (runIdToDelete: string) => {
-        if (!window.confirm('Это действие ПОЛНОСТЬЮ И БЕЗВОЗВРАТНО удалит прогон. Продолжить?')) return;
+        if (!window.confirm('This action will FULLY and PERMANENTLY delete the run. Continue?')) return;
         setIsLoading(true);
         try {
             await deleteDoc(doc(db, 'discussions', discussionId, 'runs', runIdToDelete));
@@ -166,8 +166,8 @@ export default function DiscussionPage() {
                 setMessages([]);
             }
         } catch (error) {
-            console.error("Ошибка при удалении рана:", error);
-            alert("Не удалось удалить прогон.");
+            console.error("Error deleting run:", error);
+            alert("Failed to delete run.");
         } finally {
             setIsLoading(false);
         }
@@ -177,150 +177,150 @@ export default function DiscussionPage() {
         if (!line.startsWith('data:')) return null;
         try { return JSON.parse(line.replace(/^data:\s?/, '')); } catch { return null; }
     };
-    
+
     const handleRunRound = async (runToProcess: Run, opts?: { newHistory?: DebateMessage[] }) => {
-    if (!runToProcess) {
-        alert("Критическая ошибка: в функцию не передали прогон для обработки.");
-        setStage('setup');
-        return;
-    }
-
-    const history = opts?.newHistory ?? messages;
-    setStage('debating');
-    setUserIntervention('');
-
-    try {
-        const response = await fetch('/api/debate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                discussionId,
-                runId: runToProcess.id,
-                brief,
-                goal: debateGoal,
-                selectedExperts: runToProcess.team.map(t => availableCustomExperts.find(ex => ex.id === t.id)).filter(Boolean) as Expert[],
-                history,
-            }),
-        });
-
-        if (!response.ok || !response.body) {
-            throw new Error(`Ошибка сервера: ${response.status}`);
+        if (!runToProcess) {
+            alert("Critical error: run not passed to function.");
+            setStage('setup');
+            return;
         }
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-        let currentAssistantMessageIndex = -1;
+        const history = opts?.newHistory ?? messages;
+        setStage('debating');
+        setUserIntervention('');
 
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
+        try {
+            const response = await fetch('/api/debate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    discussionId,
+                    runId: runToProcess.id,
+                    brief,
+                    goal: debateGoal,
+                    selectedExperts: runToProcess.team.map(t => availableCustomExperts.find(ex => ex.id === t.id)).filter(Boolean) as Expert[],
+                    history,
+                }),
+            });
 
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n\n');
-            buffer = lines.pop() || '';
-
-            for (const line of lines) {
-                if (!line.startsWith('data:')) continue;
-                const parsed = parseSSE(line);
-                if (!parsed) continue;
-
-                if (parsed.type === 'expert_start' && parsed.name) {
-    setMessages(prev => {
-        currentAssistantMessageIndex = prev.length;
-        setCurrentThoughts(prevThoughts => ({ ...prevThoughts, [currentAssistantMessageIndex]: '' }));
-        return [...prev, { role: 'assistant', name: parsed.name, content: '', isStreaming: true }];
-    });
-} else if (parsed.type === 'thought_chunk' && parsed.content) {
-    setCurrentThoughts(prev => ({ ...prev, [currentAssistantMessageIndex]: (prev[currentAssistantMessageIndex] || '') + parsed.content }));
-} else if (parsed.type === 'chunk' && parsed.content) {
-    setMessages(currentMessages => {
-        if (currentAssistantMessageIndex === -1) return currentMessages;
-        
-        // Вместо мутации используем .map() для создания нового массива с новым объектом
-        return currentMessages.map((msg, index) => {
-            if (index === currentAssistantMessageIndex) {
-                // Нашли нужный объект? Возвращаем его ПОЛНУЮ КОПИЮ с обновленным контентом.
-                return { ...msg, content: (msg.content || '') + (parsed.content || '') };
+            if (!response.ok || !response.body) {
+                throw new Error(`Server error: ${response.status}`);
             }
-            // Остальные объекты возвращаем как есть.
-            return msg;
-        });
-    });
-} else if (parsed.type === 'expert_end' && parsed.fullMessage) {
-    setMessages(currentMessages => { // Сразу применяем фикс из пункта 1
-        const newMessages = [...currentMessages];
-        const existingMessage = newMessages[currentAssistantMessageIndex];
-        // Проверяем, что и fullMessage прилетел, и в нашем массиве есть что обновлять
-        if (parsed.fullMessage && existingMessage) {
-            newMessages[currentAssistantMessageIndex] = {
-                      ...existingMessage,
-                      // Явно берём только нужные поля и приводим content к строке
-                      role: parsed.fullMessage.role,
-                      content: String(parsed.fullMessage.content || ''),
-                      name: parsed.fullMessage.name,
-                      isStreaming: false,
-                  } as DebateMessage; // <-- ВОТ ОН, ФИКС
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let currentAssistantMessageIndex = -1;
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n\n');
+                buffer = lines.pop() || '';
+
+                for (const line of lines) {
+                    if (!line.startsWith('data:')) continue;
+                    const parsed = parseSSE(line);
+                    if (!parsed) continue;
+
+                    if (parsed.type === 'expert_start' && parsed.name) {
+                        setMessages(prev => {
+                            currentAssistantMessageIndex = prev.length;
+                            setCurrentThoughts(prevThoughts => ({ ...prevThoughts, [currentAssistantMessageIndex]: '' }));
+                            return [...prev, { role: 'assistant', name: parsed.name, content: '', isStreaming: true }];
+                        });
+                    } else if (parsed.type === 'thought_chunk' && parsed.content) {
+                        setCurrentThoughts(prev => ({ ...prev, [currentAssistantMessageIndex]: (prev[currentAssistantMessageIndex] || '') + parsed.content }));
+                    } else if (parsed.type === 'chunk' && parsed.content) {
+                        setMessages(currentMessages => {
+                            if (currentAssistantMessageIndex === -1) return currentMessages;
+
+                            // Вместо мутации используем .map() для создания нового массива с новым объектом
+                            return currentMessages.map((msg, index) => {
+                                if (index === currentAssistantMessageIndex) {
+                                    // Нашли нужный объект? Возвращаем его ПОЛНУЮ КОПИЮ с обновленным контентом.
+                                    return { ...msg, content: (msg.content || '') + (parsed.content || '') };
+                                }
+                                // Остальные объекты возвращаем как есть.
+                                return msg;
+                            });
+                        });
+                    } else if (parsed.type === 'expert_end' && parsed.fullMessage) {
+                        setMessages(currentMessages => { // Сразу применяем фикс из пункта 1
+                            const newMessages = [...currentMessages];
+                            const existingMessage = newMessages[currentAssistantMessageIndex];
+                            // Проверяем, что и fullMessage прилетел, и в нашем массиве есть что обновлять
+                            if (parsed.fullMessage && existingMessage) {
+                                newMessages[currentAssistantMessageIndex] = {
+                                    ...existingMessage,
+                                    // Явно берём только нужные поля и приводим content к строке
+                                    role: parsed.fullMessage.role,
+                                    content: String(parsed.fullMessage.content || ''),
+                                    name: parsed.fullMessage.name,
+                                    isStreaming: false,
+                                } as DebateMessage; // <-- ВОТ ОН, ФИКС
+                            }
+                            return newMessages;
+                        });
+                        // И БОЛЬШЕ НИХУЯ НЕ ДЕЛАЕМ. Мысли остаются в стейте currentThoughts.
+                    }
+                }
+            }
+
+            setCurrentRound(prev => {
+                const newRound = prev + 1;
+                if (autoPause || newRound >= rounds) {
+                    setStage('paused');
+                } else {
+                    // Рекурсивный вызов для следующего раунда, если нет паузы
+                    setMessages(prevMessages => {
+                        handleRunRound(runToProcess, { newHistory: prevMessages });
+                        return prevMessages;
+                    });
+                }
+                return newRound;
+            });
+
+        } catch (error) {
+            console.error("ERROR INSIDE handleRunRound:", error);
+            alert(`An error occurred during debate. Check console (F12). \n\nError: ${error}`);
+            setStage('setup');
         }
-        return newMessages;
-    });
-    // И БОЛЬШЕ НИХУЯ НЕ ДЕЛАЕМ. Мысли остаются в стейте currentThoughts.
-}
-            }
-        }
-
-        setCurrentRound(prev => {
-            const newRound = prev + 1;
-            if (autoPause || newRound >= rounds) {
-                setStage('paused');
-            } else {
-                // Рекурсивный вызов для следующего раунда, если нет паузы
-                setMessages(prevMessages => {
-                    handleRunRound(runToProcess, { newHistory: prevMessages });
-                    return prevMessages;
-                });
-            }
-            return newRound;
-        });
-
-    } catch (error) {
-        console.error("ОШИБКА ВНУТРИ handleRunRound:", error);
-        alert(`Произошла ошибка во время дебатов. Смотри консоль (F12). \n\nТекст ошибки: ${error}`);
-        setStage('setup');
-    }
-};
+    };
 
     const onContinueDebate = () => {
         if (!activeRun) {
-            alert("Невозможно продолжить, не выбран активный прогон.");
+            alert("Cannot continue, no active run selected.");
             return;
         }
-    
+
         const historyForNextRound = [...messages];
-    
+
         if (userIntervention.trim()) {
             const userMsg: DebateMessage = {
                 role: 'user',
                 content: userIntervention.trim(),
-                name: 'Ты'
+                name: 'You'
             };
             historyForNextRound.push(userMsg);
-            
+
             setMessages(historyForNextRound);
             setUserIntervention('');
         }
-    
+
         handleRunRound(activeRun, { newHistory: historyForNextRound });
     };
 
     const handleGetVerdict = async () => {
         if (!activeRun) {
-            alert("Нет активного прогона для получения вердикта.");
+            alert("No active run for verdict.");
             return;
         }
 
         setStage('judging');
-        setMessages(prev => [...prev, { role: 'assistant', name: 'Судья', content: '', isStreaming: true }]);
+        setMessages(prev => [...prev, { role: 'assistant', name: 'Judge', content: '', isStreaming: true }]);
 
         try {
             const response = await fetch('/api/judge', {
@@ -368,16 +368,16 @@ export default function DiscussionPage() {
                             }
                             // Это .map() — правильный способ обновить state в React
                             return currentMessages.map((msg, index) => {
-                            if (index === judgeMessageIndex) {
-                                return { ...msg, content: report };
-                            }
-                            return msg;
-                        });
+                                if (index === judgeMessageIndex) {
+                                    return { ...msg, content: report };
+                                }
+                                return msg;
+                            });
                         });
                     }
                 }
             }
-            
+
             // --- ВОТ ОН, ФИКС СОХРАНЕНИЯ ---
             // Раз уж мы на клиенте и у нас есть права, сохраняем сами.
             // activeRun.id 100% существует, раз мы дошли до Судьи.
@@ -393,7 +393,7 @@ export default function DiscussionPage() {
                 if (judgeMessageIndex === -1) { // На случай, если Судья не сказал ни слова
                     judgeMessageIndex = newMessages.length - 1;
                 }
-                
+
                 if (newMessages[judgeMessageIndex]) {
                     newMessages[judgeMessageIndex].isStreaming = false;
                     newMessages[judgeMessageIndex].content = report.trim();
@@ -408,15 +408,15 @@ export default function DiscussionPage() {
         } catch (error) {
             console.error("Judge Error:", error);
             alert(`Failed to get verdict: ${error}`);
-            setStage('paused'); // Откатываем на 'паузу' если Судья сломался
-            // Убираем стриминговое сообщение Судьи
-            setMessages(prev => prev.filter(m => m.name !== 'Судья' || !m.isStreaming));
+            setStage('paused'); // Rollback to 'paused' if Judge fails
+            // Remove streaming Judge message
+            setMessages(prev => prev.filter(m => m.name !== 'Judge' || !m.isStreaming));
         }
     };
 
     const handleStartNewDebate = async () => {
         if (!selectedExperts.length) {
-            alert('Выберите команду экспертов');
+            alert('Select expert team');
             return;
         }
 
@@ -449,15 +449,15 @@ export default function DiscussionPage() {
             handleRunRound(newRun, { newHistory: [] });
 
         } catch (error) {
-            console.error("!!! ОШИБКА ПРИ СОЗДАНИИ 'РАНА' !!!", error);
-            alert('Не удалось создать новый прогон. Смотри консоль (F12)');
+            console.error("!!! ERROR CREATING RUN !!!", error);
+            alert('Failed to create new run. Check console (F12)');
         } finally {
             setIsLoading(false);
         }
     };
 
     if (authLoading || isLoading || !user) {
-        return <div className="text-center mt-20 font-pixel text-accent-primary animate-pulse">Загрузка рабочего пространства...</div>;
+        return <div className="text-center mt-20 font-pixel text-accent-primary animate-pulse">Loading workspace...</div>;
     }
 
     return (

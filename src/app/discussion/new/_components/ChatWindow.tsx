@@ -22,15 +22,15 @@ export default function ChatWindow({ messages, isLoading, chatEndRef }: Props) {
       <div className="flex-grow overflow-y-auto space-y-6 pr-4 py-4">
         {messages.length === 0 && (
           <div className="flex h-full flex-col items-center justify-center text-center">
-            <h2 className="font-pixel text-2xl text-text-main uppercase">Диалог с консьержем</h2>
+            <h2 className="font-pixel text-2xl text-text-main uppercase">Dialogue with Concierge</h2>
             <p className="mt-2 text-base text-text-secondary/80 max-w-md">
-              Моя цель — помочь вам превратить идею в ясную задачу для AI-экспертов.
-              Начните диалог, и я задам уточняющие вопросы, чтобы раскрыть суть.
+              My goal is to help you turn your idea into a clear task for AI experts.
+              Start a dialogue, and I will ask clarifying questions to reveal the essence.
             </p>
             <div className="mt-8 w-full max-w-lg rounded-r-lg border-l-4 border-accent-primary bg-bg-main/50 p-4 text-left">
-              <h3 className="font-pixel text-base text-accent-primary">Важно:</h3>
+              <h3 className="font-pixel text-base text-accent-primary">Important:</h3>
               <p className="mt-1 text-sm text-text-secondary">
-                Когда решите, что данных достаточно — **жмите зелёную кнопку наверху**, чтобы сформировать бриф и перейти к дебатам.
+                When you decide there is enough data — **click the green button above** to generate a brief and proceed to debates.
               </p>
             </div>
           </div>
@@ -84,7 +84,7 @@ export default function ChatWindow({ messages, isLoading, chatEndRef }: Props) {
               <Sparkles className="h-5 w-5 text-accent-secondary animate-pulse" />
             </div>
             <div className="rounded-lg bg-bg-main px-4 py-3 font-sans text-sm text-text-secondary italic">
-              Консьерж печатает...
+              Concierge is typing...
             </div>
           </div>
         )}

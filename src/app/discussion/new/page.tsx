@@ -50,7 +50,7 @@ export default function NewDiscussionPage() {
 
     } catch (error) {
       console.error("Failed to fetch concierge questions:", error);
-      const errorResponse: Message = { author: 'Concierge', text: "Извините, у меня возникла проблема. Попробуйте еще раз." };
+      const errorResponse: Message = { author: 'Concierge', text: "Sorry, I encountered a problem. Please try again." };
       setMessages(prev => [...prev, errorResponse]);
     } finally {
       setIsLoading(false);
@@ -58,13 +58,13 @@ export default function NewDiscussionPage() {
   };
 
   /* --- NEW IMPORTS NEEDED (Auto-added by agent later if possible, but manual here for safety) --- */
-  // Предполагается, что 'db' и firestore функции импортированы.
-  // Если нет - добавь их в начало файла, агент. 
+  // Assumes 'db' and firestore functions are imported.
+  // If not - add them to the top of the file, agent. 
 
   const handleCreateBrief = async () => {
     setIsSubmittingBrief(true);
     try {
-      // 1. Генерируем Бриф через AI (API)
+      // 1. Generate Brief via AI (API)
       const response = await fetch('/api/summarizer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -76,11 +76,11 @@ export default function NewDiscussionPage() {
 
       if (!user) throw new Error("User not authenticated");
 
-      // Динамический импорт для чистоты (или используй верхний импорт)
+      // Dynamic import for cleanliness (or use top import)
       const { addDoc, collection, serverTimestamp } = await import('firebase/firestore');
       const { db } = await import('@/firebase.config.js');
 
-      // 2. Сохраняем в Библиотеку Смыслов (client-side auth!)
+      // 2. Save to Meaning Library (client-side auth!)
       const briefDocRef = await addDoc(collection(db, `users/${user.uid}/briefs`), {
         content: brief,
         goal: goal,
@@ -89,7 +89,7 @@ export default function NewDiscussionPage() {
         userId: user.uid,
       });
 
-      // 3. Создаем Активную Дискуссию
+      // 3. Create Active Discussion
       const discussDocRef = await addDoc(collection(db, 'discussions'), {
         brief: brief,
         goal: goal,
@@ -104,7 +104,7 @@ export default function NewDiscussionPage() {
 
     } catch (error) {
       console.error("Failed to create brief process:", error);
-      alert("Не удалось создать бриф. Проверьте консоль.");
+      alert("Failed to create brief. Check console.");
     } finally {
       setIsSubmittingBrief(false);
     }

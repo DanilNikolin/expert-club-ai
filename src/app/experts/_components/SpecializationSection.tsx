@@ -52,14 +52,14 @@ export default function SpecializationSection({
       onClick={resetSpecializationMix}
       className="font-pixel text-xs uppercase text-text-secondary transition-colors hover:text-text-main"
     >
-      Сброс
+      Reset
     </button>
   );
 
   return (
     <ConfigSectionCard
-      title="Уровень 2: Контекст"
-      description="Распределите 100% его экспертизы, определяя, О ЧЕМ он будет думать."
+      title="Level 2: Context"
+      description="Distribute 100% of their expertise, defining WHAT they will think about."
       actions={actions}
       isCollapsible={true}
       startOpen={false}
@@ -67,8 +67,8 @@ export default function SpecializationSection({
       <div className='mb-8'>
         <div className='flex justify-between items-baseline mb-2'>
           <h3 className='flex items-center font-pixel text-base text-text-main uppercase'>
-            Распределение экспертизы
-            <Tooltip content="Сумма всех специализаций должна быть строго равна 100%." />
+            Expertise distribution
+            <Tooltip content="Sum of all specializations must be exactly 100%." />
           </h3>
           <p className={cn(
             'font-mono text-lg',
@@ -78,7 +78,7 @@ export default function SpecializationSection({
           </p>
         </div>
         <ExpertiseStackedBar specializations={specializations} />
-        {totalValue !== 100 && <p className='text-xs text-accent-warning mt-2 text-right'>Сумма должна быть равна 100%</p>}
+        {totalValue !== 100 && <p className='text-xs text-accent-warning mt-2 text-right'>Sum must be 100%</p>}
       </div>
 
       <div className="space-y-6">
@@ -104,8 +104,8 @@ export default function SpecializationSection({
 
       <div className="mt-8 border-t border-border-main pt-8">
         <label htmlFor="customContext" className="flex items-center block font-pixel text-base text-text-main uppercase mb-2">
-          Кастомный Контекст
-          <Tooltip content="Добавьте уникальный опыт, 'шрамы' или специфические знания. Максимум 500 символов." />
+          Custom Context
+          <Tooltip content="Add unique experience, 'scars' or specific knowledge. Max 500 characters." />
         </label>
         <textarea
           id="customContext"
@@ -113,7 +113,7 @@ export default function SpecializationSection({
           value={customContext}
           onChange={handleChange}
           rows={4}
-          placeholder="«Ты — арт-директор, переживший коммерческий провал...»"
+          placeholder="«You are an art director who survived a commercial failure...»"
           className={cn(
             'w-full resize-none rounded-md p-3 font-sans text-text-main placeholder:text-text-muted',
             'bg-bg-main ring-1 ring-inset ring-border-main transition-all duration-150',

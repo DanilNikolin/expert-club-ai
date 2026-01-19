@@ -29,7 +29,7 @@ export default function ConciergeHeader({ onStartBrief, isSubmitting, isChatEmpt
             {/* КОММЕНТАРИЙ ДЛЯ ТЕБЯ, ДАНИЛ: 
               Вот тот самый заголовок. Сейчас 'text-2xl', можешь менять на 'text-3xl' и т.д., чтобы подобрать идеальный размер.
             */}
-            <h1 className="font-pixel text-2xl md:text-3xl text-accent-primary uppercase">Консьерж</h1>
+            <h1 className="font-pixel text-2xl md:text-3xl text-accent-primary uppercase">Concierge</h1>
             <span
               className={cn(
                 'font-mono text-xs uppercase px-2 py-1 rounded-sm',
@@ -38,28 +38,28 @@ export default function ConciergeHeader({ onStartBrief, isSubmitting, isChatEmpt
                   : 'bg-accent-secondary/20 text-accent-secondary'
               )}
             >
-              {isChatEmpty ? 'Ожидание ввода' : 'Сбор данных'}
+              {isChatEmpty ? 'Waiting input' : 'Data gathering'}
             </span>
           </div>
           {isChatEmpty && (
             <p className="font-sans text-text-secondary mt-1 md:mt-2 max-w-lg">
-              Начните диалог, чтобы я помог вам сформулировать бриф для экспертов.
+              Start a dialogue so I can help you formulate a brief for the experts.
             </p>
           )}
         </div>
         <Button
-            onClick={onStartBrief}
-            disabled={isChatEmpty || isLoading || isSubmitting}
-            isLoading={isSubmitting}
-            size="default" // Оставляем для px-8 и text-base
-            className={cn(
-              'bg-accent-success hover:bg-accent-success/90 focus:ring-accent-success w-full md:w-auto flex-shrink-0',
-              'py-2 md:py-4', // <-- ВОТ ФИКС: Уменьшаем паддинг на мобилке, возвращаем на десктопе.
-              hasBecomeActive && 'animate-pulse-glow'
-            )}
-          >
+          onClick={onStartBrief}
+          disabled={isChatEmpty || isLoading || isSubmitting}
+          isLoading={isSubmitting}
+          size="default" // Оставляем для px-8 и text-base
+          className={cn(
+            'bg-accent-success hover:bg-accent-success/90 focus:ring-accent-success w-full md:w-auto flex-shrink-0',
+            'py-2 md:py-4', // <-- ВОТ ФИКС: Уменьшаем паддинг на мобилке, возвращаем на десктопе.
+            hasBecomeActive && 'animate-pulse-glow'
+          )}
+        >
           <FileText className="mr-2 h-4 w-4" />
-          {isSubmitting ? 'Формируем...' : 'Сформировать Бриф'}
+          {isSubmitting ? 'Generating...' : 'Generate Brief'}
         </Button>
       </div>
 

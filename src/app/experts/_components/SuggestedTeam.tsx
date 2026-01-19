@@ -32,7 +32,7 @@ export default function SuggestedTeam({ suggestions, onConfirm }: Props) {
 
   return (
     <div className="animate-fade-in-fast my-4 rounded-lg border-2 border-accent-primary/50 bg-bg-surface p-4">
-      <h3 className="font-pixel text-base uppercase text-accent-primary mb-3">Предложенная команда:</h3>
+      <h3 className="font-pixel text-base uppercase text-accent-primary mb-3">Suggested Team:</h3>
       <div className="space-y-2">
         {suggestions.map(expert => {
           const isSelected = selected.includes(expert.name);
@@ -59,7 +59,7 @@ export default function SuggestedTeam({ suggestions, onConfirm }: Props) {
         className="mt-4 w-full"
         size="sm"
       >
-        Создать выбранных ({selected.length})
+        Create selected ({selected.length})
       </Button>
       <style jsx global>{`
         @keyframes fadeInFastAnimation {

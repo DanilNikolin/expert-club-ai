@@ -1,6 +1,6 @@
 // src/app/experts/_components/expert-constructor.logic.ts
 
-// --- ТИПЫ ДАННЫХ ДЛЯ НАШЕГО ЭКСПЕРТА ---
+// --- DATA TYPES FOR OUR EXPERT ---
 export type ArchetypeMix = {
   analyst: number;
   synthesizer: number;
@@ -44,7 +44,7 @@ export type ValidationErrors = {
   customContext?: string;
 };
 
-// --- НАЧАЛЬНЫЕ ЗНАЧЕНИЯ ---
+// --- INITIAL VALUES ---
 export const initialExpertFormData: ExpertFormData = {
   name: '',
   model: 'gpt-4.1-mini',
@@ -58,49 +58,49 @@ export const initialExpertFormData: ExpertFormData = {
   character: {
     constructiveness: 1, conformism: 1, conviction: 1, opennessToData: 1,
     hasHumor: false, isContradictionHunter: false, temperature: 0.7,
-    thinkingBudget: 100, 
-},
+    thinkingBudget: 100,
+  },
 };
 
-// --- ЛЕЙБЛЫ ---
+// --- LABELS ---
 export const archetypeLabels: Record<keyof ArchetypeMix, string> = {
-  analyst: 'Аналитик',
-  synthesizer: 'Синтезатор',
-  resonator: 'Резонатор',
+  analyst: 'Analyst',
+  synthesizer: 'Synthesizer',
+  resonator: 'Resonator',
 };
 
 export const specializationLabels: Record<keyof SpecializationMix, string> = {
-  'Product & Technologies': 'Продукт & Технологии',
-  'Finance & Resources': 'Финансы & Ресурсы',
-  'Marketing & Audience': 'Маркетинг & Аудитория',
-  'Strategy & Market': 'Стратегия & Рынок',
-  'Ethics & Society': 'Этика & Социум',
-  'Law & Risks': 'Право & Риски',
-  'Generalist': 'Широкий Профиль',
+  'Product & Technologies': 'Product & Technologies',
+  'Finance & Resources': 'Finance & Resources',
+  'Marketing & Audience': 'Marketing & Audience',
+  'Strategy & Market': 'Strategy & Market',
+  'Ethics & Society': 'Ethics & Society',
+  'Law & Risks': 'Law & Risks',
+  'Generalist': 'Generalist',
 };
 
 export const characterLabels = {
-  constructiveness: 'Конструктивность',
-  conformism: 'Конформизм',
-  conviction: 'Убежденность',
-  opennessToData: 'Открытость к данным',
-  temperature: 'Креативность (Температура)'
+  constructiveness: 'Constructiveness',
+  conformism: 'Conformism',
+  conviction: 'Conviction',
+  opennessToData: 'Openness to data',
+  temperature: 'Creativity (Temperature)'
 };
 
 export const characterDescriptions = {
-  constructiveness: 'Низкие значения = деструктивность, высокие = конструктивность',
-  conformism: 'Низкие значения = нонконформизм, высокие = конформизм',
-  conviction: 'Насколько сильно эксперт отстаивает свою позицию',
-  opennessToData: 'Готовность изменить мнение на основе новых данных',
-  temperature: 'Низкие = предсказуемость, высокие = безумные идеи',
+  constructiveness: 'Low values = destructiveness, high values = constructiveness',
+  conformism: 'Low values = nonconformism, high values = conformism',
+  conviction: 'How strongly the expert defends their position',
+  opennessToData: 'Willingness to change opinion based on new data',
+  temperature: 'Low = predictability, high = wild ideas',
 };
 
-// --- ШАБЛОНЫ ЭКСПЕРТОВ ---
+// --- EXPERT TEMPLATES ---
 type ExpertTemplate = Partial<Omit<ExpertFormData, 'id' | 'name'>>;
 
 export const expertTemplates: Record<string, { name: string, data: ExpertTemplate }> = {
   pedantic_analyst: {
-    name: 'Душнила-Аналитик',
+    name: 'Pedantic Analyst',
     data: {
       model: 'gpt-4.1-mini',
       archetypeMix: { analyst: 80, synthesizer: 10, resonator: 10 },
@@ -109,14 +109,14 @@ export const expertTemplates: Record<string, { name: string, data: ExpertTemplat
         'Strategy & Market': 20, 'Ethics & Society': 0, 'Law & Risks': 20, 'Generalist': 0,
       },
       character: {
-      constructiveness: 8, conformism: 3, conviction: 9, opennessToData: 9,
-      hasHumor: false, isContradictionHunter: true, temperature: 0.3,
-      thinkingBudget: 100, 
-  },
+        constructiveness: 8, conformism: 3, conviction: 9, opennessToData: 9,
+        hasHumor: false, isContradictionHunter: true, temperature: 0.3,
+        thinkingBudget: 100,
+      },
     }
   },
   creative_storm: {
-    name: 'Креативный Шторм',
+    name: 'Creative Storm',
     data: {
       model: 'gpt-4.1-mini',
       archetypeMix: { analyst: 10, synthesizer: 80, resonator: 10 },
@@ -125,14 +125,14 @@ export const expertTemplates: Record<string, { name: string, data: ExpertTemplat
         'Strategy & Market': 10, 'Ethics & Society': 0, 'Law & Risks': 0, 'Generalist': 0,
       },
       character: {
-      constructiveness: 7, conformism: 8, conviction: 4, opennessToData: 6,
-      hasHumor: true, isContradictionHunter: false, temperature: 1.5,
-      thinkingBudget: 100, 
-  },
+        constructiveness: 7, conformism: 8, conviction: 4, opennessToData: 6,
+        hasHumor: true, isContradictionHunter: false, temperature: 1.5,
+        thinkingBudget: 100,
+      },
     }
   },
   pragmatic_product_manager: {
-    name: 'Прагматичный Продакт',
+    name: 'Pragmatic Prod. Manager',
     data: {
       model: 'gpt-4.1-mini',
       archetypeMix: { analyst: 50, synthesizer: 30, resonator: 20 },
@@ -141,15 +141,15 @@ export const expertTemplates: Record<string, { name: string, data: ExpertTemplat
         'Strategy & Market': 10, 'Ethics & Society': 0, 'Law & Risks': 0, 'Generalist': 0,
       },
       character: {
-      constructiveness: 9, conformism: 6, conviction: 7, opennessToData: 8,
-      hasHumor: false, isContradictionHunter: false, temperature: 0.7,
-      thinkingBudget: 100,
-  },
+        constructiveness: 9, conformism: 6, conviction: 7, opennessToData: 8,
+        hasHumor: false, isContradictionHunter: false, temperature: 0.7,
+        thinkingBudget: 100,
+      },
     }
   },
 };
 
-// --- ХЕЛПЕРЫ ---
+// --- HELPERS ---
 export const clampSliderValue = <T extends Record<string, number>>(
   mix: T,
   key: keyof T,
@@ -162,13 +162,13 @@ export const clampSliderValue = <T extends Record<string, number>>(
   return Math.min(newVal, maxAllowed);
 };
 
-// --- НОВАЯ ФУНКЦИЯ-САНИТАЙЗЕР ---
-// Принимает объект (вроде archetypeMix), чистит и нормализует его
+// --- NEW SANITIZER FUNCTION ---
+// Accepts an object (like archetypeMix), cleans and normalizes it
 export function sanitizeAndNormalizeMix(mix: Record<string, number>): Record<string, number> {
   const sanitizedMix: Record<string, number> = {};
   let total = 0;
 
-  // 1. "Стрижем" все значения, чтобы они были в диапазоне 0-100
+  // 1. "Clip" all values to be in range 0-100
   for (const key in mix) {
     const value = mix[key] || 0;
     const clampedValue = Math.max(0, Math.min(100, value));
@@ -176,9 +176,9 @@ export function sanitizeAndNormalizeMix(mix: Record<string, number>): Record<str
     total += clampedValue;
   }
 
-  if (total === 0) return sanitizedMix; // Если все нули, оставляем как есть
+  if (total === 0) return sanitizedMix; // If all zeros, leave as is
 
-  // 2. Нормализуем, чтобы сумма была ровно 100
+  // 2. Normalize so sum is exactly 100
   const normalizationFactor = 100 / total;
   let normalizedTotal = 0;
   const keys = Object.keys(sanitizedMix);
@@ -190,7 +190,7 @@ export function sanitizeAndNormalizeMix(mix: Record<string, number>): Record<str
     normalizedTotal += normalizedValue;
   }
 
-  // 3. Остаток кидаем на последний элемент, чтобы избежать ошибок округления
+  // 3. Add remainder to the last element to avoid rounding errors
   const lastKey = keys[keys.length - 1];
   sanitizedMix[lastKey] = 100 - normalizedTotal;
 

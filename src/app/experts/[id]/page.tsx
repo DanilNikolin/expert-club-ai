@@ -65,10 +65,10 @@ export default function CreateExpertPage() {
 
   const validateForm = useCallback((data: ExpertFormData): ValidationErrors => {
     const errors: ValidationErrors = {};
-    if (!data.name.trim()) errors.name = 'Имя эксперта обязательно';
-    else if (data.name.trim().length < 3) errors.name = 'Имя должно содержать минимум 3 символа';
-    else if (data.name.trim().length > 100) errors.name = 'Имя слишком длинное (максимум 100 символов)';
-    if (data.customContext.length > 500) errors.customContext = 'Контекст слишком длинный (максимум 500 символов)';
+    if (!data.name.trim()) errors.name = 'Expert name is required';
+    else if (data.name.trim().length < 3) errors.name = 'Name must contain at least 3 characters';
+    else if (data.name.trim().length > 100) errors.name = 'Name is too long (max 100 characters)';
+    if (data.customContext.length > 500) errors.customContext = 'Context is too long (max 500 characters)';
     return errors;
   }, []);
 
@@ -80,7 +80,7 @@ export default function CreateExpertPage() {
         localStorage.setItem(autoSaveKey, JSON.stringify(formData));
         setLastSaved(new Date());
       } catch (err) {
-        console.warn('Не удалось сохранить черновик:', err);
+        console.warn('Failed to save draft:', err);
       } finally {
         setTimeout(() => setIsAutoSaving(false), 500);
       }
@@ -95,39 +95,39 @@ export default function CreateExpertPage() {
       return;
     }
     const loadData = async () => {
-        setLocalLoading(true);
-        if (isCreateMode) {
-            try {
-                const savedDraft = localStorage.getItem(autoSaveKey);
-                if (savedDraft) {
-                    const draftData = JSON.parse(savedDraft);
-                    const completeData = { ...initialExpertFormData, ...draftData, character: { ...initialExpertFormData.character, ...draftData.character } };
-                    setFormData(completeData);
-                }
-            } catch (err) {
-                console.warn('Не удалось загрузить черновик:', err);
-            }
-        } else if (expertId) {
-            try {
-                const docRef = doc(db, `users/${user.uid}/customExperts`, expertId);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    const expertData = docSnap.data();
-                    const characterWithDefaults = { ...initialExpertFormData.character, ...expertData.character };
-                    setFormData({ ...expertData, character: characterWithDefaults, id: expertId } as ExpertFormData);
-                } else {
-                    router.push('/experts/create');
-                }
-             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-             } catch (_err) {
-                 router.push('/dashboard');
-             }
+      setLocalLoading(true);
+      if (isCreateMode) {
+        try {
+          const savedDraft = localStorage.getItem(autoSaveKey);
+          if (savedDraft) {
+            const draftData = JSON.parse(savedDraft);
+            const completeData = { ...initialExpertFormData, ...draftData, character: { ...initialExpertFormData.character, ...draftData.character } };
+            setFormData(completeData);
+          }
+        } catch (err) {
+          console.warn('Failed to load draft:', err);
         }
-        setLocalLoading(false);
+      } else if (expertId) {
+        try {
+          const docRef = doc(db, `users/${user.uid}/customExperts`, expertId);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const expertData = docSnap.data();
+            const characterWithDefaults = { ...initialExpertFormData.character, ...expertData.character };
+            setFormData({ ...expertData, character: characterWithDefaults, id: expertId } as ExpertFormData);
+          } else {
+            router.push('/experts/create');
+          }
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_err) {
+          router.push('/dashboard');
+        }
+      }
+      setLocalLoading(false);
     };
     loadData();
   }, [expertId, user, loading, router, isCreateMode, autoSaveKey]);
-  
+
   useEffect(() => {
     setValidationErrors(validateForm(formData));
   }, [formData, validateForm]);
@@ -135,15 +135,15 @@ export default function CreateExpertPage() {
   // ЭТОТ useEffect сработает один раз при загрузке страницы, чтобы перехватить бриф из URL
   useEffect(() => {
     const briefFromUrl = searchParams.get('brief');
-    
+
     // Если мы в режиме создания, в URL есть бриф, чат пуст И ФЛАГ ЕЩЕ НЕ ПОДНЯТ
     if (isCreateMode && briefFromUrl && chatMessages.length === 0 && !briefSentRef.current) {
       briefSentRef.current = true; // <-- ПРАВКА №1: СРАЗУ ПОДНИМАЕМ ФЛАГ
 
-      const initialPrompt = `Привет! Вот мой бриф, нужна команда для его анализа:\n\n---\n${decodeURIComponent(briefFromUrl.replace(/\+/g, ' '))}\n---`;
-      
+      const initialPrompt = `Hi! Here is my brief, I need a team to analyze it:\n\n---\n${decodeURIComponent(briefFromUrl.replace(/\+/g, ' '))}\n---`;
+
       const userMessage: ConstructorChatMessage = { role: 'user', content: initialPrompt };
-      
+
       // Сразу отправляем его на сервер, имитируя клик пользователя
       const sendInitialBrief = async () => {
         setChatMessages([userMessage]); // Сначала показываем сообщение пользователя
@@ -156,8 +156,8 @@ export default function CreateExpertPage() {
             body: JSON.stringify({ messages: [userMessage], editingExpert: null }),
           });
 
-          if (!res.ok) throw new Error('Ошибка сети или сервера при авто-отправке брифа');
-          
+          if (!res.ok) throw new Error('Network or server error during auto-brief submission');
+
           const data = await res.json();
           const assistantMessage: ConstructorChatMessage = {
             role: 'assistant',
@@ -167,7 +167,7 @@ export default function CreateExpertPage() {
           setChatMessages(prev => [...prev, assistantMessage]);
 
         } catch (err) {
-          setChatError('Упс, что-то пошло не так при обработке брифа.');
+          setChatError('Oops, something went wrong processing the brief.');
           console.error(err);
         } finally {
           setIsChatLoading(false);
@@ -175,37 +175,37 @@ export default function CreateExpertPage() {
           router.replace('/experts/create', { scroll: false });
         }
       };
-      
+
       sendInitialBrief();
     }
-    
+
   }, [isCreateMode, searchParams, chatMessages.length, router]); // <-- ПРАВКА №2: ДОБАВЬ 'router' В МАССИВ ЗАВИСИМОСТЕЙ
 
   useEffect(() => {
     if (isWizardActive && creationQueue.length > 0) {
-        const nextExpert = creationQueue[0];
-        const nextExpertData = creationQueue[0];
-        // Умное слияние: берем основу, накладываем данные от AI, потом отдельно и глубоко сливаем вложенные объекты.
-        const mergedData = {
-          ...initialExpertFormData,
-          ...nextExpertData,
-          archetypeMix: { ...initialExpertFormData.archetypeMix, ...nextExpertData.archetypeMix },
-          specializations: { ...initialExpertFormData.specializations, ...nextExpertData.specializations },
-          character: { ...initialExpertFormData.character, ...nextExpertData.character },
-        };
-        setFormData(mergedData as ExpertFormData);
-                
-        const totalInQueue = creationQueue.length;
-        const currentStep = (initialQueueSize || totalInQueue) - totalInQueue + 1;
+      const nextExpert = creationQueue[0];
+      const nextExpertData = creationQueue[0];
+      // Умное слияние: берем основу, накладываем данные от AI, потом отдельно и глубоко сливаем вложенные объекты.
+      const mergedData = {
+        ...initialExpertFormData,
+        ...nextExpertData,
+        archetypeMix: { ...initialExpertFormData.archetypeMix, ...nextExpertData.archetypeMix },
+        specializations: { ...initialExpertFormData.specializations, ...nextExpertData.specializations },
+        character: { ...initialExpertFormData.character, ...nextExpertData.character },
+      };
+      setFormData(mergedData as ExpertFormData);
 
-        setChatMessages(prev => [...prev, { role: 'assistant', content: `Шаг ${currentStep}: Настраиваем "${nextExpert.name}". Проверь параметры и сохрани.` }]);
+      const totalInQueue = creationQueue.length;
+      const currentStep = (initialQueueSize || totalInQueue) - totalInQueue + 1;
+
+      setChatMessages(prev => [...prev, { role: 'assistant', content: `Step ${currentStep}: Configuring "${nextExpert.name}". Check parameters and save.` }]);
     }
     // Добавим стейт для отслеживания начального размера очереди для красивого вывода шагов
     if (isWizardActive && creationQueue.length > 0 && !initialQueueSize) {
-        setInitialQueueSize(creationQueue.length);
+      setInitialQueueSize(creationQueue.length);
     }
     if (!isWizardActive) {
-        setInitialQueueSize(null);
+      setInitialQueueSize(null);
     }
   }, [isWizardActive, creationQueue, initialQueueSize]);
 
@@ -225,48 +225,48 @@ export default function CreateExpertPage() {
   };
 
   const handleArchetypeMixChange = (type: keyof ArchetypeMix, value: number) => {
-  setFormData(prev => {
-    // 1. Считаем, сколько уже "занято" другими ползунками.
-    const otherTotal = Object.entries(prev.archetypeMix)
-      .filter(([key]) => key !== type)
-      .reduce((sum, [, val]) => sum + val, 0);
+    setFormData(prev => {
+      // 1. Считаем, сколько уже "занято" другими ползунками.
+      const otherTotal = Object.entries(prev.archetypeMix)
+        .filter(([key]) => key !== type)
+        .reduce((sum, [, val]) => sum + val, 0);
 
-    // 2. Вычисляем "потолок" для текущего ползунка. Больше этого значения он не прыгнет.
-    const maxAllowed = 100 - otherTotal;
+      // 2. Вычисляем "потолок" для текущего ползунка. Больше этого значения он не прыгнет.
+      const maxAllowed = 100 - otherTotal;
 
-    // 3. Устанавливаем новое значение, но не больше "потолка". И не меньше нуля, на всякий случай.
-    const newValue = Math.max(0, Math.min(value, maxAllowed));
+      // 3. Устанавливаем новое значение, но не больше "потолка". И не меньше нуля, на всякий случай.
+      const newValue = Math.max(0, Math.min(value, maxAllowed));
 
-    // 4. Обновляем стейт, меняя ТОЛЬКО ОДИН ползунок, который мы двигали.
-    return {
-      ...prev,
-      archetypeMix: {
-        ...prev.archetypeMix,
-        [type]: newValue,
-      },
-    };
-  });
-};
+      // 4. Обновляем стейт, меняя ТОЛЬКО ОДИН ползунок, который мы двигали.
+      return {
+        ...prev,
+        archetypeMix: {
+          ...prev.archetypeMix,
+          [type]: newValue,
+        },
+      };
+    });
+  };
 
   const handleSpecializationMixChange = (spec: keyof SpecializationMix, value: number) => {
-  setFormData(prev => {
-    // Та же самая логика, один в один.
-    const otherTotal = Object.entries(prev.specializations)
-      .filter(([key]) => key !== spec)
-      .reduce((sum, [, val]) => sum + val, 0);
+    setFormData(prev => {
+      // Та же самая логика, один в один.
+      const otherTotal = Object.entries(prev.specializations)
+        .filter(([key]) => key !== spec)
+        .reduce((sum, [, val]) => sum + val, 0);
 
-    const maxAllowed = 100 - otherTotal;
-    const newValue = Math.max(0, Math.min(value, maxAllowed));
+      const maxAllowed = 100 - otherTotal;
+      const newValue = Math.max(0, Math.min(value, maxAllowed));
 
-    return {
-      ...prev,
-      specializations: {
-        ...prev.specializations,
-        [spec]: newValue,
-      },
-    };
-  });
-};
+      return {
+        ...prev,
+        specializations: {
+          ...prev.specializations,
+          [spec]: newValue,
+        },
+      };
+    });
+  };
 
   // --- НОВАЯ ЛОГИКА "МАСТЕРА СОЗДАНИЯ" И ЧАТА ---
 
@@ -275,7 +275,7 @@ export default function CreateExpertPage() {
     setCreationQueue(queue);
     setIsWizardActive(true);
     // Прячем чат и выводим сообщение о начале работы мастера
-    setChatMessages([{ role: 'user', content: `Отлично, приступаем к созданию: ${selectedNames.join(', ')}` }]);
+    setChatMessages([{ role: 'user', content: `Great, starting creation: ${selectedNames.join(', ')}` }]);
   }, []);
 
   const handleChatSubmit = async (e: React.FormEvent) => {
@@ -299,10 +299,10 @@ export default function CreateExpertPage() {
         }),
       });
 
-      if (!res.ok) throw new Error('Ошибка сети или сервера');
-      
+      if (!res.ok) throw new Error('Network or server error');
+
       const data = await res.json(); // Ожидаем JSON { message: string, suggestions: [] }
-      
+
       const assistantMessage: ConstructorChatMessage = {
         role: 'assistant',
         content: data.message,
@@ -325,7 +325,7 @@ export default function CreateExpertPage() {
       }
 
     } catch (err) {
-      setChatError('та твою ж..., ассистент задумался и сломался. Попробуй еще раз.');
+      setChatError('Assistant got stuck. Please try again.');
       console.error(err);
     } finally {
       setIsChatLoading(false);
@@ -334,9 +334,9 @@ export default function CreateExpertPage() {
 
   const resetArchetypeMix = () => setFormData((p) => ({ ...p, archetypeMix: initialExpertFormData.archetypeMix }));
   const resetSpecializationMix = () => setFormData((p) => ({ ...p, specializations: initialExpertFormData.specializations }));
-  
+
   const clearDraft = () => {
-    if (confirm('Очистить все данные формы?')) {
+    if (confirm('Clear all form data?')) {
       localStorage.removeItem(autoSaveKey);
       setFormData(initialExpertFormData);
     }
@@ -345,7 +345,7 @@ export default function CreateExpertPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading || !user || isSaving || !isFormValid) return;
-    
+
     setIsSaving(true);
     try {
       const dataToSave = { ...formData };
@@ -359,7 +359,7 @@ export default function CreateExpertPage() {
       } else {
         // Режим создания (одиночный или через мастер)
         await addDoc(collection(db, `users/${user.uid}/customExperts`), { ...finalData, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
-        
+
         if (isWizardActive) {
           const remainingQueue = creationQueue.slice(1);
           if (remainingQueue.length > 0) {
@@ -369,7 +369,7 @@ export default function CreateExpertPage() {
             setCreationQueue([]);
             setIsWizardActive(false);
             localStorage.removeItem(autoSaveKey);
-            alert('Команда успешно создана!');
+            alert('Team successfully created!');
             router.push('/dashboard');
           }
         } else {
@@ -380,8 +380,8 @@ export default function CreateExpertPage() {
       }
       setLastSaved(new Date());
     } catch (err) {
-      console.error('Ошибка сохранения эксперта:', err);
-      alert('Не удалось сохранить эксперта.');
+      console.error('Error saving expert:', err);
+      alert('Failed to save expert.');
     } finally {
       setIsSaving(false);
     }
@@ -396,24 +396,24 @@ export default function CreateExpertPage() {
     if (JSON.stringify(formData.character) !== JSON.stringify(initialExpertFormData.character)) done++;
     return Math.round((done / 5) * 100);
   };
-  
+
   const completionProgress = getCompletionProgress();
   const isFormValid = !Object.keys(validationErrors).length && formData.name.trim().length >= 3;
 
   // --- РЕНДЕР ---
-  
+
   if (loading || localLoading || !user) {
     return (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-primary mx-auto mb-4"></div>
-            <p className="text-text-secondary">Загрузка конструктора...</p>
-          </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-primary mx-auto mb-4"></div>
+          <p className="text-text-secondary">Loading constructor...</p>
         </div>
+      </div>
     );
   }
 
-return (
+  return (
     <div className="container mx-auto max-w-7xl px-4 py-8">
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 gap-x-12 gap-y-16 lg:grid-cols-12">
@@ -432,8 +432,8 @@ return (
                 <ExpertPreview formData={formData} />
               ) : (
                 <ConfigSectionCard
-                  title="AI-Ассистент"
-                  description={isCreateMode ? "Опиши эксперта, я соберу его за тебя." : "Говори, что поправить. Сделаю бойца лучше."}
+                  title="AI-Assistant"
+                  description={isCreateMode ? "Describe the expert, I'll build them for you." : "Tell me what to fix. I'll improve the fighter."}
                   isCollapsible={false} // Больше не сворачиваем
                 >
                   <ChatConfiguratorSection

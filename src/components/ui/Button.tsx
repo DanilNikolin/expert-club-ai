@@ -41,7 +41,7 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  VariantProps<typeof buttonVariants> {
   isLoading?: boolean;
 }
 
@@ -62,7 +62,7 @@ export const Button = ({
       {isLoading ? (
         <div className="flex items-center justify-center">
           <LoaderCircle className="mr-2 h-5 w-5 animate-spin" />
-          <span>Загрузка...</span>
+          <span>Loading...</span>
         </div>
       ) : (
         children
