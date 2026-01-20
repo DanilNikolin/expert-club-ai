@@ -16,7 +16,7 @@ type Message = {
 
 export async function POST(request: Request) {
     try {
-        const { messages, userId } = await request.json();
+        const { messages } = await request.json();
 
         if (!messages || messages.length === 0) {
             return NextResponse.json({ error: 'Messages are required' }, { status: 400 });

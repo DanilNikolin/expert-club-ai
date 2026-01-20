@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback, type ElementType } from 'react';
 import Link from 'next/link';
-import { type Discussion, type Expert } from '@/types';
+import { type Discussion, type Expert, type Brief } from '@/types';
 import {
   collection,
   query,
@@ -75,7 +75,7 @@ export default function DashboardPage() {
 
   const [experts, setExperts] = useState<Expert[]>([]);
   const [discussions, setDiscussions] = useState<Discussion[]>([]);
-  const [briefs, setBriefs] = useState<any[]>([]); // TODO: Fix type to Brief[]
+  const [briefs, setBriefs] = useState<Brief[]>([]);
 
   const [isLoadingExperts, setIsLoadingExperts] = useState(true);
   const [isLoadingDiscussions, setIsLoadingDiscussions] = useState(true);
@@ -129,7 +129,7 @@ export default function DashboardPage() {
     // Отдельно пытаемся загрузить брифы (новые данные), чтобы ошибка прав не ломала старое
     try {
       const briefsSnap = await getDocs(briefsQuery);
-      setBriefs(briefsSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) })));
+      setBriefs(briefsSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as Omit<Brief, 'id'>) })));
     } catch (error) {
       console.warn("Failed to load briefs (likely permission issue):", error);
       setBriefs([]); // Fallback to empty
@@ -188,7 +188,7 @@ export default function DashboardPage() {
     setBriefs(prev => prev.filter(b => b.id !== id));
   };
 
-  const handleStartDebateFromBrief = async (brief: any) => {
+  const handleStartDebateFromBrief = async (brief: Brief) => {
     // Создаем новую дискуссию на основе существующего брифа
     try {
       // Мы используем import { addDoc, serverTimestamp } ... убедимся что они есть или импортим

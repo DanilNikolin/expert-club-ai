@@ -74,7 +74,7 @@ export default function ChatWindow({ messages, chatEndRef, teamInRun, currentTho
               <div key={i} className="my-8 rounded-lg border-2 border-amber-400 bg-bg-surface p-6 shadow-lg shadow-amber-500/10">
                 <div className="flex items-center gap-3 mb-4">
                   <Scale className="h-8 w-8 text-amber-400" />
-                  <h3 className="title-pixel text-amber-400 text-2xl">Judge's Verdict</h3>
+                  <h3 className="title-pixel text-amber-400 text-2xl">Judge&apos;s Verdict</h3>
                 </div>
 
                 <div

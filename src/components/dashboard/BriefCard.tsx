@@ -93,7 +93,7 @@ export default function BriefCard({ brief, onDelete, onStartDebate, isExpanded, 
                     {brief.goalJustification && (
                         <div className="p-3 bg-bg-elevated rounded-lg border border-border-main/50">
                             <h4 className="font-pixel text-[10px] uppercase text-text-secondary mb-1">Why this goal?</h4>
-                            <p className="text-xs text-text-secondary italic">"{brief.goalJustification}"</p>
+                            <p className="text-xs text-text-secondary italic">&quot;{brief.goalJustification}&quot;</p>
                         </div>
                     )}
 
