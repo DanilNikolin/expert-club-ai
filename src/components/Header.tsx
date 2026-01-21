@@ -13,7 +13,12 @@ import { UserCircle, LogOut, Home } from 'lucide-react';
 // Extracting profile menu to a separate component for cleanliness
 const ProfileMenu = ({ user, onLogout }: { user: User; onLogout: () => void; }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [user.photoURL]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -29,9 +34,20 @@ const ProfileMenu = ({ user, onLogout }: { user: User; onLogout: () => void; }) 
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="rounded-full transition-opacity hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary"
+        className="rounded-full transition-opacity hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary overflow-hidden w-8 h-8 flex items-center justify-center border border-border-main bg-bg-surface"
       >
-        <UserCircle size={28} className="text-text-secondary" />
+        {user.photoURL && !imgError ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={user.photoURL}
+            alt="User Avatar"
+            className="w-full h-full object-cover"
+            referrerPolicy="no-referrer"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <UserCircle size={28} className="text-text-secondary" />
+        )}
       </button>
 
       {isOpen && (

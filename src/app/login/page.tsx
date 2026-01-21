@@ -10,6 +10,8 @@ import {
 import { auth } from '@/firebase.config.js';
 // NEW ROUTER IMPORT:
 import { useRouter } from 'next/navigation';
+import Link from 'next/link'; // Added Link import
+import { Button } from '@/components/ui/Button';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -62,49 +64,88 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex justify-center items-center mt-20">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold text-center text-gray-900">
-          Login to Club
-        </h1>
-        <form onSubmit={handleLogin} className="space-y-6">
-          {/* Email/password form remains unchanged */}
+    <div className="flex justify-center items-center min-h-[calc(100vh-200px)] animate-fade-in-fast">
+      <div className="w-full max-w-md p-8 pt-10 space-y-8 bg-bg-surface rounded-xl border border-border-main shadow-2xl relative overflow-hidden">
+        {/* Decorative corner accents */}
+        <div className="absolute top-0 left-0 w-16 h-16 border-l-2 border-t-2 border-accent-primary/30 rounded-tl-xl pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-16 h-16 border-r-2 border-b-2 border-accent-primary/30 rounded-br-xl pointer-events-none" />
+
+        <div className="text-center space-y-2">
+          <h1 className="title-pixel text-accent-primary text-3xl">
+            Club Login
+          </h1>
+          <p className="text-sm text-text-secondary font-sans">
+            Enter the closed territory of experts
+          </p>
+        </div>
+
+        <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-            <input id="email" name="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="block w-full px-3 py-2 mt-1 text-gray-900 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+            <label htmlFor="email" className="block text-xs font-pixel uppercase tracking-wider text-text-secondary mb-2">Email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="block w-full px-4 py-3 bg-bg-main border border-border-main rounded-lg text-text-main placeholder-text-secondary/50 focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all font-sans"
+              placeholder="agent@expert-club.ai"
+            />
           </div>
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
-            <input id="password" name="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="block w-full px-3 py-2 mt-1 text-gray-900 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+            <label htmlFor="password" className="block text-xs font-pixel uppercase tracking-wider text-text-secondary mb-2">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="block w-full px-4 py-3 bg-bg-main border border-border-main rounded-lg text-text-main placeholder-text-secondary/50 focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all font-sans"
+              placeholder="••••••••"
+            />
           </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          <div>
-            <button type="submit" className="w-full px-4 py-2 font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-              Log In
-            </button>
+
+          {error && (
+            <div className="p-3 bg-accent-danger/10 border border-accent-danger/30 rounded-lg">
+              <p className="text-xs text-accent-danger font-sans text-center">{error}</p>
+            </div>
+          )}
+
+          <div className="pt-2">
+            <Button type="submit" variant="primary" size="default" className="w-full py-6 text-lg">
+              Enter System
+            </Button>
           </div>
         </form>
 
-        {/* NEW BLOCK WITH DIVIDER AND GOOGLE BUTTON */}
         <div className="relative flex items-center py-2">
-          <div className="flex-grow border-t border-gray-300"></div>
-          <span className="flex-shrink mx-4 text-sm text-gray-500">Or</span>
-          <div className="flex-grow border-t border-gray-300"></div>
+          <div className="flex-grow border-t border-border-main"></div>
+          <span className="flex-shrink mx-4 text-xs font-pixel text-text-secondary uppercase">Or</span>
+          <div className="flex-grow border-t border-border-main"></div>
         </div>
 
         <button
           onClick={handleGoogleSignIn}
-          className="w-full flex justify-center items-center px-4 py-2 font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          className="w-full flex justify-center items-center gap-3 px-4 py-3 bg-bg-main border border-border-main rounded-lg text-text-secondary font-sans text-sm hover:text-text-main hover:border-accent-primary hover:bg-bg-elevated transition-all duration-300 group"
         >
-          <svg className="w-5 h-5 mr-2" viewBox="0 0 48 48">
-            <path fill="#4285F4" d="M24 9.5c3.9 0 6.9 1.6 9.1 3.7l6.8-6.8C35.4 2.6 30.1 0 24 0 14.9 0 7.3 5.4 3 13.4l8.4 6.5C13.2 13.2 18.2 9.5 24 9.5z"></path>
-            <path fill="#34A853" d="M46.2 25.4c0-1.7-.2-3.4-.5-5H24v9.5h12.5c-.5 3.1-2.1 5.7-4.5 7.5l7.9 6.1c4.6-4.2 7.3-10.2 7.3-17.1z"></path>
-            <path fill="#FBBC05" d="M11.4 28.4c-.5-1.5-.8-3.1-.8-4.8s.3-3.3.8-4.8L3 13.4C1.1 16.9 0 20.9 0 24.9c0 4 1.1 8 3 11.5l8.4-6.6z"></path>
-            <path fill="#EA4335" d="M24 48c6.1 0 11.4-2 15.1-5.4l-7.9-6.1c-2.1 1.4-4.8 2.3-7.2 2.3-5.8 0-10.8-3.7-12.7-8.7L3 36.4C7.3 44.4 14.9 48 24 48z"></path>
-            <path fill="none" d="M0 0h48v48H0z"></path>
+          <svg className="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity" viewBox="0 0 48 48">
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+            <path fill="none" d="M0 0h48v48H0z" />
           </svg>
-          Log in with Google
+          Google Access
         </button>
+
+        <p className="text-center text-xs text-text-secondary font-sans mt-8">
+          Not initialized yet?{' '}
+          <Link href="/signup" className="text-accent-primary hover:underline hover:text-accent-primary/80 transition-colors">
+            Initialize (Sign Up)
+          </Link>
+        </p>
       </div>
     </div>
   );

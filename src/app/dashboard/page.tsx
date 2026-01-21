@@ -75,17 +75,15 @@ export default function DashboardPage() {
 
   const [experts, setExperts] = useState<Expert[]>([]);
   const [discussions, setDiscussions] = useState<Discussion[]>([]);
-  const [briefs, setBriefs] = useState<Brief[]>([]);
+
 
   const [isLoadingExperts, setIsLoadingExperts] = useState(true);
   const [isLoadingDiscussions, setIsLoadingDiscussions] = useState(true);
-  const [isLoadingBriefs, setIsLoadingBriefs] = useState(true);
 
-  const [mode, setMode] = useState<'experts' | 'discussions' | 'briefs'>('briefs'); // Default to briefs as requested context implies importance
+  const [mode, setMode] = useState<'experts' | 'discussions'>('experts');
 
   const [expandedExperts, setExpandedExperts] = useState<string[]>([]);
   const [expandedDiscussions, setExpandedDiscussions] = useState<string[]>([]);
-  const [expandedBriefs, setExpandedBriefs] = useState<string[]>([]);
 
   const [isFabOpen, setIsFabOpen] = useState(false);
 
@@ -94,7 +92,7 @@ export default function DashboardPage() {
     if (!user) return;
     setIsLoadingExperts(true);
     setIsLoadingDiscussions(true);
-    setIsLoadingBriefs(true);
+
 
     const expertsQuery = query(
       collection(db, `users/${user.uid}/customExperts`),
@@ -105,12 +103,7 @@ export default function DashboardPage() {
       where('userId', '==', user.uid),
       orderBy('createdAt', 'desc')
     );
-    const briefsQuery = query(
-      collection(db, `users/${user.uid}/briefs`),
-      orderBy('createdAt', 'desc')
-    );
-
-    // Загружаем критичные данные (Эксперты и Дискуссии)
+    // Загружаем данные (Эксперты и Дискуссии)
     try {
       const [expertsSnap, discSnap] = await Promise.all([
         getDocs(expertsQuery),
@@ -125,18 +118,6 @@ export default function DashboardPage() {
       setIsLoadingExperts(false);
       setIsLoadingDiscussions(false);
     }
-
-    // Отдельно пытаемся загрузить брифы (новые данные), чтобы ошибка прав не ломала старое
-    try {
-      const briefsSnap = await getDocs(briefsQuery);
-      setBriefs(briefsSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as Omit<Brief, 'id'>) })));
-    } catch (error) {
-      console.warn("Failed to load briefs (likely permission issue):", error);
-      setBriefs([]); // Fallback to empty
-    } finally {
-      setIsLoadingBriefs(false);
-    }
-
   }, [user]);
 
   // --- Toggles ---
@@ -152,16 +133,9 @@ export default function DashboardPage() {
     );
   }, []);
 
-  const handleToggleBrief = useCallback((briefId: string) => {
-    setExpandedBriefs(prev =>
-      prev.includes(briefId) ? prev.filter(id => id !== briefId) : [...prev, briefId]
-    );
-  }, []);
-
   const handleCollapseAll = useCallback(() => {
     setExpandedExperts([]);
     setExpandedDiscussions([]);
-    setExpandedBriefs([]);
   }, []);
 
   useEffect(() => {
@@ -182,34 +156,6 @@ export default function DashboardPage() {
     setDiscussions(prev => prev.filter(d => d.id !== id));
   };
 
-  const handleDeleteBrief = async (id: string) => {
-    if (!window.confirm('Delete brief from library?')) return;
-    await deleteDoc(firebaseDoc(db, `users/${user?.uid}/briefs`, id));
-    setBriefs(prev => prev.filter(b => b.id !== id));
-  };
-
-  const handleStartDebateFromBrief = async (brief: Brief) => {
-    // Создаем новую дискуссию на основе существующего брифа
-    try {
-      // Мы используем import { addDoc, serverTimestamp } ... убедимся что они есть или импортим
-      const { addDoc, collection, serverTimestamp } = await import('firebase/firestore');
-      const docRef = await addDoc(collection(db, 'discussions'), {
-        brief: brief.content,
-        goal: brief.goal || 'BRAINSTORMING',
-        goalJustification: brief.goalJustification || '',
-        createdAt: serverTimestamp(),
-        userId: user?.uid,
-        status: 'brief_created',
-        sourceBriefId: brief.id
-      });
-
-      router.push(`/discussion/${docRef.id}`);
-    } catch (e) {
-      console.error("Error starting debate:", e);
-      alert("Failed to create discussion :(");
-    }
-  };
-
   const handleBriefUpdate = (discussionId: string, newBrief: string) => {
     setDiscussions(prev => prev.map(d => (d.id === discussionId ? { ...d, brief: newBrief } : d)));
   };
@@ -223,9 +169,9 @@ export default function DashboardPage() {
     switch (mode) {
       case 'experts': return 'Your Experts';
       case 'discussions': return 'Your Discussions';
-      case 'briefs': return 'Briefs Library';
+      default: return 'Dashboard';
     }
-  }
+  };
 
   // Компактная шапка на мобиле, больше места карточкам
   return (
@@ -245,14 +191,14 @@ export default function DashboardPage() {
         {/* --- TABS SWITCHER (Desktop) --- */}
         <div className="hidden md:flex gap-4 mt-6 border-b border-border-main pb-1">
           <button
-            onClick={() => setMode('briefs')}
+            onClick={() => setMode('experts')}
             className={cn(
               "px-4 py-2 font-pixel text-sm uppercase transition-colors relative",
-              mode === 'briefs' ? "text-text-main" : "text-text-secondary hover:text-text-main"
+              mode === 'experts' ? "text-text-main" : "text-text-secondary hover:text-text-main"
             )}
           >
-            Briefs
-            {mode === 'briefs' && <div className="absolute bottom-[-5px] left-0 w-full h-[2px] bg-accent-primary" />}
+            Experts
+            {mode === 'experts' && <div className="absolute bottom-[-5px] left-0 w-full h-[2px] bg-accent-primary" />}
           </button>
           <button
             onClick={() => setMode('discussions')}
@@ -264,22 +210,12 @@ export default function DashboardPage() {
             Discussions
             {mode === 'discussions' && <div className="absolute bottom-[-5px] left-0 w-full h-[2px] bg-accent-primary" />}
           </button>
-          <button
-            onClick={() => setMode('experts')}
-            className={cn(
-              "px-4 py-2 font-pixel text-sm uppercase transition-colors relative",
-              mode === 'experts' ? "text-text-main" : "text-text-secondary hover:text-text-main"
-            )}
-          >
-            Experts
-            {mode === 'experts' && <div className="absolute bottom-[-5px] left-0 w-full h-[2px] bg-accent-primary" />}
-          </button>
         </div>
 
         <div className="flex-1 flex flex-col gap-4 mt-3 md:mt-4">
           <div className="flex justify-between items-center">
             {/* Свернуть все */}
-            {(expandedExperts.length > 0 || expandedDiscussions.length > 0 || expandedBriefs.length > 0) && (
+            {(expandedExperts.length > 0 || expandedDiscussions.length > 0) && (
               <button
                 onClick={handleCollapseAll}
                 className="font-pixel text-[11px] md:text-xs uppercase text-text-secondary transition-colors hover:text-text-main animate-fade-in-fast ml-auto"
@@ -296,32 +232,7 @@ export default function DashboardPage() {
           >
             <div className="flex flex-wrap gap-6 justify-center">
 
-              {/* === BRIEFS MODE === */}
-              {mode === 'briefs' && (
-                isLoadingBriefs ? (
-                  <p className="text-text-secondary text-center w-full">Loading briefs...</p>
-                ) : briefs.length === 0 ? (
-                  <EmptyState
-                    icon={BookOpen}
-                    title="Briefs Library is empty"
-                    description="Complete an interview with the Concierge to create your first brief. It will be saved here forever."
-                    buttonText="+ Create new brief"
-                    buttonLink="/discussion/new"
-                  />
-                ) : (
-                  briefs.map(brief => (
-                    <div key={brief.id} id={`brief-card-${brief.id}`}>
-                      <BriefCard
-                        brief={brief}
-                        isExpanded={expandedBriefs.includes(brief.id)}
-                        onToggle={() => handleToggleBrief(brief.id)}
-                        onDelete={handleDeleteBrief}
-                        onStartDebate={handleStartDebateFromBrief}
-                      />
-                    </div>
-                  ))
-                )
-              )}
+
 
               {/* === EXPERTS MODE === */}
               {mode === 'experts' && (
@@ -396,16 +307,14 @@ export default function DashboardPage() {
           <button
             type="button"
             onClick={() => {
-              if (mode === 'briefs') setMode('discussions');
-              else if (mode === 'discussions') setMode('experts');
-              else setMode('briefs');
+              if (mode === 'experts') setMode('discussions');
+              else setMode('experts');
             }}
             className="flex items-center gap-2 px-4 py-3 bg-bg-surface rounded-xl border border-border-main shadow-lg font-pixel text-xs uppercase text-text-secondary hover:text-text-main transition"
           >
             <span className="text-xl leading-none">⇅</span>
             <span>
-              {mode === 'briefs' ? 'К Дискуссиям' :
-                mode === 'discussions' ? 'К Экспертам' : 'К Брифам'}
+              {mode === 'experts' ? 'To Discussions' : 'To Experts'}
             </span>
           </button>
 
@@ -413,16 +322,7 @@ export default function DashboardPage() {
           <div className="relative">
             {isFabOpen && (
               <div className="absolute bottom-16 right-0 flex flex-col gap-2 animate-fade-in-fast">
-                <div className="flex items-center gap-3">
-                  <span className="w-40 text-right bg-bg-surface text-text-main px-3 py-2 rounded-lg font-pixel text-xs shadow-lg border border-border-main">
-                    New Brief
-                  </span>
-                  <Link href="/discussion/new">
-                    <button className="w-12 h-12 rounded-full p-0 shadow-lg border border-border-main bg-bg-surface text-text-main flex items-center justify-center">
-                      <MessagesSquare className="h-5 w-5" />
-                    </button>
-                  </Link>
-                </div>
+
                 <div className="flex items-center gap-3">
                   <span className="w-40 text-right bg-bg-surface text-text-main px-3 py-2 rounded-lg font-pixel text-xs shadow-lg border border-border-main">
                     Create Expert

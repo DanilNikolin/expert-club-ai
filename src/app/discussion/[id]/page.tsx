@@ -62,8 +62,8 @@ export default function DiscussionPage() {
             return newSet;
         });
     };
-    const scrollToBottom = () => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    useEffect(scrollToBottom, [messages]);
+    // const scrollToBottom = () => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // useEffect(scrollToBottom, [messages]);
 
     const fetchData = useCallback(async (currentUser: User) => {
         if (!discussionId) return;

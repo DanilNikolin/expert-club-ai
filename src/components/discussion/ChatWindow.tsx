@@ -2,8 +2,8 @@
 'use client';
 
 import { type DebateMessage } from '@/types';
-import { LegacyRef } from 'react';
-import { Bot, BrainCircuit, User, Scale, ChevronDown } from 'lucide-react';
+import { LegacyRef, useEffect, useRef, useState } from 'react';
+import { Bot, BrainCircuit, User, Scale, ChevronDown, ArrowDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Компонент для отображения мыслей
@@ -62,9 +62,51 @@ export default function ChatWindow({ messages, chatEndRef, teamInRun, currentTho
     expertColorMap.set(member.name, expertTextColors[index % expertTextColors.length]);
   });
 
+  // --- SMART AUTO-SCROLL LOGIC ---
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const lastMessageCount = useRef(messages.length);
+
+  // Helper to check if we are at the bottom
+  const checkIsAtBottom = () => {
+    if (!scrollContainerRef.current) return false;
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+
+    // Используем порог 50px только для отображения кнопки "Вниз"
+    return Math.abs(scrollHeight - clientHeight - scrollTop) < 50;
+  };
+
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    if (chatEndRef && 'current' in chatEndRef && chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior, block: 'end' });
+    }
+  };
+
+  // 1. Handle Scroll Events - just for button visibility
+  const handleScroll = () => {
+    if (!scrollContainerRef.current) return;
+    const atBottom = checkIsAtBottom();
+    setShowScrollButton(!atBottom);
+  };
+
+  // 2. Effect: New messages added (length changed) -> Scroll once
+  useEffect(() => {
+    const isNewMessage = messages.length > lastMessageCount.current;
+    if (isNewMessage) {
+      scrollToBottom('smooth');
+    }
+    lastMessageCount.current = messages.length;
+  }, [messages.length]);
+
+  // REMOVED: Streaming auto-scroll effect. Manual control only.
+
   return (
     <>
-      <div className="flex-grow overflow-y-auto space-y-10 pr-4">
+      <div
+        className="flex-grow overflow-y-auto space-y-10 pr-4 relative custom-scrollbar"
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+      >
         {messages.length > 0 ? messages.map((m, i) => {
           const isUser = m.role === 'user';
           const isJudge = m.name === 'Judge';
@@ -133,6 +175,18 @@ export default function ChatWindow({ messages, chatEndRef, teamInRun, currentTho
           </div>
         )}
         <div ref={chatEndRef} />
+
+        {/* Scroll to bottom button */}
+        {showScrollButton && (
+          <button
+            onClick={() => {
+              scrollToBottom('smooth');
+            }}
+            className="fixed bottom-32 right-10 md:right-[35%] z-50 p-2 rounded-full bg-accent-primary text-text-on-accent shadow-lg animate-fade-in-fast hover:bg-accent-primary/80 transition-colors"
+          >
+            <ArrowDown size={20} />
+          </button>
+        )}
       </div>
 
       <style jsx global>{`
