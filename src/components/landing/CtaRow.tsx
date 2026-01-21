@@ -16,12 +16,12 @@ export function CtaRow({ isAuthed }: Props) {
         <>
           <Link href="/dashboard" className="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/60 rounded-lg">
             <Button size="default" className="w-full px-8 py-4 text-lg">
-              Перейти в Дашборд
+              Go to Dashboard
             </Button>
           </Link>
           <Link href="/experts/create" className="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-secondary/60 rounded-lg">
             <Button variant="secondary" size="default" className="w-full px-8 py-4 text-lg">
-              + Новый Эксперт
+              + New Expert
             </Button>
           </Link>
         </>
@@ -30,12 +30,12 @@ export function CtaRow({ isAuthed }: Props) {
           <Link href="/signup" className="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/60 rounded-lg">
             <Button size="default" className="w-full px-8 py-4 text-lg">
               <Play className="w-5 h-5 mr-2" />
-              Попробовать бесплатно
+              Try for free
             </Button>
           </Link>
           <Link href="/login" className="focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-secondary/60 rounded-lg">
             <Button variant="secondary" size="default" className="w-full px-8 py-4 text-lg">
-              Войти
+              Log in
             </Button>
           </Link>
         </>

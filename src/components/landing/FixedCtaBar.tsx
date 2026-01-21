@@ -20,11 +20,11 @@ export function FixedCtaBar({ isAuthed }: Props) {
             <Play className="w-4 h-4 text-accent-primary" />
           </div>
           <div className="text-sm text-text-secondary">
-            <span className="text-text-main font-medium">Готов?</span> Первая сессия — бесплатно.
+            <span className="text-text-main font-medium">Ready?</span> First session is free.
           </div>
           <Link href="/signup" className="ml-auto">
             <Button size="sm" className="px-4">
-              Начать
+              Start
             </Button>
           </Link>
         </div>
