@@ -3,101 +3,102 @@ import OpenAI from 'openai';
 import { NextResponse } from 'next/server';
 import slugify from 'slugify';
 
-if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY не найден.');
+if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY not found.');
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+    apiKey: process.env.OPENAI_API_KEY,
 });
 
 type DebateMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam;
 
 export async function POST(request: Request) {
-    const { discussionId, runId, brief, debateHistory } = await request.json();
+    const { discussionId, runId, brief, debateHistory } = await request.json();
 
-    if (!discussionId || !runId || !debateHistory || !brief) {
-        return NextResponse.json({ error: 'Отсутствуют обязательные поля' }, { status: 400 });
-    }
+    if (!discussionId || !runId || !debateHistory || !brief) {
+        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
 
-    const stream = new ReadableStream({
-        async start(controller) {
-            const encoder = new TextEncoder();
-            const pushData = (data: object) => {
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
-            };
+    const stream = new ReadableStream({
+        async start(controller) {
+            const encoder = new TextEncoder();
+            const pushData = (data: object) => {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+            };
 
-            try {
-                pushData({ type: 'judge_start' });
+            try {
+                pushData({ type: 'judge_start' });
 
-                const judgePrompt = `## WHO
-Ты — «Судья», циничный и беспристрастный AI-аналитик с огромным опытом в бизнесе и венчурных инвестициях. Твоя специализация — препарировать бизнес-дискуссии и выносить безжалостно честный вердикт. Ты видишь всю подноготную, все логические дыры и всю чушь, которую несут эксперты.
+                const judgePrompt = `## WHO
+You are "The Judge," a cynical and impartial AI analyst with vast experience in business and venture capital. Your specialty is dissecting business discussions and delivering ruthlessly honest verdicts. You see the underlying truth, all logical gaps, and any nonsense spoken by experts.
 
 ## CONTEXT
-Ты получаешь на вход четыре элемента:
-1.  **Бриф Идеи:** Первоначальная задумка автора.
-2.  **Стратегическая Цель Дебатов:** Какую задачу ставил пользователь перед экспертами (например, "ПОИСК РЕШЕНИЙ").
-3.  **Участники:** Список экспертов, участвовавших в споре.
-4.  **Стенограмма:** Полный лог их диалога.
+You receive four elements:
+1.  **Idea Brief:** The author's original concept.
+2.  **Debate Strategic Goal:** The task set by the user for the experts (e.g., "SOLUTION SEARCH").
+3.  **Participants:** List of experts who participated in the debate.
+4.  **Transcript:** The full log of their dialogue.
 
 ## MISSION
-Твоя задача — проанализировать всё это и выдать структурированный, острый и глубокий финальный отчет для автора идеи. Тебе **запрещено** быть политкорректным, мягким или нейтральным. Твоя ценность — в остроте, прямоте и объективности. Ты не пересказываешь диалог, ты выносишь из него вердикт.
+Your task is to analyze all of this and issue a structured, sharp, and deep final report for the author. You are **forbidden** from being politically correct, soft, or neutral. Your value lies in sharpness, directness, and objectivity. Do not just summarize the dialogue; deliver a verdict.
+
+IMPORTANT: You must ALWAY speak in ENGLISH.
 
 ## OUTPUT FORMAT
-Твой отчет должен быть отформатирован в Markdown и строго следовать этой структуре:
+Your report must be formatted in Markdown and strictly follow this structure:
 
-### Вердикт по Идее
-Оцени жизнеспособность первоначальной идеи из брифа. Дай четкий ответ: это перспективная задумка или полная хуйня? Обоснуй в 2-3 предложениях.
+### Idea Verdict
+Assess the viability of the original idea from the brief. Give a clear answer: is this a promising concept or complete nonsense? Justify in 2-3 sentences.
 
-### Разбор Полётов (Анализ Экспертов)
-Оцени **каждого** эксперта по имени. Кто был полезен, а кто лил воду? Кто четко следовал цели дебатов, а кто ушел в сторону? Кто нашел реальную проблему, а кто занимался демагогией? Будь конкретен, не стесняйся в выражениях, если эксперт был бесполезен или деструктивен.
+### Expert Performance Review
+Evaluate **each** expert by name. Who was useful, and who just spouted water? Who clearly followed the debate goal, and who went off-track? Who found a real problem, and who engaged in demagoguery? Be specific, do not shy away from harsh expressions if an expert was useless or destructive.
 
-### Ключевые Выводы и Риски
-Собери 3-4 самых важных инсайта, которые родились в споре. Какие главные риски были вскрыты? Какие неожиданные возможности появились? Это самая суть, без воды.
+### Key Insights & Risks
+Gather 3-4 most important insights born in the dispute. What major risks were uncovered? What unexpected opportunities appeared? This is the core, no fluff.
 
-### Рекомендация к Действию
-Дай автору идеи 2-3 конкретных, практических первых шага. Что ему делать прямо сейчас, учитывая итоги дебатов? (Например: "Провести опрос 50 потенциальных клиентов", "Составить фин. модель на 20 кур", "Забыть эту идею и не тратить время").
+### Action Plan
+Give the idea author 2-3 concrete, practical first steps. What should they do right now, considering the debate results? (e.g., "Survey 50 potential clients," "Build a financial model for 20 chickens," "Forget this idea and don't waste time").
 `;
-                
-                const sanitizeName = (name: string) => {
-                    const sanitized = slugify(name, { replacement: '_', remove: /[^a-zA-Z0-9_]/g, lower: false, trim: true });
-                    return sanitized.substring(0, 64);
-                };
 
-                const messagesForJudge: DebateMessage[] = [
-                    { role: 'system', content: judgePrompt },
-                    { role: 'user', content: `Вот первоначальный бриф:\n"${brief}"\n\nВот стенограмма дебатов:\n`},
-                    ...debateHistory.map((msg: DebateMessage) => ({
-                        ...msg,
-                        name: msg.role === 'assistant' && msg.name ? sanitizeName(msg.name) : undefined,
-                    }))
-                ];
-                
-                const judgeStream = await openai.chat.completions.create({
+                const sanitizeName = (name: string) => {
+                    const sanitized = slugify(name, { replacement: '_', remove: /[^a-zA-Z0-9_]/g, lower: false, trim: true });
+                    return sanitized.substring(0, 64);
+                };
+
+                const messagesForJudge: DebateMessage[] = [
+                    { role: 'system', content: judgePrompt },
+                    { role: 'user', content: `Here is the original brief:\n"${brief}"\n\nHere is the debate transcript:\n` },
+                    ...debateHistory.map((msg: DebateMessage) => ({
+                        ...msg,
+                        name: msg.role === 'assistant' && msg.name ? sanitizeName(msg.name) : undefined,
+                    }))
+                ];
+
+                const judgeStream = await openai.chat.completions.create({
                     model: 'gpt-4.1-mini',
                     messages: messagesForJudge,
                     stream: true,
                     max_tokens: 4096,
-                    temperature: 0.7 
+                    temperature: 0.7
                 });
-        
-                for await (const chunk of judgeStream) {
-                    const content = chunk.choices[0]?.delta?.content || '';
-                    // report += content; // НАХУЙ
-                    pushData({ type: 'chunk', content });
-                }
-        
-                pushData({ type: 'judge_end' });
-                controller.close();
 
-            } catch (error) {
-                const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка на сервере.';
-                console.error("ОШИБКА В API СУДЬИ:", error); 
-                pushData({ type: 'error', message: errorMessage });
-                controller.close();
-            }
-        }
-    });
+                for await (const chunk of judgeStream) {
+                    const content = chunk.choices[0]?.delta?.content || '';
+                    pushData({ type: 'chunk', content });
+                }
 
-    return new Response(stream, {
-        headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' },
-    });
+                pushData({ type: 'judge_end' });
+                controller.close();
+
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown server error.';
+                console.error("JUDGE API ERROR:", error);
+                pushData({ type: 'error', message: errorMessage });
+                controller.close();
+            }
+        }
+    });
+
+    return new Response(stream, {
+        headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' },
+    });
 }
