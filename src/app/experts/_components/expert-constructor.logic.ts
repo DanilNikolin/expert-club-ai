@@ -62,6 +62,13 @@ export const initialExpertFormData: ExpertFormData = {
   },
 };
 
+// --- MODEL DISPLAY NAMES ---
+export const MODEL_DISPLAY_NAMES = {
+  'gpt-4.1-mini': 'Lightning Fast',
+  'gpt-5-mini': 'Universal Intelligence',
+  'deepseek-chat': 'Deep Analysis',
+};
+
 // --- LABELS ---
 export const archetypeLabels: Record<keyof ArchetypeMix, string> = {
   analyst: 'Analyst',

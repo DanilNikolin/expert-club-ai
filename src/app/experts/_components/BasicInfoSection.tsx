@@ -3,7 +3,7 @@
 
 import React from 'react';
 import ConfigSectionCard from './ConfigSectionCard';
-import { type ExpertFormData, type ValidationErrors } from './expert-constructor.logic';
+import { type ExpertFormData, type ValidationErrors, MODEL_DISPLAY_NAMES } from './expert-constructor.logic';
 import { cn } from '@/lib/utils';
 import Tooltip from '@/components/ui/Tooltip';
 
@@ -63,15 +63,9 @@ export default function BasicInfoSection({ formData, handleChange, validationErr
             onChange={handleChange}
             className="select-primary"
           >
-            {/* <optgroup label="Google (Июль 2025)">
-              <option value="gemini-2.5-flash">Gemini 2.5 Flash (Баланс/Мощь)</option>
-            </optgroup> */}
-            <optgroup label="OpenAI (Streaming)">
-              <option value="gpt-4.1-mini">GPT-4.1 Mini (Stream)</option>
-            </optgroup>
-            <optgroup label="Other">
-              <option value="deepseek-chat">DeepSeek Chat (Depth)</option>
-            </optgroup>
+            <option value="gpt-4.1-mini">{MODEL_DISPLAY_NAMES['gpt-4.1-mini']}</option>
+            <option value="gpt-5-mini">{MODEL_DISPLAY_NAMES['gpt-5-mini']}</option>
+            <option value="deepseek-chat">{MODEL_DISPLAY_NAMES['deepseek-chat']}</option>
           </select>
         </div>
       </div>
