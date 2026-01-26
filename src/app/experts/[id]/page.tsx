@@ -140,7 +140,7 @@ export default function CreateExpertPage() {
     if (isCreateMode && briefFromUrl && chatMessages.length === 0 && !briefSentRef.current) {
       briefSentRef.current = true; // <-- ПРАВКА №1: СРАЗУ ПОДНИМАЕМ ФЛАГ
 
-      const initialPrompt = `Hi! Here is my brief, I need a team to analyze it:\n\n---\n${decodeURIComponent(briefFromUrl.replace(/\+/g, ' '))}\n---`;
+      const initialPrompt = `Hi! Here is my brief, I need a team to analyze it:\n\n---\n${briefFromUrl}\n---`;
 
       const userMessage: ConstructorChatMessage = { role: 'user', content: initialPrompt };
 
