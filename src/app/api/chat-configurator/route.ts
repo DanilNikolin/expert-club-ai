@@ -17,17 +17,19 @@ You are a "Chief AI Architect" in the «expert-CLUB-AI» application. Your perso
 
 Your defining trait is empathy for the user. You understand they may not know the technical parameters; this is normal. Your job is to translate their intent and context into the perfect expert configuration. When in doubt (e.g., a user's phrase could imply changing both 'temperature' and 'synthesizer'), ask a clever, clarifying question with a bit of humor. Your ultimate goal is to give the user an expert they didn't even know they wanted, but one that perfectly solves their task.
 
+IMPORTANT: You must ALWAY speak in ENGLISH.
+
 Your entire output MUST BE a single, valid JSON object.
 
 Your JSON output must strictly follow this structure:
 {
-  "message": "A witty, helpful, and concise text response in the user's language.",
+  "message": "A witty, helpful, and concise text response in ENGLISH.",
   "suggestions": [ /* Array of FULL expert profiles */ ]
 }
 
 The profile structure in \`suggestions\` MUST BE COMPLETE. DO NOT OMIT ANY FIELDS.
 An expert profile MUST contain these keys: "name", "model", "archetypeMix", "specializations", "customContext", "character".
-- **customContext (string):** A brief, witty background. **MUST be 1-2 sentences, MAXIMUM 500 characters.**
+- **customContext (string):** A brief, witty background in ENGLISH. **MUST be 1-2 sentences, MAXIMUM 500 characters.**
 - **IMPORTANT SYSTEM RULE:** The "model" key MUST ALWAYS be set to the string value "gpt-4.1-mini". This is a non-negotiable system requirement. This is a non-negotiable system requirement.
 The "character" object MUST contain these keys: "constructiveness", "conformism", "conviction", "opennessToData", "hasHumor", "isContradictionHunter", "temperature".
 
@@ -125,69 +127,69 @@ export async function POST(req: NextRequest) {
     };
 
     if (!messages) {
-      return NextResponse.json({ error: 'Сообщения не найдены' }, { status: 400 });
+      return NextResponse.json({ error: 'Messages not found' }, { status: 400 });
     }
 
-    // Формируем контекстное сообщение для AI, чтобы он понял, в каком режиме работать
-    let contextHeader = "## РЕЖИМ: СОЗДАНИЕ\nПроанализируй запрос и предложи команду экспертов.";
+    // Form context message for AI to understand the mode
+    let contextHeader = "## MODE: CREATION\nAnalyze the request and propose a team of experts.";
     if (editingExpert) {
-        contextHeader = `## РЕЖИМ: РЕДАКТИРОВАНИЕ\nПроанализируй запрос и измени параметры предоставленного эксперта.\nДанные текущего эксперта для изменения:\n${JSON.stringify(editingExpert)}`;
+      contextHeader = `## MODE: EDITING\nAnalyze the request and modify the parameters of the provided expert.\nCurrent expert data to modify:\n${JSON.stringify(editingExpert)}`;
     }
-    
-    // Вставляем контекст как первое сообщение от "пользователя" после системного промпта
+
+    // Insert context as the first user message after the system prompt
     const messagesForApi: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: contextHeader },
-        ...messages
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: contextHeader },
+      ...messages
     ];
 
     const response = await openai.chat.completions.create({
-        model: 'gpt-5-mini',
-        messages: messagesForApi,
-        max_completion_tokens: 4096,
-        response_format: { type: "json_object" },
-      });
-    
+      model: 'gpt-5-mini',
+      messages: messagesForApi,
+      max_completion_tokens: 4096,
+      response_format: { type: "json_object" },
+    });
+
     // --- ДИАГНОСТИЧЕСКИЙ БЛОК ---
-const choice = response.choices[0];
-const assistantResponseContent = choice.message.content;
+    const choice = response.choices[0];
+    const assistantResponseContent = choice.message.content;
 
-// Выводим в серверную консоль полную причину, чтобы понять, что за хуйня
-console.log(`[DEBUG] Finish Reason: ${choice.finish_reason}`);
-if (choice.finish_reason === 'content_filter') {
-    console.error('[CRITICAL] OpenAI заблокировал ответ из-за контент-фильтров!');
-}
-// --- КОНЕЦ ДИАГНОСТИКИ ---
+    // Выводим в серверную консоль полную причину, чтобы понять, что за хуйня
+    console.log(`[DEBUG] Finish Reason: ${choice.finish_reason}`);
+    if (choice.finish_reason === 'content_filter') {
+      console.error('[CRITICAL] OpenAI заблокировал ответ из-за контент-фильтров!');
+    }
+    // --- КОНЕЦ ДИАГНОСТИКИ ---
 
-if (!assistantResponseContent) {
-    // Теперь ошибка будет информативнее
-    throw new Error(`AI вернул пустой ответ. Причина завершения: ${choice.finish_reason}`);
-}
-    
+    if (!assistantResponseContent) {
+      // Теперь ошибка будет информативнее
+      throw new Error(`AI вернул пустой ответ. Причина завершения: ${choice.finish_reason}`);
+    }
+
     // Парсим ответ, так как ожидаем JSON
     try {
-        const parsedResponse = JSON.parse(assistantResponseContent);
+      const parsedResponse = JSON.parse(assistantResponseContent);
 
-        // --- НАШ ВЫШИБАЛА ---
-        const ALLOWED_MODELS = ['gpt-4.1-mini'];
-        const DEFAULT_MODEL = 'gpt-4.1-mini';
+      // --- НАШ ВЫШИБАЛА ---
+      const ALLOWED_MODELS = ['gpt-4.1-mini'];
+      const DEFAULT_MODEL = 'gpt-4.1-mini';
 
-        if (parsedResponse.suggestions && Array.isArray(parsedResponse.suggestions)) {
-                    parsedResponse.suggestions.forEach((expert: ExpertSuggestion) => {
-                        if (!expert.model || !ALLOWED_MODELS.includes(expert.model)) {
-                    // Если модель левая или отсутствует - принудительно ставим дефолт.
-                    // Можно даже в консоль вывести лог для себя, чтобы знать о таких случаях.
-                    console.log(`[!] AI tried to use an invalid model: "${expert.model}". Corrected to "${DEFAULT_MODEL}".`);
-                    expert.model = DEFAULT_MODEL;
-                }
-            });
-        }
-        // --- КОНЕЦ ВЫШИБАЛЫ ---
-        
-        return NextResponse.json(parsedResponse);
+      if (parsedResponse.suggestions && Array.isArray(parsedResponse.suggestions)) {
+        parsedResponse.suggestions.forEach((expert: ExpertSuggestion) => {
+          if (!expert.model || !ALLOWED_MODELS.includes(expert.model)) {
+            // Если модель левая или отсутствует - принудительно ставим дефолт.
+            // Можно даже в консоль вывести лог для себя, чтобы знать о таких случаях.
+            console.log(`[!] AI tried to use an invalid model: "${expert.model}". Corrected to "${DEFAULT_MODEL}".`);
+            expert.model = DEFAULT_MODEL;
+          }
+        });
+      }
+      // --- КОНЕЦ ВЫШИБАЛЫ ---
+
+      return NextResponse.json(parsedResponse);
     } catch (e) {
-        console.error('Ошибка парсинга JSON от OpenAI:', e, 'Оригинальный ответ:', assistantResponseContent);
-        throw new Error("AI вернул некорректный формат данных.");
+      console.error('Ошибка парсинга JSON от OpenAI:', e, 'Оригинальный ответ:', assistantResponseContent);
+      throw new Error("AI вернул некорректный формат данных.");
     }
 
   } catch (error) {
